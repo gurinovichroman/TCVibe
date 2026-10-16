@@ -1,0 +1,93 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.WorkspaceNotesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        Title="{Binding WindowTitle}"
+        Width="620" Height="520"
+        MinWidth="420" MinHeight="360">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="{DynamicResource WsNotes_Notes}"
+                   Margin="0,0,0,4" />
+
+        <!-- AcceptsReturn keeps Enter inside the notes instead of firing the default button. -->
+        <TextBox Grid.Row="1"
+                 x:Name="NotesBox"
+                 AutomationProperties.Name="{DynamicResource WsNotes_Notes}"
+                 Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True"
+                 AcceptsTab="False"
+                 TextWrapping="Wrap"
+                 FontFamily="Consolas"
+                 VerticalScrollBarVisibility="Auto"
+                 SpellCheck.IsEnabled="False" />
+
+        <!-- A Grid, not a horizontal StackPanel: only a bounded column lets a long path trim. -->
+        <Grid Grid.Row="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{DynamicResource WsNotes_File}" FontSize="11"
+                       Foreground="{DynamicResource ForegroundDimBrush}" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding NotesPath}"
+                       ToolTip="{Binding NotesPath}"
+                       Margin="4,0,0,0"
+                       FontSize="11"
+                       Foreground="{DynamicResource ForegroundDimBrush}"
+                       FontFamily="Consolas"
+                       TextTrimming="CharacterEllipsis" />
+        </Grid>
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="6" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="{DynamicResource WsNotes_Command}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding TerminalCommand, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{DynamicResource WsNotes_Command}"
+                     FontFamily="Consolas" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0"
+                       Text="{DynamicResource WsNotes_Directory}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding TerminalDirectory, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{DynamicResource WsNotes_Directory}"
+                     ToolTip="{DynamicResource WsNotes_DirectoryHint}"
+                     FontFamily="Consolas" />
+        </Grid>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{DynamicResource OK}" Width="90" Margin="0,0,8,0"
+                    Command="{Binding ConfirmCommand}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="90"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

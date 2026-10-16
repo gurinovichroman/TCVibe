@@ -1,0 +1,142 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.HotkeySettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Hotkeys_Title}" Height="600" Width="780"
+        MinHeight="440" MinWidth="640">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style x:Key="BindingRow" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolVis}}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsModified}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource HighlightBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search bar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <Label Content="{DynamicResource Hotkeys_Search}" Target="{Binding ElementName=SearchBox}"
+                   VerticalAlignment="Center" MinWidth="60"/>
+            <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Width="250" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Bindings list -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Bindings}"
+                  SelectedItem="{Binding SelectedBinding}"
+                  RowStyle="{StaticResource BindingRow}"
+                  AutoGenerateColumns="False"
+                  AutomationProperties.Name="{DynamicResource Hotkeys_Title}"
+                  CanUserAddRows="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{DynamicResource Hotkeys_ColCommand}" Binding="{Binding Title}" Width="*"/>
+                <DataGridTextColumn Header="{DynamicResource Hotkeys_ColKey}" Binding="{Binding DisplayText}" Width="200"/>
+                <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource Hotkeys_ColChanged}" Binding="{Binding IsModified, Mode=OneWay}" Width="80"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Edit panel -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource BackgroundAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                Margin="0,8,0,0" Padding="12,8"
+                Visibility="{Binding SelectedBinding, Converter={x:Static conv:NullToVisibilityConverter.Instance}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource Hotkeys_EditCommand}"
+                       VerticalAlignment="Center" MinWidth="90"/>
+                <TextBlock Grid.Row="0" Grid.Column="1"
+                           Text="{Binding SelectedBinding.Title}"
+                           VerticalAlignment="Center" FontWeight="Bold"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Content="{DynamicResource Hotkeys_Key}"
+                       Target="{Binding ElementName=GestureBox}" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="GestureBox" Margin="0,6,0,0"
+                         Text="{Binding EditGesture, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{DynamicResource Hotkeys_KeyTip}"/>
+
+                <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource Hotkeys_Record}"
+                       Target="{Binding ElementName=RecordBox}" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="RecordBox" Margin="0,6,0,0"
+                         IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                         Text="{DynamicResource Hotkeys_RecordHint}"
+                         Foreground="{DynamicResource ForegroundDimBrush}"
+                         PreviewKeyDown="RecordBox_PreviewKeyDown"/>
+
+                <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="2"
+                            Orientation="Vertical" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Content="{DynamicResource Hotkeys_Apply}"
+                            Command="{Binding ApplyHotkeyCommand}"
+                            Margin="0,0,0,4" MinWidth="90"/>
+                    <Button Content="{DynamicResource Hotkeys_Reset}"
+                            Command="{Binding ResetHotkeyCommand}" MinWidth="90"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Feedback + bottom buttons -->
+        <Grid Grid.Row="3" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource WarningBrush}"
+                           Text="{DynamicResource Hotkeys_GuestNote}"
+                           Visibility="{Binding IsGuestWindow, Converter={StaticResource BoolVis}}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="{DynamicResource Hotkeys_Import}" Command="{Binding ImportProfileCommand}" Margin="0,0,6,0"/>
+                <Button Content="{DynamicResource Hotkeys_Export}" Command="{Binding ExportProfileCommand}" Margin="0,0,6,0"/>
+                <Button Content="{DynamicResource Hotkeys_ResetAll}" Command="{Binding ResetAllCommand}" Margin="0,0,6,0"/>
+                <Button Content="{DynamicResource Hotkeys_Save}" Command="{Binding SaveCommand}" IsDefault="True" Margin="0,0,6,0"/>
+                <Button Content="{DynamicResource Cancel}" IsCancel="True" Click="CancelButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

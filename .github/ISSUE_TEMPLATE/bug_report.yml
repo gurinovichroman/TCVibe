@@ -1,0 +1,68 @@
+name: Bug report
+description: Something in TCVibe does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. **Help → Report a bug** in TCVibe opens this form with the version and Windows filled in.
+        Questions and ideas go to [Discussions](https://github.com/gurinovichroman/TCVibe/discussions). A security problem? Please report it [privately](https://github.com/gurinovichroman/TCVibe/security/advisories/new), not here.
+
+  # The ids "version" and "os" are filled from the URL by Help → Report a bug (ProjectLinks.BugReportUrl).
+  - type: input
+    id: version
+    attributes:
+      label: TCVibe version
+      description: Help → Report a bug fills this in. Otherwise, the name of the release you downloaded.
+      placeholder: 0.1.0 (win-x64, portable)
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Windows
+      placeholder: Windows 11 (10.0.26100), x64
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead. A screenshot helps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a workspace with …
+        2. Press …
+        3. See …
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Panels, tabs and file operations
+        - Workspaces
+        - Git
+        - Agents and MCP
+        - Archives
+        - Remote connections (FTP, SFTP, WebDAV, cloud)
+        - Search
+        - Viewer and editor
+        - Updates and installation
+        - Something else
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: >
+        Help → Open the log folder shows the logs with the newest one selected. Drag the file here, or paste
+        the lines around the error. Logs contain file paths: look through them before you attach.

@@ -1,0 +1,103 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.ConflictDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Conflict_Title}"
+        Width="580" MinHeight="200" SizeToContent="Height"
+        ResizeMode="NoResize"
+        AutomationProperties.Name="{DynamicResource Conflict_Title}">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                   Text="{Binding Headline}" />
+
+        <!-- File info grid: the label column, then the incoming file, then the one it would replace -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{DynamicResource Conflict_Source}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" Margin="4,0" />
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="{DynamicResource Conflict_Destination}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" Margin="4,0" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Conflict_Path}"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" VerticalAlignment="Top" />
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SourcePath}" ToolTip="{Binding SourcePath}"
+                       TextWrapping="Wrap" FontSize="11" Margin="4,0" />
+            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding DestPath}" ToolTip="{Binding DestPath}"
+                       TextWrapping="Wrap" FontSize="11" Margin="4,0" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource Conflict_Size}"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SourceSize}" FontSize="11" Margin="4,0"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding DestSize}" FontSize="11" Margin="4,0"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource Conflict_Modified}"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SourceDate}" FontSize="11" Margin="4,0"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+            <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding DestDate}" FontSize="11" Margin="4,0"
+                       Visibility="{Binding ShowSizeAndDate, Converter={StaticResource BoolToVis}}" />
+        </Grid>
+
+        <TextBlock Grid.Row="4" Text="{Binding Hint}" FontSize="11" FontWeight="SemiBold"
+                   Foreground="{DynamicResource WarningBrush}" />
+
+        <!-- Apply to all -->
+        <CheckBox Grid.Row="6"
+                  Content="{DynamicResource Conflict_ApplyAll}"
+                  ToolTip="{DynamicResource Conflict_ApplyAllTip}"
+                  IsChecked="{Binding ApplyToAll}"
+                  Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" />
+
+        <!-- Buttons. Skip is the default: Enter must never destroy a file by reflex. -->
+        <WrapPanel Grid.Row="8" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource Conflict_Overwrite}" MinWidth="90" Margin="0,0,6,0" Padding="8,3"
+                    Command="{Binding OverwriteCommand}" />
+            <Button Content="{DynamicResource Conflict_OverwriteNewer}" MinWidth="110" Margin="0,0,6,0" Padding="8,3"
+                    ToolTip="{DynamicResource Conflict_OverwriteNewerTip}"
+                    Command="{Binding OverwriteIfNewerCommand}" />
+            <Button Content="{DynamicResource Conflict_Skip}" MinWidth="80" Margin="0,0,6,0" Padding="8,3"
+                    Command="{Binding SkipCommand}" IsDefault="True" />
+            <Button Content="{DynamicResource Conflict_Rename}" MinWidth="90" Margin="0,0,6,0" Padding="8,3"
+                    Command="{Binding RenameAutoCommand}" />
+            <Button Content="{DynamicResource Cancel}" MinWidth="80" Padding="8,3"
+                    Command="{Binding CancelCommand}" IsCancel="True" />
+        </WrapPanel>
+    </Grid>
+</local:TcvDialog>

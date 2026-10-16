@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TCV.App</RootNamespace>
+    <AssemblyName>TCV.App</AssemblyName>
+    <!-- Program.Main, not the generated App.Main: Velopack's hooks must run first (TRAP-71). -->
+    <StartupObject>TCV.App.Program</StartupObject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Per-Monitor DPI Awareness v2 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Windows take it as their default icon (taskbar, Alt+Tab, dialog captions), vpk copies it to
+         the portable stub. Built from Assets\Logo\tcv-logo.png by tools\make-icons.ps1. -->
+    <ApplicationIcon>Assets\Logo\tcv.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog.Sinks.Debug" />
+    <PackageReference Include="System.Text.Encoding.CodePages" />
+    <PackageReference Include="Velopack" />
+  </ItemGroup>
+
+  <!-- IBM Plex, the design's typeface (SIL OFL 1.1, Fonts/OFL.txt): compiled in so the look does not
+       depend on what the machine has installed. The licence ships beside the exe as the OFL asks. -->
+  <ItemGroup>
+    <Resource Include="Fonts\*.ttf" />
+    <None Update="Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Logo\tcv-logo-128.png" />
+    <Resource Include="Assets\Logo\tcv-logo-128-dark.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TCV.Core\TCV.Core.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Archives\TCV.Archives.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Network\TCV.Network.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Search\TCV.Search.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.MultiRename\TCV.MultiRename.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Tools\TCV.Tools.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Git\TCV.Git.csproj" />
+    <ProjectReference Include="..\Plugins\TCV.Ai\TCV.Ai.csproj" />
+  </ItemGroup>
+
+</Project>

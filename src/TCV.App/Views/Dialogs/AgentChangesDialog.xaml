@@ -1,0 +1,357 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.AgentChangesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{Binding WindowTitle}"
+        Width="980" Height="560"
+        MinWidth="720" MinHeight="420">
+
+    <local:TcvDialog.Resources>
+        <!-- A list with nothing in it says why, instead of showing a bare header. Shown only while the
+             list named in Tag has no items. -->
+        <Style x:Key="EmptyListHint" TargetType="TextBlock">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag.HasItems, RelativeSource={RelativeSource Self}}" Value="False">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0">
+
+            <!-- ── What changed, and who did it ─────────────────────────────── -->
+            <TabItem Header="{DynamicResource Agent_TabChanges}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="{DynamicResource Agent_Branch}" VerticalAlignment="Center" Opacity="0.7" />
+                        <TextBlock Text="{Binding Branch}" VerticalAlignment="Center"
+                                   Margin="6,0,16,0" FontWeight="SemiBold" />
+                        <CheckBox Content="{DynamicResource Agent_OnlyAttributed}"
+                                  IsChecked="{Binding OnlyAttributed}"
+                                  VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <ListView Grid.Row="1" x:Name="ChangesList"
+                              ItemsSource="{Binding Changes}"
+                              SelectedItem="{Binding Selected}"
+                              AutomationProperties.Name="{DynamicResource Agent_TabChanges}"
+                              MouseDoubleClick="OnChangesDoubleClick">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="{DynamicResource Agent_ColStatus}" Width="50"
+                                                DisplayMemberBinding="{Binding StatusLabel}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColStaged}" Width="70"
+                                                DisplayMemberBinding="{Binding StagedText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColPath}" Width="380"
+                                                DisplayMemberBinding="{Binding RelativePath}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColOrigin}" Width="200">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <!-- The tooltip says what the verdict rests on: a log line is proof,
+                                                 a session window is a circumstantial guess (ADR-0019). -->
+                                            <TextBlock Text="{Binding OriginText}" ToolTip="{Binding OriginHint}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="{DynamicResource Agent_ColActor}" Width="180"
+                                                DisplayMemberBinding="{Binding Actor}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColWhen}" Width="130"
+                                                DisplayMemberBinding="{Binding AtText}" />
+                            </GridView>
+                        </ListView.View>
+
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Style.Triggers>
+                                    <!-- An agent's edits are what this window exists to surface, so they
+                                         read as the foreground and unattributed ones recede. -->
+                                    <DataTrigger Binding="{Binding Origin}" Value="Supervised">
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Origin}" Value="Agent">
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Origin}" Value="External">
+                                        <Setter Property="Opacity" Value="0.7" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+
+                    <TextBlock Grid.Row="1" Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=ChangesList}"
+                               Text="{DynamicResource Agent_ChangesEmpty}" />
+
+                    <TextBlock Grid.Row="2" Text="{Binding Summary}" Margin="0,6,0,0"
+                               Opacity="0.7" FontSize="11" />
+                </Grid>
+            </TabItem>
+
+            <!-- ── The operation journal: what the manager actually performed ── -->
+            <TabItem Header="{DynamicResource Agent_TabJournal}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" x:Name="JournalList" ItemsSource="{Binding Journal}"
+                              AutomationProperties.Name="{DynamicResource Agent_TabJournal}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="{DynamicResource Agent_ColWhen}" Width="140"
+                                                DisplayMemberBinding="{Binding Entry.Timestamp, StringFormat=g}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColKind}" Width="90"
+                                                DisplayMemberBinding="{Binding KindText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColSource}" Width="300"
+                                                DisplayMemberBinding="{Binding Source}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColTarget}" Width="220"
+                                                DisplayMemberBinding="{Binding Destination}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColOutcome}" Width="90"
+                                                DisplayMemberBinding="{Binding OutcomeText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColRequestedBy}" Width="140"
+                                                DisplayMemberBinding="{Binding Entry.Origin}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <TextBlock Grid.Row="0" Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=JournalList}"
+                               Text="{DynamicResource Agent_JournalEmpty}" />
+
+                    <TextBlock Grid.Row="1" Text="{DynamicResource Agent_JournalHint}"
+                               Margin="0,6,0,0" Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+                </Grid>
+            </TabItem>
+
+            <!-- ── Agent sessions: the evidence behind the provenance column ─── -->
+            <TabItem Header="{DynamicResource Agent_TabSessions}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" x:Name="SessionsList"
+                              ItemsSource="{Binding Sessions}"
+                              SelectedItem="{Binding SelectedSession}"
+                              AutomationProperties.Name="{DynamicResource Agent_TabSessions}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="{DynamicResource Agent_ColTool}" Width="140"
+                                                DisplayMemberBinding="{Binding Tool}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColTask}" Width="240"
+                                                DisplayMemberBinding="{Binding Task}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColRoot}" Width="300"
+                                                DisplayMemberBinding="{Binding Root}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColStarted}" Width="140"
+                                                DisplayMemberBinding="{Binding StartedText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColOpen}" Width="60"
+                                                DisplayMemberBinding="{Binding OpenText}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <TextBlock Grid.Row="0" Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=SessionsList}"
+                               Text="{DynamicResource Agent_SessionsEmpty}" />
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="{DynamicResource Agent_CloseSession}" MinWidth="150"
+                                Command="{Binding CloseSessionCommand}"
+                                IsEnabled="{Binding SelectedSession.IsOpen, FallbackValue=False, TargetNullValue=False}" />
+                        <TextBlock Text="{DynamicResource Agent_SessionHint}" Margin="12,0,0,0"
+                                   VerticalAlignment="Center" Opacity="0.7" FontSize="11"
+                                   TextWrapping="Wrap" MaxWidth="600" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ── The MCP server and exactly what it exposes (§ 3.6.4) ──────── -->
+            <TabItem Header="{DynamicResource Agent_TabServer}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <!-- Disabled in a guest workspace window: the server belongs to the window
+                             that owns the session (TRAP-22). -->
+                        <Button MinWidth="150" Command="{Binding ToggleServerCommand}"
+                                IsEnabled="{Binding CanConfigureServer}"
+                                Content="{DynamicResource Agent_ToggleServer}" />
+                        <TextBlock Text="{DynamicResource Agent_ServerStatus}" Margin="16,0,4,0"
+                                   VerticalAlignment="Center" Opacity="0.7" />
+                        <TextBlock Text="{Binding ServerStateText}" VerticalAlignment="Center"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <!-- Selectable, not a label: connecting a client means copying this line. -->
+                    <TextBox Grid.Row="1" Text="{Binding ServerCommandLine, Mode=OneWay}"
+                             IsReadOnly="True" Margin="0,8,0,0" FontFamily="Consolas"
+                             TextWrapping="Wrap" MinHeight="42"
+                             AutomationProperties.Name="{DynamicResource Agent_ServerCommandLine}" />
+
+                    <TextBlock Grid.Row="2" Text="{DynamicResource Agent_ServerRestartHint}" Margin="0,4,0,0"
+                               Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+
+                    <CheckBox Grid.Row="3" Margin="0,10,0,0"
+                              Content="{DynamicResource Agent_AllowWrites}"
+                              IsEnabled="{Binding CanConfigureServer}"
+                              IsChecked="{Binding WritesEnabled}" />
+
+                    <Grid Grid.Row="4" Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="{DynamicResource Agent_ApprovedRoots}" Opacity="0.7" />
+                        <ListBox Grid.Row="1" x:Name="RootsList" Margin="0,4,0,0"
+                                 ItemsSource="{Binding ApprovedRoots}"
+                                 SelectedItem="{Binding SelectedRoot}"
+                                 AutomationProperties.Name="{DynamicResource Agent_ApprovedRoots}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=RootsList}"
+                                   Text="{DynamicResource Agent_RootsEmpty}" />
+                    </Grid>
+
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="{DynamicResource Agent_ApproveFolder}" MinWidth="160" Margin="0,0,8,0"
+                                IsEnabled="{Binding CanConfigureServer}"
+                                Command="{Binding ApproveFolderCommand}" />
+                        <Button Content="{DynamicResource Agent_RevokeRoot}" MinWidth="120"
+                                IsEnabled="{Binding CanConfigureServer}"
+                                Command="{Binding RevokeRootCommand}" />
+                        <TextBlock Text="{DynamicResource Agent_ScopeHint}" Margin="12,0,0,0"
+                                   VerticalAlignment="Center" Opacity="0.7" FontSize="11"
+                                   TextWrapping="Wrap" MaxWidth="440" />
+                    </StackPanel>
+
+                    <!-- The list above names directories; this line names the mounts open in the panels
+                         that panel:// reaches right now (ADR-0023). -->
+                    <TextBlock Grid.Row="6" Text="{Binding ReachableMountsText}" Margin="0,8,0,0"
+                               Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+                </Grid>
+            </TabItem>
+
+            <!-- ── Supervised writes: pending and decided (6.13b) ────────────── -->
+            <TabItem Header="{DynamicResource Agent_TabWrites}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{DynamicResource Agent_Pending}" Opacity="0.7" />
+                    <Grid Grid.Row="1" Margin="0,4,0,10">
+                        <ListBox x:Name="PendingList" ItemsSource="{Binding Pending}" MinHeight="40" MaxHeight="110"
+                                 AutomationProperties.Name="{DynamicResource Agent_Pending}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <Run Text="{Binding Agent, Mode=OneWay}" FontWeight="SemiBold" />
+                                        <Run Text=" — " />
+                                        <Run Text="{Binding SummaryText, Mode=OneWay}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=PendingList}"
+                                   Text="{DynamicResource Agent_PendingEmpty}" />
+                    </Grid>
+
+                    <ListView Grid.Row="2" x:Name="WritesList" ItemsSource="{Binding RecentWrites}"
+                              AutomationProperties.Name="{DynamicResource Agent_TabWrites}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="{DynamicResource Agent_ColWhen}" Width="140"
+                                                DisplayMemberBinding="{Binding DecidedText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColAgent}" Width="160"
+                                                DisplayMemberBinding="{Binding Agent}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColProposal}" Width="330"
+                                                DisplayMemberBinding="{Binding Summary}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColVerdict}" Width="90"
+                                                DisplayMemberBinding="{Binding VerdictText}" />
+                                <GridViewColumn Header="{DynamicResource Agent_ColOutcome}" Width="200"
+                                                DisplayMemberBinding="{Binding OutcomeText}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <TextBlock Grid.Row="2" Style="{StaticResource EmptyListHint}" Tag="{Binding ElementName=WritesList}"
+                               Text="{DynamicResource Agent_WritesEmpty}" />
+
+                    <Button Grid.Row="3" HorizontalAlignment="Left" MinWidth="150" Margin="0,8,0,0"
+                            Content="{DynamicResource Agent_ClearHistory}"
+                            Command="{Binding ClearWriteHistoryCommand}" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <ProgressBar Grid.Row="1" IsIndeterminate="True" Height="3" Margin="0,6,0,0"
+                     Visibility="{Binding IsBusy, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+
+        <TextBlock Grid.Row="2"
+                   Text="{Binding StatusMessage}"
+                   Margin="0,6,0,0"
+                   Opacity="0.7" FontSize="11"
+                   TextWrapping="Wrap" />
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Content="{DynamicResource Agent_Revert}" MinWidth="130" Margin="0,0,8,0"
+                        Command="{Binding RevertSelectedCommand}"
+                        IsEnabled="{Binding CanRevert}"
+                        ToolTipService.ShowOnDisabled="True"
+                        ToolTip="{DynamicResource Agent_RevertHint}" />
+                <Button Content="{DynamicResource Agent_Stage}" MinWidth="120" Margin="0,0,8,0"
+                        Command="{Binding StageSelectedCommand}"
+                        IsEnabled="{Binding CanRevert}" />
+                <Button Content="{DynamicResource Agent_Diff}" MinWidth="100" Margin="0,0,8,0"
+                        Command="{Binding ShowDiffCommand}"
+                        IsEnabled="{Binding CanDiff}" />
+                <Button Content="{DynamicResource Refresh}" MinWidth="90"
+                        Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={x:Static conv:InverseBoolConverter.Instance}}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{DynamicResource Agent_ShowInPanel}" MinWidth="150" Margin="0,0,8,0"
+                        Command="{Binding ShowInPanelCommand}"
+                        IsEnabled="{Binding CanRevert}" />
+                <!-- Not the default button: Enter would otherwise close the whole dashboard from any tab,
+                     from the Server tab as much as from the change list. -->
+                <Button Content="{DynamicResource Close}" MinWidth="90"
+                        Command="{Binding CloseCommand}"
+                        IsCancel="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

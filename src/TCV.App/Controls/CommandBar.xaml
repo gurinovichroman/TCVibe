@@ -1,0 +1,36 @@
+<UserControl x:Class="TCV.App.Controls.CommandBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- The function-key row (design: .function-bar, 42px): F3 View … F10 Exit, the keys the design names.
+         Each button's Tag is the command id it runs; its content (key in the mono face, then the label) is
+         built in code from the live hotkey bindings and the string dictionary (CommandBar.Refresh), so a
+         rebind or a language switch is reflected here. F1 (palette) and F2 (rename) still work from the
+         keyboard; the row shows the eight the design does. -->
+    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0" Padding="7.5,6" Height="42">
+        <!-- Equal cells across the whole width, as in Total Commander. In a narrow window a label is
+             cut with an ellipsis rather than pushing F9/F10 off the edge; the tooltip has it whole. -->
+        <UniformGrid x:Name="Buttons" Rows="1" VerticalAlignment="Center">
+            <UniformGrid.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource FunctionKey}">
+                    <Setter Property="Margin" Value="2.5,0" />
+                    <Style.Triggers>
+                        <!-- Delete is the one destructive key: the danger colour, as the design marks it. -->
+                        <Trigger Property="Tag" Value="Delete">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </UniformGrid.Resources>
+            <Button Tag="View"           Click="OnButtonClick" />
+            <Button Tag="Edit"           Click="OnButtonClick" />
+            <Button Tag="Copy"           Click="OnButtonClick" />
+            <Button Tag="Move"           Click="OnButtonClick" />
+            <Button Tag="NewFolder"      Click="OnButtonClick" />
+            <Button Tag="Delete"         Click="OnButtonClick" />
+            <Button Tag="Terminal"       Click="OnButtonClick" />
+            <Button Tag="Quit"           Click="OnButtonClick" />
+        </UniformGrid>
+    </Border>
+</UserControl>

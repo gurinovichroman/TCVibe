@@ -1,0 +1,154 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.CompareDirectoriesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:sync="clr-namespace:TCV.App.Sync"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Cmp_Title}"
+        Width="1040" Height="640"
+        MinWidth="720" MinHeight="420">
+
+    <local:TcvDialog.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- The two sides -->
+        <Grid Grid.Row="0" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{Binding LeftPath}" TextTrimming="CharacterEllipsis"
+                       ToolTip="{Binding LeftPath}" />
+            <TextBlock Grid.Column="1" Text="  ⇄  " />
+            <TextBlock Grid.Column="2" Text="{Binding RightPath}" TextTrimming="CharacterEllipsis"
+                       ToolTip="{Binding RightPath}" />
+        </Grid>
+
+        <!-- Options -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,6">
+            <Button Content="{DynamicResource Cmp_Compare}" Command="{Binding CompareCommand}"
+                    Padding="10,3" Margin="0,0,8,0" IsDefault="True" />
+            <Button Content="{DynamicResource Search_Stop}" Command="{Binding StopCommand}"
+                    IsEnabled="{Binding IsComparing}"
+                    Padding="10,3" Margin="0,0,16,0" />
+            <CheckBox Content="{DynamicResource Cmp_Recursive}" IsChecked="{Binding Recursive}"
+                      VerticalAlignment="Center" Margin="0,0,12,0" />
+            <CheckBox Content="{DynamicResource Cmp_ShowSame}" IsChecked="{Binding ShowSame}"
+                      VerticalAlignment="Center" Margin="0,0,12,0" />
+            <CheckBox Content="{DynamicResource Cmp_CompareContent}" IsChecked="{Binding CompareContent}"
+                      ToolTip="{DynamicResource Cmp_CompareContentHint}"
+                      VerticalAlignment="Center" />
+        </StackPanel>
+
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Rows}"
+                  AutomationProperties.Name="{DynamicResource Cmp_Title}"
+                  AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False"
+                  GridLinesVisibility="None" HeadersVisibility="Column"
+                  SelectionMode="Extended">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="{x:Static sync:ComparisonStatus.OnlyLeft}">
+                            <Setter Property="Foreground" Value="{DynamicResource SyntaxAddedBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="{x:Static sync:ComparisonStatus.OnlyRight}">
+                            <Setter Property="Foreground" Value="{DynamicResource SyntaxHunkBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="{x:Static sync:ComparisonStatus.Different}">
+                            <Setter Property="Foreground" Value="{DynamicResource SyntaxRemovedBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="{x:Static sync:ComparisonStatus.Unreadable}">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <!-- The tick box lives in the cell (not a DataGridCheckBoxColumn) so it can be disabled per row -->
+                <DataGridTemplateColumn Width="34" Header="✓">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{DynamicResource Cmp_TickRow}"
+                                      IsEnabled="{Binding CanSelect}"
+                                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{DynamicResource Col_Name}" Binding="{Binding Name}" Width="220" />
+                <DataGridTextColumn Header="{DynamicResource Cmp_Left}" Binding="{Binding LeftSize}" Width="90" />
+                <DataGridTextColumn Header="{DynamicResource Cmp_LeftModified}" Binding="{Binding LeftModified}" Width="130" />
+                <!-- Click (or Space) steps the row's direction: → ← = -->
+                <DataGridTemplateColumn Width="48">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding DirectionText}" Command="{Binding CycleDirectionCommand}"
+                                    IsEnabled="{Binding CanSelect}" MinWidth="30" Padding="4,0"
+                                    ToolTip="{DynamicResource Cmp_DirectionHint}"
+                                    AutomationProperties.Name="{DynamicResource Cmp_DirectionButton}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{DynamicResource Cmp_Right}" Binding="{Binding RightSize}" Width="90" />
+                <DataGridTextColumn Header="{DynamicResource Cmp_RightModified}" Binding="{Binding RightModified}" Width="130" />
+                <DataGridTemplateColumn Width="28">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding WarningText}" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource WarningBrush}"
+                                       ToolTip="{DynamicResource Cmp_OverwritesNewerHint}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{DynamicResource Cmp_Status}" Binding="{Binding StatusText}" Width="150" />
+                <DataGridTextColumn Header="{DynamicResource Col_Folder}" Binding="{Binding Directory}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <ProgressBar Grid.Row="3" Height="4" Margin="0,6,0,0" IsIndeterminate="True"
+                     AutomationProperties.Name="{DynamicResource Cmp_Running}"
+                     Visibility="{Binding IsComparing, Converter={StaticResource BoolToVis}}" />
+
+        <TextBlock Grid.Row="4" Text="{Binding StatusText}" Margin="0,6,0,6" TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <DockPanel Grid.Row="5" LastChildFill="False">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="{DynamicResource Cmp_AllToRight}" Command="{Binding SelectToRightCommand}"
+                        Padding="10,3" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource Cmp_AllToLeft}" Command="{Binding SelectToLeftCommand}"
+                        Padding="10,3" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource Cmp_Defaults}" Command="{Binding SelectDefaultsCommand}"
+                        Padding="10,3" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Content="{DynamicResource Cmp_Synchronize}" Command="{Binding SynchronizeCommand}"
+                        Padding="10,3" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource Cancel}" Command="{Binding CancelCommand}"
+                        Padding="10,3" IsCancel="True" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</local:TcvDialog>

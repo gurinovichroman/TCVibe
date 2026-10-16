@@ -1,0 +1,104 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.PluginManagerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        Title="{DynamicResource Plugins_Title}" Height="500" Width="720"
+        MinHeight="340" MinWidth="560">
+
+    <Window.Resources>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="MinWidth" Value="100"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0" Background="{DynamicResource BackgroundAltBrush}">
+
+            <!-- File System Plugins -->
+            <TabItem Header="{DynamicResource Plugins_TabFileSystems}">
+                <DataGrid ItemsSource="{Binding FileSystemPlugins}"
+                          SelectedItem="{Binding SelectedPlugin}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False" IsReadOnly="True"
+                          AutomationProperties.Name="{DynamicResource Plugins_TabFileSystems}"
+                          Margin="4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="160"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColName}" Binding="{Binding Name}" Width="140"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColVersion}" Binding="{Binding Version}" Width="70"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColSchemes}" Binding="{Binding Details}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Tool Plugins -->
+            <TabItem Header="{DynamicResource Plugins_TabTools}">
+                <DataGrid ItemsSource="{Binding ToolPlugins}"
+                          SelectedItem="{Binding SelectedPlugin}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False" IsReadOnly="True"
+                          AutomationProperties.Name="{DynamicResource Plugins_TabTools}"
+                          Margin="4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="160"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColName}" Binding="{Binding Name}" Width="140"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColVersion}" Binding="{Binding Version}" Width="70"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColMenu}" Binding="{Binding Details}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Column Plugins -->
+            <TabItem Header="{DynamicResource Plugins_TabColumns}">
+                <DataGrid ItemsSource="{Binding ColumnPlugins}"
+                          SelectedItem="{Binding SelectedPlugin}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False" IsReadOnly="True"
+                          AutomationProperties.Name="{DynamicResource Plugins_TabColumns}"
+                          Margin="4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="160"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColName}" Binding="{Binding Name}" Width="140"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColVersion}" Binding="{Binding Version}" Width="70"/>
+                        <DataGridTextColumn Header="{DynamicResource Plugins_ColColumns}" Binding="{Binding Details}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status bar -->
+        <TextBlock Grid.Row="1"
+                   Text="{Binding StatusMessage}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource DirectoryBrush}"
+                   Margin="0,6,0,0"
+                   FontStyle="Italic"/>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="2" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Content="{DynamicResource Plugins_Load}"
+                        Command="{Binding LoadPluginCommand}"
+                        Margin="0,0,8,0"/>
+                <Button Content="{DynamicResource Plugins_Refresh}"
+                        Command="{Binding RefreshCommand}"/>
+            </StackPanel>
+            <Button Content="{DynamicResource Close}"
+                    Click="CloseButton_Click"
+                    IsCancel="True"
+                    IsDefault="True"
+                    HorizontalAlignment="Right"/>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

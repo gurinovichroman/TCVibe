@@ -1,0 +1,205 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.GitCommitDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{Binding WindowTitle}"
+        Width="800" Height="600"
+        MinWidth="660" MinHeight="480">
+
+    <local:TcvDialog.Resources>
+        <!-- One row of a change list: the status letter (as in git status, short form: A M D R U ?) then the path.
+             Coloured by the same theme tokens as the panel's Git column. Declared before use: a
+             StaticResource cannot look forward in the same file. -->
+        <DataTemplate x:Key="ChangedFileTemplate">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusLabel}" Width="16"
+                           FontFamily="Consolas" FontWeight="Bold">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="Conflict">
+                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Untracked">
+                                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Added">
+                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding RelativePath}" FontFamily="Consolas" />
+            </StackPanel>
+        </DataTemplate>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="{DynamicResource Git_Branch}" Foreground="{DynamicResource ForegroundDimBrush}" />
+            <TextBlock Text="{Binding BranchDisplay}" Margin="6,0,0,0" FontFamily="Consolas" FontWeight="Bold" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="{DynamicResource Git_Unstaged}" Margin="0,0,0,4"
+                       Foreground="{DynamicResource ForegroundDimBrush}" />
+            <!-- Extended selection: staging a handful of files is Ctrl/Shift-click then one button. -->
+            <ListBox Grid.Row="1" Grid.Column="0"
+                     x:Name="UnstagedList"
+                     ItemsSource="{Binding Unstaged}"
+                     SelectionMode="Extended"
+                     ItemTemplate="{StaticResource ChangedFileTemplate}"
+                     AutomationProperties.Name="{DynamicResource Git_Unstaged}"
+                     MouseDoubleClick="OnUnstagedDoubleClick"
+                     SelectionChanged="OnListSelectionChanged"
+                     KeyDown="OnUnstagedKeyDown" />
+
+            <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                <Button Content="→" Width="34" Height="26" Margin="0,0,0,4"
+                        ToolTip="{DynamicResource Git_Stage}"
+                        AutomationProperties.Name="{DynamicResource Git_Stage}"
+                        Command="{Binding StageSelectedCommand}"
+                        CommandParameter="{Binding SelectedItems, ElementName=UnstagedList}"
+                        IsEnabled="{Binding CanActOnUnstagedSelection}" />
+                <Button Content="⇒" Width="34" Height="26" Margin="0,0,0,12"
+                        ToolTip="{DynamicResource Git_StageAll}"
+                        AutomationProperties.Name="{DynamicResource Git_StageAll}"
+                        Command="{Binding StageAllFilesCommand}"
+                        IsEnabled="{Binding IsIdle}" />
+                <Button Content="←" Width="34" Height="26" Margin="0,0,0,4"
+                        ToolTip="{DynamicResource Git_Unstage}"
+                        AutomationProperties.Name="{DynamicResource Git_Unstage}"
+                        Command="{Binding UnstageSelectedCommand}"
+                        CommandParameter="{Binding SelectedItems, ElementName=StagedList}"
+                        IsEnabled="{Binding CanActOnStagedSelection}" />
+                <Button Content="⇐" Width="34" Height="26"
+                        ToolTip="{DynamicResource Git_UnstageAll}"
+                        AutomationProperties.Name="{DynamicResource Git_UnstageAll}"
+                        Command="{Binding UnstageAllFilesCommand}"
+                        IsEnabled="{Binding IsIdle}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="0" Grid.Column="2"
+                       Text="{DynamicResource Git_Staged}" Margin="0,0,0,4"
+                       Foreground="{DynamicResource ForegroundDimBrush}" />
+            <ListBox Grid.Row="1" Grid.Column="2"
+                     x:Name="StagedList"
+                     ItemsSource="{Binding Staged}"
+                     SelectionMode="Extended"
+                     ItemTemplate="{StaticResource ChangedFileTemplate}"
+                     AutomationProperties.Name="{DynamicResource Git_Staged}"
+                     MouseDoubleClick="OnStagedDoubleClick"
+                     SelectionChanged="OnListSelectionChanged"
+                     KeyDown="OnStagedKeyDown" />
+
+            <!-- Review actions per side. Discard exists only for the working-tree side and always asks first. -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,6,0,0">
+                <Button Content="{DynamicResource Git_Diff}" MinWidth="80" Margin="0,0,8,0"
+                        Command="{Binding ShowDiffCommand}"
+                        CommandParameter="{Binding SelectedItems, ElementName=UnstagedList}"
+                        IsEnabled="{Binding HasUnstagedSelection}"
+                        Visibility="{Binding CanShowDiffs, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                        ToolTip="{DynamicResource Git_DiffHint}" />
+                <Button Content="{DynamicResource Git_Discard}" MinWidth="80"
+                        Command="{Binding DiscardSelectedCommand}"
+                        CommandParameter="{Binding SelectedItems, ElementName=UnstagedList}"
+                        IsEnabled="{Binding CanActOnUnstagedSelection}"
+                        ToolTip="{DynamicResource Git_DiscardHint}" />
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" Margin="0,6,0,0">
+                <Button Content="{DynamicResource Git_Diff}" MinWidth="80"
+                        Command="{Binding ShowDiffCommand}"
+                        CommandParameter="{Binding SelectedItems, ElementName=StagedList}"
+                        IsEnabled="{Binding HasStagedSelection}"
+                        Visibility="{Binding CanShowDiffs, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                        ToolTip="{DynamicResource Git_DiffHint}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,10,0,4">
+            <TextBlock Text="{DynamicResource Git_Message}" VerticalAlignment="Center" />
+            <!-- Fills the box below; never commits by itself (ADR-0008). Hidden entirely when
+                 no model is configured, so it is not a button that only ever shows an error. -->
+            <Button HorizontalAlignment="Right" MinWidth="150"
+                    Content="{DynamicResource Git_DraftMessage}"
+                    Command="{Binding DraftMessageCommand}"
+                    IsEnabled="{Binding CanDraft}"
+                    Visibility="{Binding LlmAvailable, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                    ToolTip="{Binding DraftHint}" />
+        </Grid>
+
+        <!-- AcceptsReturn: a commit message has a body, and Enter must not fire the default button.
+             Ctrl+Enter commits (handled in code-behind, ahead of the text box). -->
+        <TextBox Grid.Row="3"
+                 x:Name="MessageBox"
+                 Height="90"
+                 Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 FontFamily="Consolas"
+                 VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="{DynamicResource Git_Message}" />
+
+        <Grid Grid.Row="4" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Content="{DynamicResource Git_StageAllTracked}"
+                      IsChecked="{Binding StageAll}"
+                      ToolTip="{DynamicResource Git_StageAllTrackedHint}"
+                      VerticalAlignment="Center" />
+            <!-- Errors are red (DangerBrush) so a refusal cannot be mistaken for progress text. -->
+            <TextBlock Grid.Column="1" Text="{Binding StatusMessage}"
+                       Margin="12,0,0,0" VerticalAlignment="Center"
+                       FontSize="11" TextWrapping="Wrap"
+                       ToolTip="{Binding StatusMessage}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsError}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{DynamicResource Git_Commit}" MinWidth="110" Margin="0,0,8,0"
+                    Command="{Binding CommitCommand}"
+                    IsEnabled="{Binding CanCommit}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Close}" Width="90"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+
+</local:TcvDialog>

@@ -1,0 +1,98 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.CopyDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{Binding Title}"
+        Width="500" MinHeight="240" SizeToContent="Height"
+        ResizeMode="NoResize"
+        AutomationProperties.Name="{Binding Title}">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Destination -->
+        <TextBlock Grid.Row="0" Text="{Binding Description}" TextWrapping="Wrap" />
+        <TextBox Grid.Row="2"
+                 Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{DynamicResource Copy_TargetName}"
+                 ToolTip="{DynamicResource Copy_TargetTip}"
+                 x:Name="TargetBox" />
+
+        <!-- Conflict mode -->
+        <GroupBox Grid.Row="4" Header="{DynamicResource Copy_OnConflict}" Padding="8,4"
+                  Foreground="{DynamicResource ForegroundDimBrush}">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{DynamicResource Copy_Ask}"       IsChecked="{Binding ConflictModeAsk}"       Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Copy_Overwrite}" IsChecked="{Binding ConflictModeOverwrite}" Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Copy_Skip}"      IsChecked="{Binding ConflictModeSkip}"      Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Copy_Rename}"    IsChecked="{Binding ConflictModeRename}" />
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Extra options: copying only. A move renames or streams-and-deletes and has no use for them. -->
+        <Expander Grid.Row="6" Header="{DynamicResource Copy_Options}"
+                  Foreground="{DynamicResource ForegroundDimBrush}">
+            <Expander.Style>
+                <Style TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowCopyOptions}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Expander.Style>
+            <GroupBox Padding="8,4"
+                      Foreground="{DynamicResource ForegroundDimBrush}">
+                <!-- Two columns; an option the transfer cannot honour (out of or into an archive) is
+                     collapsed, and UniformGrid gives a collapsed child no cell, so the rest close up. -->
+                <UniformGrid Columns="2">
+                    <CheckBox Margin="0,3"
+                              Content="{DynamicResource Copy_Timestamps}"
+                              ToolTip="{DynamicResource Copy_TimestampsTip}"
+                              IsChecked="{Binding PreserveTimestamps}"
+                              Visibility="{Binding ShowTimestamps, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                    <CheckBox Margin="0,3"
+                              Content="{DynamicResource Copy_OnlyNewer}"
+                              ToolTip="{DynamicResource Copy_OnlyNewerTip}"
+                              IsChecked="{Binding OnlyIfNewer}"
+                              Visibility="{Binding ShowOnlyIfNewer, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+
+                    <StackPanel Margin="0,3" Orientation="Horizontal"
+                                Visibility="{Binding ShowParallel, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <CheckBox Content="{DynamicResource Copy_Parallel}"
+                                  ToolTip="{DynamicResource Copy_ParallelTip}"
+                                  IsChecked="{Binding ParallelCopy}"
+                                  VerticalAlignment="Center" />
+                        <TextBox Width="36" Margin="6,0,0,0"
+                                 Text="{Binding Threads, UpdateSourceTrigger=LostFocus}"
+                                 IsEnabled="{Binding ParallelCopy}"
+                                 AutomationProperties.Name="{DynamicResource Copy_ThreadsName}"
+                                 Padding="3,1"
+                                 VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </UniformGrid>
+            </GroupBox>
+        </Expander>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource OK}" Width="80" Margin="0,0,8,0"
+                    Command="{Binding ConfirmCommand}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="80"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

@@ -1,0 +1,148 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.PackDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Pack_Title}"
+        Width="520" MinHeight="200" SizeToContent="Height"
+        ResizeMode="NoResize">
+
+    <local:TcvDialog.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Description -->
+        <TextBlock Grid.Row="0" Text="{Binding Description}" TextWrapping="Wrap" />
+
+        <!-- Archive name + destination -->
+        <GroupBox Grid.Row="2" Header="{DynamicResource Pack_Archive}"
+                  Foreground="{DynamicResource ForegroundDimBrush}" Padding="8,4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="2" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Content="{DynamicResource Pack_Name}" Target="{Binding ElementName=NameBox}" Padding="0" />
+                <TextBox  Grid.Row="2" x:Name="NameBox"
+                          Text="{Binding ArchiveName, UpdateSourceTrigger=PropertyChanged}" />
+                <Label Grid.Row="4" Content="{DynamicResource Pack_Destination}" Target="{Binding ElementName=DestBox}" Padding="0" />
+                <TextBox  Grid.Row="6" x:Name="DestBox"
+                          Text="{Binding DestinationDir, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Grid.Row="8"
+                           Text="{Binding PreviewPath}"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           FontSize="11"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </GroupBox>
+
+        <!-- Format -->
+        <GroupBox Grid.Row="4" Header="{DynamicResource Pack_Format}"
+                  Foreground="{DynamicResource ForegroundDimBrush}" Padding="8,4">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="ZIP"
+                                 IsChecked="{Binding FormatZip}"
+                                 Margin="0,0,12,0" />
+                    <RadioButton Content="7-Zip"
+                                 IsChecked="{Binding FormatSevenZip}"
+                                 Visibility="{Binding SevenZipAvailable, Converter={StaticResource BoolToVis}}"
+                                 Margin="0,0,12,0" />
+                    <RadioButton Content="TAR"
+                                 IsChecked="{Binding FormatTar}" />
+                </StackPanel>
+                <TextBlock Margin="0,4,0,0"
+                           Text="{DynamicResource Pack_SevenZipNote}"
+                           Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding SevenZipInfoVisible, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Compression -->
+        <GroupBox Grid.Row="6" Header="{DynamicResource Pack_Compression}"
+                  Foreground="{DynamicResource ForegroundDimBrush}" Padding="8,4"
+                  IsEnabled="{Binding IsCompressionEnabled}">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{DynamicResource Pack_Store}"  IsChecked="{Binding CompressionStore}"  Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Pack_Fast}"   IsChecked="{Binding CompressionFast}"   Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Pack_Normal}" IsChecked="{Binding CompressionNormal}" Margin="0,0,12,0" />
+                <RadioButton Content="{DynamicResource Pack_Ultra}"  IsChecked="{Binding CompressionUltra}" />
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Password (expander) -->
+        <Expander Grid.Row="8" Header="{DynamicResource Pack_Password}"
+                  Foreground="{DynamicResource ForegroundDimBrush}"
+                  IsEnabled="{Binding IsPasswordSupported}">
+            <GroupBox Padding="8,4" Foreground="{DynamicResource ForegroundDimBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="4" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource Pack_PasswordLabel}" Target="{Binding ElementName=PasswordBox}"
+                           VerticalAlignment="Center" Padding="0" />
+                    <PasswordBox Grid.Row="0" Grid.Column="1"
+                                 x:Name="PasswordBox" />
+                    <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource Pack_ConfirmLabel}" Target="{Binding ElementName=PasswordConfirmBox}"
+                           VerticalAlignment="Center" Padding="0" />
+                    <PasswordBox Grid.Row="2" Grid.Column="1"
+                                 x:Name="PasswordConfirmBox" />
+                    <TextBlock Grid.Row="4" Grid.ColumnSpan="2"
+                               Text="{DynamicResource Pack_PasswordNeedsSevenZip}"
+                               Foreground="{DynamicResource WarningBrush}" FontSize="11"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding PasswordUnsupported, Converter={StaticResource BoolToVis}}" />
+                </Grid>
+            </GroupBox>
+        </Expander>
+
+        <!-- Add to existing -->
+        <CheckBox Grid.Row="10"
+                  Content="{DynamicResource Pack_AddToExisting}"
+                  IsChecked="{Binding AddToExisting}"
+                  IsEnabled="{Binding CanAddToExisting}" />
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="12" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource OK}" Width="80" Margin="0,0,8,0"
+                    Command="{Binding ConfirmCommand}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="80"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

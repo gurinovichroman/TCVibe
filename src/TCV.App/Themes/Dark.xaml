@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Dark palette. Values are the design tokens of docs/DESIGN.md converted from OKLCH to sRGB, so a
+         change of palette starts there. Only colours live here: every control style is in
+         Themes/Controls.xaml and reads these keys with DynamicResource, which is what lets ThemeManager
+         swap this dictionary at runtime. Dark and Light must define exactly the same keys. -->
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Surfaces â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <Color x:Key="BackgroundColor">#FF0E0F11</Color>      <!-- work surface: the active panel, inputs -->
+    <Color x:Key="BackgroundAltColor">#FF111214</Color>   <!-- the quieter plane: inactive panel, folder tree, rail -->
+    <Color x:Key="CardColor">#FF161719</Color>            <!-- chrome: menu bar, headers, status, dialogs -->
+    <Color x:Key="SurfaceColor">#FF1C1E21</Color>         <!-- raised: hovered row, quick filter, tooltip -->
+    <Color x:Key="BorderColor">#FF292B2F</Color>
+    <Color x:Key="ForegroundColor">#FFCFD1D5</Color>
+    <!-- #7C8088 keeps 4.5:1 on Background, BackgroundAlt and Card for the 10â€“11px dim text (the design's
+         own #797D85 is 4.3:1 on Card) -->
+    <Color x:Key="ForegroundDimColor">#FF7C8088</Color>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Accent and states â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <Color x:Key="AccentColor">#FF8DD86D</Color>
+    <Color x:Key="AccentHoverColor">#FFA6E58A</Color>
+    <Color x:Key="SelectionColor">#FF213324</Color>       <!-- what is selected: a marked row, a chosen item; a green-tinted slab -->
+    <Color x:Key="SelectionHoverColor">#FF25292F</Color>  <!-- quiet: the cursor row, menu highlight, current drive -->
+    <Color x:Key="DirectoryColor">#FFC9A96E</Color>
+    <Color x:Key="DangerColor">#FFF66D67</Color>
+    <Color x:Key="SuccessColor">#FF68D18C</Color>
+    <Color x:Key="WarningColor">#FFE7AF5C</Color>
+    <Color x:Key="InfoColor">#FF61AFEE</Color>
+
+    <SolidColorBrush x:Key="BackgroundBrush"       Color="{StaticResource BackgroundColor}" />
+    <SolidColorBrush x:Key="BackgroundAltBrush"    Color="{StaticResource BackgroundAltColor}" />
+    <SolidColorBrush x:Key="CardBrush"              Color="{StaticResource CardColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush"          Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="BorderBrush"           Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ForegroundBrush"       Color="{StaticResource ForegroundColor}" />
+    <SolidColorBrush x:Key="ForegroundDimBrush"    Color="{StaticResource ForegroundDimColor}" />
+    <!-- AccentColor, AccentBrush and AccentForegroundBrush (text on an accent fill) are replaced by
+         ThemeManager when the user picks an accent of their own (6.33). Styles therefore read them
+         with DynamicResource: a StaticResource would keep this green whatever the setting says. -->
+    <SolidColorBrush x:Key="AccentBrush"           Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FF0C110B" />
+    <SolidColorBrush x:Key="SelectionBrush"        Color="{StaticResource SelectionColor}" />
+    <SolidColorBrush x:Key="SelectionHoverBrush"   Color="{StaticResource SelectionHoverColor}" />
+    <SolidColorBrush x:Key="DirectoryBrush"        Color="{StaticResource DirectoryColor}" />
+    <SolidColorBrush x:Key="DangerBrush"           Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="DangerForegroundBrush" Color="#FF0C110B" />
+    <SolidColorBrush x:Key="SuccessBrush"          Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="WarningBrush"          Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="InfoBrush"             Color="{StaticResource InfoColor}" />
+    <!-- Source-code files in the list (the design's code teal) -->
+    <SolidColorBrush x:Key="CodeBrush"             Color="#FF4CBBBC" />
+    <!-- Pictures, video and sound in the list (the syntax palette's pink) -->
+    <SolidColorBrush x:Key="MediaBrush"            Color="#FFE490D2" />
+
+    <!-- Tints laid over any fill: a hovered or pressed button keeps its own colour underneath -->
+    <SolidColorBrush x:Key="HoverBrush"            Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="PressedBrush"          Color="#26FFFFFF" />
+    <!-- The border at 28%: the hairline between file rows -->
+    <SolidColorBrush x:Key="RowLineBrush"          Color="#47292B2F" />
+    <SolidColorBrush x:Key="ScrollThumbBrush"      Color="#667C8088" />
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#B37C8088" />
+
+    <!-- Soft fills -->
+    <SolidColorBrush x:Key="DangerSoftBrush"       Color="#FF331D1B" />
+    <SolidColorBrush x:Key="HighlightBrush"        Color="#FFFFD700" />
+
+    <!-- â•â•â•â•â•â•â• Syntax highlighting (F3 code preview, 6.18) â•â•â•â•â•â•â• -->
+    <!-- Token colours are the design's hue tokens, so code reads as part of the same palette; they
+         still need contrast against the code background specifically, which is why they are keys of
+         their own and not Accent/Danger reused. -->
+    <SolidColorBrush x:Key="SyntaxKeywordBrush"  Color="#FF61AFEE" />
+    <SolidColorBrush x:Key="SyntaxTypeBrush"     Color="#FF4CBBBC" />
+    <SolidColorBrush x:Key="SyntaxStringBrush"   Color="#FFC9A96E" />
+    <SolidColorBrush x:Key="SyntaxNumberBrush"   Color="#FF68D18C" />
+    <SolidColorBrush x:Key="SyntaxCommentBrush"  Color="#FF7C8088" />
+    <SolidColorBrush x:Key="SyntaxMetaBrush"     Color="#FFE490D2" />
+    <SolidColorBrush x:Key="SyntaxAddedBrush"    Color="#FF68D18C" />
+    <SolidColorBrush x:Key="SyntaxRemovedBrush"  Color="#FFF66D67" />
+    <SolidColorBrush x:Key="SyntaxHunkBrush"     Color="#FF61AFEE" />
+    <SolidColorBrush x:Key="SyntaxGutterBrush"   Color="#FF7C8088" />
+    <SolidColorBrush x:Key="SyntaxCodeBackBrush" Color="#FF0E0F11" />
+
+</ResourceDictionary>

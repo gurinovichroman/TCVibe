@@ -1,0 +1,19 @@
+<Application x:Class="TCV.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TCV.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Base.xaml" />
+                <!-- Line icons (lucide geometries) for ctrl:Icon -->
+                <ResourceDictionary Source="Themes/Icons.xaml" />
+                <!-- Styles of every stock control. They read the palette with DynamicResource, so the
+                     palette dictionary (Dark / Light) that ThemeManager adds later is all it swaps. -->
+                <ResourceDictionary Source="Themes/Controls.xaml" />
+                <!-- Language pack — swapped at runtime by LocalizationManager -->
+                <ResourceDictionary Source="Localization/Strings.en.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,105 @@
+<UserControl x:Class="TCV.App.Controls.BreadcrumbBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:TCV.App.Converters"
+             xmlns:ctrl="clr-namespace:TCV.App.Controls">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <!-- The path (design: .breadcrumbs, mono 10px): the way there in the dim colour with «/» between, a
+         chevron, then the folder the panel is in, in the text colour. Each segment is a button; a click on
+         the empty part of the bar edits the path as text. The bar itself is the panel's (PanelView). -->
+    <Border x:Name="RootBorder" Background="Transparent" Height="37"
+            MouseDown="OnBorderMouseDown">
+        <Grid>
+            <!-- Breadcrumb view mode -->
+            <ItemsControl ItemsSource="{Binding BreadcrumbSegments}"
+                          Visibility="{Binding IsEditingPath, Converter={StaticResource BoolToVis}, ConverterParameter=inverse}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="Slash" Text="/" Foreground="{DynamicResource ForegroundDimBrush}"
+                                       FontFamily="{DynamicResource MonoFontFamily}" FontSize="10"
+                                       VerticalAlignment="Center" Margin="1,0" />
+                            <ctrl:Icon x:Name="Chevron" Data="{StaticResource IconChevronRight}" Width="11" Height="11"
+                                       Foreground="{DynamicResource ForegroundDimBrush}" Margin="2,0" Visibility="Collapsed" />
+                            <!-- A TextBlock, not a string Content: buttons recognise access keys, and a
+                                 folder called "my_project" must keep its underscore. -->
+                            <Button x:Name="Segment"
+                                    Style="{StaticResource GhostButton}"
+                                    AutomationProperties.Name="{Binding DisplayName}"
+                                    Padding="2,2"
+                                    FontFamily="{DynamicResource MonoFontFamily}"
+                                    FontSize="10"
+                                    Click="OnSegmentClick">
+                                <TextBlock x:Name="SegmentText" Text="{Binding DisplayName}" />
+                            </Button>
+                        </StackPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsFirst}" Value="True">
+                                <Setter TargetName="Slash" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsLast}" Value="True">
+                                <Setter TargetName="Slash" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Chevron" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Segment" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                                <Setter TargetName="SegmentText" Property="FontWeight" Value="Medium" />
+                            </DataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsFirst}" Value="True" />
+                                    <Condition Binding="{Binding IsLast}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Chevron" Property="Visibility" Value="Collapsed" />
+                            </MultiDataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Edit mode TextBox -->
+            <TextBox x:Name="PathTextBox"
+                     Text="{Binding EditablePath, UpdateSourceTrigger=PropertyChanged}"
+                     Visibility="{Binding IsEditingPath, Converter={StaticResource BoolToVis}}"
+                     Foreground="{DynamicResource ForegroundBrush}"
+                     AutomationProperties.Name="{DynamicResource Breadcrumb_Path}"
+                     Margin="4,2"
+                     Padding="4,1"
+                     FontFamily="{DynamicResource MonoFontFamily}"
+                     FontSize="11"
+                     VerticalContentAlignment="Center"
+                     VerticalAlignment="Stretch"
+                     IsVisibleChanged="OnPathTextBoxVisibleChanged"
+                     PreviewKeyDown="OnPathTextBoxPreviewKeyDown"
+                     KeyDown="OnPathTextBoxKeyDown"
+                     TextChanged="OnPathTextBoxTextChanged"
+                     LostFocus="OnPathTextBoxLostFocus" />
+
+            <!-- Autocomplete suggestions popup -->
+            <Popup x:Name="SuggestionsPopup"
+                   PlacementTarget="{Binding ElementName=RootBorder}"
+                   Placement="Bottom"
+                   StaysOpen="True"
+                   AllowsTransparency="True"
+                   IsOpen="False">
+                <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusLg}" Padding="3" MaxHeight="180">
+                    <ListBox x:Name="SuggestionsList"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="{DynamicResource ForegroundBrush}"
+                             FontFamily="{DynamicResource MonoFontFamily}"
+                             FontSize="11"
+                             MouseLeftButtonUp="OnSuggestionClick" />
+                </Border>
+            </Popup>
+        </Grid>
+    </Border>
+</UserControl>

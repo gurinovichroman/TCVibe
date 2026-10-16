@@ -1,0 +1,129 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.GitCloneDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{Binding WindowTitle}"
+        Width="620" Height="360"
+        MinWidth="500" MinHeight="320">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0"
+                   Text="{DynamicResource Git_CloneUrl}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="0" Grid.Column="1"
+                 x:Name="UrlBox"
+                 Margin="0,0,0,6"
+                 Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}"
+                 IsEnabled="{Binding IsBusy, Converter={x:Static conv:InverseBoolConverter.Instance}}"
+                 AutomationProperties.Name="{DynamicResource Git_CloneUrl}"
+                 FontFamily="Consolas" />
+
+        <TextBlock Grid.Row="1" Grid.Column="0"
+                   Text="{DynamicResource Git_CloneTarget}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="1" Grid.Column="1"
+                 Margin="0,0,0,6"
+                 Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}"
+                 IsEnabled="{Binding IsBusy, Converter={x:Static conv:InverseBoolConverter.Instance}}"
+                 AutomationProperties.Name="{DynamicResource Git_CloneTarget}"
+                 FontFamily="Consolas" />
+
+        <!-- Only for private repositories. Kept in memory for this one clone: the token is read from
+             the password box when Clone is pressed and never stored, logged or bound. -->
+        <Expander Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                  Header="{DynamicResource Git_CloneCredentials}"
+                  IsExpanded="{Binding ShowCredentials, Mode=TwoWay}"
+                  IsEnabled="{Binding IsBusy, Converter={x:Static conv:InverseBoolConverter.Instance}}"
+                  Margin="0,4,0,0">
+            <Grid Margin="0,6,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Text="{DynamicResource Git_CloneUser}"
+                           VerticalAlignment="Center" Margin="0,0,8,6" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6"
+                         Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{DynamicResource Git_CloneUser}" />
+
+                <TextBlock Grid.Row="1" Text="{DynamicResource Git_CloneToken}"
+                           VerticalAlignment="Center" Margin="0,0,8,6" />
+                <PasswordBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,6"
+                             x:Name="SecretBox"
+                             AutomationProperties.Name="{DynamicResource Git_CloneToken}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="1" FontSize="11" TextWrapping="Wrap"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           Text="{DynamicResource Git_CloneCredentialsHint}" />
+            </Grid>
+        </Expander>
+
+        <ProgressBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                     Height="12" Margin="0,8,0,0"
+                     Minimum="0" Maximum="100"
+                     Value="{Binding Percent, Mode=OneWay}"
+                     IsIndeterminate="{Binding IsIndeterminate}"
+                     Visibility="{Binding IsBusy, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+
+        <!-- Progress in the normal colour, a failed attempt in DangerBrush. -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                   Text="{Binding StatusMessage}"
+                   Margin="0,6,0,0" FontSize="11"
+                   TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Top">
+            <!-- An SSH link to a well-known host is cloned over its https twin: say so, and where. -->
+            <TextBlock Text="{Binding InfoMessage}"
+                       Visibility="{Binding InfoMessage, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                       Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                       TextWrapping="Wrap" Margin="0,6,0,0" />
+            <TextBlock Text="{Binding ValidationMessage}"
+                       Foreground="{DynamicResource DangerBrush}" FontSize="11"
+                       TextWrapping="Wrap" Margin="0,6,0,0" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{DynamicResource Git_CloneStart}" MinWidth="110" Margin="0,0,8,0"
+                    Command="{Binding CloneCommand}"
+                    IsEnabled="{Binding CanClone}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="90"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

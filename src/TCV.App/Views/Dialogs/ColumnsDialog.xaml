@@ -1,0 +1,83 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.ColumnsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Columns_Title}"
+        Width="480" Height="440"
+        MinWidth="380" MinHeight="320">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{DynamicResource Columns_Hint}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource ForegroundDimBrush}" />
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox Grid.Column="0" ItemsSource="{Binding Rows}"
+                     AutomationProperties.Name="{DynamicResource Columns_Title}"
+                     SelectedItem="{Binding Selected}"
+                     HorizontalContentAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Grid.Column="0" IsChecked="{Binding Visible}"
+                                      AutomationProperties.Name="{Binding Title}"
+                                      IsEnabled="{Binding CanHide}" VerticalAlignment="Center"
+                                      Margin="0,0,6,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="{DynamicResource Col_Computed}"
+                                       Visibility="{Binding IsComputed, Converter={StaticResource BoolToVis}}"
+                                       Foreground="{DynamicResource ForegroundDimBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontSize="11" />
+                            <TextBox Grid.Column="3" Width="60"
+                                     AutomationProperties.Name="{DynamicResource Columns_Width}"
+                                     Text="{Binding Width, StringFormat=F0, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="{Binding HasWidth, Converter={StaticResource BoolToVis}}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                <Button Content="▲" Width="34" Margin="0,0,0,4" Command="{Binding MoveUpCommand}"
+                        AutomationProperties.Name="{DynamicResource Columns_MoveUp}"
+                        ToolTip="{DynamicResource Columns_MoveUp}" />
+                <Button Content="▼" Width="34" Margin="0,0,0,4" Command="{Binding MoveDownCommand}"
+                        AutomationProperties.Name="{DynamicResource Columns_MoveDown}"
+                        ToolTip="{DynamicResource Columns_MoveDown}" />
+                <Button Content="{DynamicResource Columns_Reset}" Margin="0,12,0,0"
+                        Command="{Binding ResetCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource OK}" Width="90" Margin="0,0,8,0"
+                    Command="{Binding ConfirmCommand}" IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="90"
+                    Command="{Binding CancelCommand}" IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

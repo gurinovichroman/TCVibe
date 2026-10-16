@@ -1,0 +1,102 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.GitBranchDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        Title="{Binding WindowTitle}"
+        Width="500" Height="480"
+        MinWidth="400" MinHeight="360">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="{DynamicResource Git_Branch}" Foreground="{DynamicResource ForegroundDimBrush}" />
+            <TextBlock Text="{Binding HeadDisplay}" Margin="6,0,0,0"
+                       FontFamily="Consolas" FontWeight="Bold" />
+        </StackPanel>
+
+        <ListBox Grid.Row="1"
+                 x:Name="BranchList"
+                 ItemsSource="{Binding Branches}"
+                 SelectedItem="{Binding Selected}"
+                 FontFamily="Consolas"
+                 AutomationProperties.Name="{DynamicResource Git_BranchListName}"
+                 MouseDoubleClick="OnListDoubleClick"
+                 KeyDown="OnListKeyDown">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" ToolTip="{Binding ToolTip}">
+                        <TextBlock Text="{Binding Marker}" Width="18" />
+                        <TextBlock Text="{Binding Name}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <!-- A branch another worktree holds is shown but greyed: it cannot be switched to. -->
+                                        <DataTrigger Binding="{Binding Info.IsBlocked}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="2" Text="{DynamicResource Git_NewBranch}" Margin="0,10,0,4" />
+        <TextBox Grid.Row="3"
+                 x:Name="NewBranchBox"
+                 Text="{Binding NewBranch, UpdateSourceTrigger=PropertyChanged}"
+                 FontFamily="Consolas"
+                 AutomationProperties.Name="{DynamicResource Git_NewBranch}"
+                 KeyDown="OnNewBranchKeyDown" />
+
+        <TextBlock Grid.Row="4"
+                   Text="{Binding ValidationMessage}"
+                   Foreground="{DynamicResource DangerBrush}" FontSize="11"
+                   TextWrapping="Wrap" Margin="0,6,0,0" />
+
+        <!-- Outcome of the last operation: red when it failed, so a refusal is not read as progress. -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" FontSize="11"
+                   TextWrapping="Wrap" Margin="0,4,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <Grid Grid.Row="6" Margin="0,12,0,0">
+            <Button Content="{DynamicResource Git_BranchDelete}" MinWidth="110" HorizontalAlignment="Left"
+                    Command="{Binding DeleteCommand}"
+                    IsEnabled="{Binding CanDelete}"
+                    ToolTip="{DynamicResource Git_BranchDeleteHint}" ToolTipService.ShowOnDisabled="True" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{DynamicResource Git_CreateBranch}" MinWidth="130" Margin="0,0,8,0"
+                        Command="{Binding CreateCommand}"
+                        IsEnabled="{Binding CanCreate}" />
+                <Button Content="{DynamicResource Git_SwitchBranch}" MinWidth="110" Margin="0,0,8,0"
+                        Command="{Binding SwitchCommand}"
+                        IsEnabled="{Binding CanSwitch}"
+                        IsDefault="True" />
+                <Button Content="{DynamicResource Close}" Width="90"
+                        Command="{Binding CancelCommand}"
+                        IsCancel="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

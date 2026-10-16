@@ -1,0 +1,69 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.DeleteConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Delete_Title}"
+        Width="460" MinHeight="140" SizeToContent="Height"
+        ResizeMode="NoResize"
+        AutomationProperties.Name="{DynamicResource Delete_Title}">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{Binding Description}"
+                   FontSize="14" TextWrapping="Wrap" />
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding Preview}" MaxHeight="150"
+                 BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                 Background="{DynamicResource BackgroundAltBrush}"
+                 Foreground="{DynamicResource ForegroundBrush}"
+                 AutomationProperties.Name="{DynamicResource Delete_ListName}"
+                 IsTabStop="False" Focusable="False"
+                 KeyboardNavigation.TabNavigation="None" />
+
+        <StackPanel Grid.Row="4">
+            <!-- The truth about the Recycle Bin: red whenever anything is deleted for good -->
+            <TextBlock Text="{Binding RecycleBinNote}" TextWrapping="Wrap" FontSize="12">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WarnsPermanent}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBlock Text="{Binding FolderNote}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                       Foreground="{DynamicResource ForegroundDimBrush}"
+                       Visibility="{Binding HasFolderNote, Converter={StaticResource BoolToVis}}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <!-- The destructive button is filled with the danger colour (the design's destructive variant). -->
+            <Button Content="{DynamicResource Delete_Button}" MinWidth="80" Margin="0,0,8,0" Padding="8,3"
+                    Style="{StaticResource DangerButton}"
+                    Command="{Binding ConfirmCommand}"
+                    IsDefault="{Binding DeleteIsDefault, Mode=OneWay}" />
+            <Button Content="{DynamicResource Cancel}" MinWidth="80" Padding="8,3"
+                    Command="{Binding CancelCommand}"
+                    IsDefault="{Binding CancelIsDefault, Mode=OneWay}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

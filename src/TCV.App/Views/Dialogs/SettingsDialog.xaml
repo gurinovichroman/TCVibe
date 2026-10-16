@@ -1,0 +1,591 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        xmlns:loc="clr-namespace:TCV.App.Localization"
+        Title="{DynamicResource Settings_Title}" Height="580" Width="720" MinHeight="420" MinWidth="620"
+       >
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <Style TargetType="GroupBox" BasedOn="{StaticResource {x:Type GroupBox}}">
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="MinWidth" Value="80"/>
+        </Style>
+        <Style x:Key="GridRemoveButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="MinWidth" Value="24"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="ToolTip" Value="{DynamicResource Settings_Remove}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0" Background="{DynamicResource BackgroundAltBrush}">
+            <TabItem Header="{DynamicResource Settings_Theme}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <GroupBox Header="{DynamicResource Settings_ThemeGroup}">
+                            <StackPanel Margin="8">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <Label Content="{DynamicResource Settings_ThemeLabel}" Target="{Binding ElementName=ThemeCombo}" Width="100"/>
+                                    <ComboBox x:Name="ThemeCombo"
+                                              ItemsSource="{Binding AvailableThemes}"
+                                              SelectedItem="{Binding SelectedTheme}"
+                                              Width="160"/>
+                                </StackPanel>
+                                <CheckBox Content="{DynamicResource Settings_UseSystemTheme}"
+                                          IsChecked="{Binding UseSystemTheme}"/>
+
+                                <!-- Accent (6.33): a preset, or any colour typed as hex; the swatch shows what was typed -->
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Label Content="{DynamicResource Settings_AccentLabel}" Target="{Binding ElementName=AccentCombo}" Width="100"/>
+                                    <ComboBox x:Name="AccentCombo"
+                                              ItemsSource="{Binding AccentOptions}"
+                                              SelectedItem="{Binding SelectedAccent}"
+                                              Width="160"/>
+                                    <TextBox Width="90" Margin="8,0,0,0" VerticalContentAlignment="Center"
+                                             AutomationProperties.Name="{DynamicResource Settings_AccentHex}"
+                                             Text="{Binding AccentColor, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Border Width="20" Height="20" Margin="8,0,0,0" CornerRadius="2"
+                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                            Background="{Binding AccentColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
+                                            Visibility="{Binding AccentColor, Converter={StaticResource BoolVis}}"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource Settings_AccentHint}"
+                                           Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                <TextBlock Text="{Binding AccentError}" Foreground="{DynamicResource DangerBrush}"
+                                           FontSize="11" TextWrapping="Wrap"
+                                           Visibility="{Binding AccentError, Converter={StaticResource BoolVis}}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- File panel font (6.33), with a line drawn in it -->
+                        <GroupBox Header="{DynamicResource Settings_FontGroup}">
+                            <StackPanel Margin="8">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <Label Content="{DynamicResource Settings_FontFamily}" Target="{Binding ElementName=FontCombo}" Width="100"/>
+                                    <ComboBox x:Name="FontCombo"
+                                              ItemsSource="{Binding AvailableFonts}"
+                                              SelectedItem="{Binding SelectedPanelFont}"
+                                              MaxDropDownHeight="320"
+                                              Width="220"/>
+                                    <Label Content="{DynamicResource Settings_FontSize}" Target="{Binding ElementName=FontSizeCombo}" Margin="12,0,0,0"/>
+                                    <ComboBox x:Name="FontSizeCombo"
+                                              ItemsSource="{Binding AvailableFontSizes}"
+                                              SelectedItem="{Binding PanelFontSize}"
+                                              Width="60"/>
+                                </StackPanel>
+                                <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" Padding="6,4" Margin="0,6,0,0">
+                                    <TextBlock Text="{DynamicResource Settings_FontPreview}"
+                                               FontFamily="{Binding PreviewFontFamily}"
+                                               FontSize="{Binding PanelFontSize}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </Border>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- File icons in the lists: the design's line icons, or Windows' own as in Explorer -->
+                        <GroupBox Header="{DynamicResource Settings_FileIconsGroup}">
+                            <StackPanel Margin="8">
+                                <RadioButton GroupName="FileIcons" Content="{DynamicResource Settings_FileIconsLine}"
+                                             IsChecked="{Binding LineFileIcons}" Margin="0,2"/>
+                                <RadioButton GroupName="FileIcons" Content="{DynamicResource Settings_FileIconsSystem}"
+                                             IsChecked="{Binding SystemFileIcons}" Margin="0,2"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="{DynamicResource Settings_LanguageGroup}">
+                            <StackPanel Margin="8">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <Label Content="{DynamicResource Settings_LanguageLabel}" Target="{Binding ElementName=LanguageCombo}" Width="100"/>
+                                    <ComboBox x:Name="LanguageCombo"
+                                              ItemsSource="{Binding AvailableLanguages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              DisplayMemberPath="DisplayName"
+                                              Width="160"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource Settings_LanguageNote}"
+                                           Opacity="0.7" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ── Interface: which parts of the window are shown (6.33) ────── -->
+            <TabItem Header="{DynamicResource Settings_LayoutTab}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <GroupBox Header="{DynamicResource Settings_LayoutGroup}">
+                            <StackPanel Margin="8">
+                                <CheckBox Content="{DynamicResource Settings_ShowToolbar}"
+                                          IsChecked="{Binding ShowToolbar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowCommandLine}"
+                                          IsChecked="{Binding ShowCommandLine}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowAppStatusBar}"
+                                          IsChecked="{Binding ShowAppStatusBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowFunctionKeyBar}"
+                                          IsChecked="{Binding ShowFunctionKeyBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowDriveBar}"
+                                          IsChecked="{Binding ShowDriveBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowTabBar}"
+                                          IsChecked="{Binding ShowTabBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowPathBar}"
+                                          IsChecked="{Binding ShowPathBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowViewToolbar}"
+                                          IsChecked="{Binding ShowViewToolbar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowStatusBar}"
+                                          IsChecked="{Binding ShowStatusBar}"/>
+                                <CheckBox Content="{DynamicResource Settings_ShowWorkspaceSidebar}"
+                                          ToolTip="{DynamicResource Settings_ShowWorkspaceSidebarTip}"
+                                          IsChecked="{Binding ShowWorkspaceSidebar}"/>
+                                <TextBlock Text="{DynamicResource Settings_LayoutHint}"
+                                           Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="{DynamicResource Settings_Files}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="12">
+                    <GroupBox Header="{DynamicResource Settings_DisplayGroup}">
+                        <StackPanel Margin="8">
+                            <CheckBox Content="{DynamicResource Settings_ShowHidden}"
+                                      IsChecked="{Binding ShowHiddenFiles}"/>
+                            <CheckBox Content="{DynamicResource Settings_FoldersFirst}"
+                                      IsChecked="{Binding FoldersFirst}"/>
+                            <CheckBox Content="{DynamicResource Settings_QuickSearchJumps}"
+                                      ToolTip="{DynamicResource Settings_QuickSearchJumpsTip}"
+                                      IsChecked="{Binding QuickSearchJumps}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="{DynamicResource Settings_OperationsGroup}">
+                        <StackPanel Margin="8">
+                            <CheckBox Content="{DynamicResource Settings_ConfirmDelete}"
+                                      ToolTip="{DynamicResource Settings_ConfirmDeleteTip}"
+                                      IsChecked="{Binding ConfirmDelete}"/>
+                            <CheckBox Content="{DynamicResource Settings_RecycleBin}"
+                                      IsChecked="{Binding MoveToRecycleBin}"/>
+                            <CheckBox Content="{DynamicResource Settings_ConfirmOverwrite}"
+                                      ToolTip="{DynamicResource Settings_ConfirmOverwriteTip}"
+                                      IsChecked="{Binding ConfirmOverwrite}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- The program F4 opens a file in; empty keeps the Windows association. Server files
+                         go through the same program (RemoteEditService). -->
+                    <GroupBox Header="{loc:Live Settings_FileEditorGroup}">
+                        <Grid Margin="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource Settings_FileEditorPick}"
+                                   Target="{Binding ElementName=FileEditorPickCombo}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="FileEditorPickCombo" Grid.Row="0" Grid.Column="1" Margin="0,0,0,6"
+                                      ItemsSource="{Binding FileEditorSuggestions}"
+                                      DisplayMemberPath="Name"
+                                      SelectedItem="{Binding FileEditorSuggestion, Mode=TwoWay}"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="{DynamicResource Settings_FileEditorCommand}"
+                                   Target="{Binding ElementName=FileEditorCommandBox}" VerticalAlignment="Center"/>
+                            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,6">
+                                <TextBox x:Name="FileEditorCommandBox"
+                                         Text="{Binding FileEditorCommand, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="{DynamicResource Settings_FileEditorSystem}" Margin="8,0" VerticalAlignment="Center"
+                                           IsHitTestVisible="False" Foreground="{DynamicResource ForegroundDimBrush}"
+                                           Visibility="{Binding FileEditorCommand, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}"/>
+                            </Grid>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,6">
+                                <Button Content="{DynamicResource UserTools_Browse}" Command="{Binding BrowseFileEditorCommand}" Margin="0,0,6,0"/>
+                                <Button Content="{DynamicResource Settings_FileEditorReset}" Command="{Binding ResetFileEditorCommand}"/>
+                            </StackPanel>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource Settings_FileEditorArgs}"
+                                   Target="{Binding ElementName=FileEditorArgsBox}" VerticalAlignment="Center"/>
+                            <TextBox x:Name="FileEditorArgsBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,6"
+                                     Text="{Binding FileEditorArguments, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <CheckBox Grid.Row="3" Grid.Column="1" Content="{DynamicResource Settings_ExtInTerminal}"
+                                      IsChecked="{Binding FileEditorInTerminal}" Margin="0,0,0,6"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" TextWrapping="Wrap" Opacity="0.7"
+                                       Text="{loc:Live Settings_FileEditorHint}"/>
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="{DynamicResource Settings_ColorRules}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DataGrid Grid.Row="0"
+                              ItemsSource="{Binding ColorRules}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              Background="{DynamicResource BackgroundAltBrush}"
+                              GridLinesVisibility="None"
+                              Style="{StaticResource StripedGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Settings_CrPattern}" Binding="{Binding Pattern}" Width="150"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_CrForeground}" Binding="{Binding Foreground}" Width="120"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_CrBackground}" Binding="{Binding Background}" Width="120"/>
+                            <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource Settings_CrDirs}" Binding="{Binding ApplyToDirectories}" Width="80"/>
+                            <DataGridTemplateColumn Width="60">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕" Style="{StaticResource GridRemoveButton}"
+                                                AutomationProperties.Name="{DynamicResource Settings_Remove}"
+                                                Command="{Binding DataContext.RemoveColorRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Button Grid.Row="1" Content="{DynamicResource Settings_CrAdd}"
+                            Command="{Binding AddColorRuleCommand}"
+                            HorizontalAlignment="Left" Margin="0,6,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Editors (Ctrl+E) and agent CLIs (Ctrl+Shift+A) -->
+            <TabItem Header="{DynamicResource Settings_TabExternal}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,6"
+                               Text="{DynamicResource Settings_ExtHint}"/>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Editors}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              Background="{DynamicResource BackgroundAltBrush}"
+                              GridLinesVisibility="None"
+                              Style="{StaticResource StripedGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtEditor}" Binding="{Binding Name}" Width="130"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtCommand}" Binding="{Binding Command}" Width="130"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtArguments}" Binding="{Binding Arguments}" Width="*"/>
+                            <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource Settings_ExtInTerminal}" Binding="{Binding InTerminal}" Width="80"/>
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕" Style="{StaticResource GridRemoveButton}" AutomationProperties.Name="{DynamicResource Settings_Remove}"
+                                                Command="{Binding DataContext.RemoveEditorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,10">
+                        <Button Content="{DynamicResource Settings_ExtAddEditor}" Command="{Binding AddEditorCommand}" Margin="0,0,8,0"/>
+                        <Button Content="{DynamicResource Settings_ExtDetect}" Command="{Binding DetectToolsCommand}" Margin="0,0,8,0"/>
+                        <Label Content="{Binding DefaultEditorLabel}" VerticalAlignment="Center" Target="{Binding ElementName=DefaultEditorCombo}"/>
+                        <ComboBox x:Name="DefaultEditorCombo" Width="140" VerticalAlignment="Center"
+                                  ItemsSource="{Binding Editors}"
+                                  DisplayMemberPath="Name"
+                                  SelectedItem="{Binding DefaultEditor, Mode=TwoWay}"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="{DynamicResource Settings_ExtAgentsHint}"
+                               Opacity="0.7" Margin="0,0,0,6"/>
+
+                    <DataGrid Grid.Row="4"
+                              ItemsSource="{Binding Agents}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              Background="{DynamicResource BackgroundAltBrush}"
+                              GridLinesVisibility="None"
+                              Style="{StaticResource StripedGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtAgent}" Binding="{Binding Name}" Width="130"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtCommand}" Binding="{Binding Command}" Width="130"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ExtArguments}" Binding="{Binding Arguments}" Width="*"/>
+                            <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource Settings_ExtInTerminal}" Binding="{Binding InTerminal}" Width="80"/>
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕" Style="{StaticResource GridRemoveButton}" AutomationProperties.Name="{DynamicResource Settings_Remove}"
+                                                Command="{Binding DataContext.RemoveAgentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Content="{DynamicResource Settings_ExtAddAgent}" Command="{Binding AddAgentCommand}" Margin="0,0,8,0"/>
+                        <Label Content="{Binding DefaultAgentLabel}" VerticalAlignment="Center" Target="{Binding ElementName=DefaultAgentCombo}"/>
+                        <ComboBox x:Name="DefaultAgentCombo" Width="140" VerticalAlignment="Center"
+                                  ItemsSource="{Binding Agents}"
+                                  DisplayMemberPath="Name"
+                                  SelectedItem="{Binding DefaultAgent, Mode=TwoWay}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ── Shells the command line runs a command in ─────────────────── -->
+            <TabItem x:Name="ShellsTabItem" Header="{DynamicResource Settings_ShellsTab}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{DynamicResource Settings_ShellsHint}"
+                               TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,6"/>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Shells}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              Background="{DynamicResource BackgroundAltBrush}"
+                              GridLinesVisibility="None"
+                              Style="{StaticResource StripedGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ShellName}" Binding="{Binding Name}" Width="130"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ShellCommand}" Binding="{Binding Command}" Width="200"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_ShellArguments}" Binding="{Binding Arguments}" Width="*"/>
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕" Style="{StaticResource GridRemoveButton}" AutomationProperties.Name="{DynamicResource Settings_Remove}"
+                                                Command="{Binding DataContext.RemoveShellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Content="{DynamicResource Settings_ShellAdd}" Command="{Binding AddShellCommand}" Margin="0,0,8,0"/>
+                        <Button Content="{DynamicResource Settings_ShellDetect}" Command="{Binding DetectShellsCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ── Git: the worktree setup hook (6.30) ──────────────────────── -->
+            <TabItem Header="{DynamicResource Settings_GitTab}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <GroupBox Header="{loc:Live Settings_GitWorktrees}">
+                            <StackPanel Margin="8">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <Label Content="{DynamicResource Settings_GitWorktreeRoot}" Width="180"/>
+                                    <TextBox Width="380" VerticalContentAlignment="Center"
+                                             Text="{Binding WorktreeRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource Settings_GitWorktreeRootHint}"
+                                           Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="{DynamicResource Settings_GitCarryPatterns}" Margin="0,0,0,4"/>
+                                <TextBox Height="70" AcceptsReturn="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto"
+                                         Text="{Binding WorktreeCarryPatterns, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="{DynamicResource Settings_GitCarryPatternsHint}"
+                                           Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,10"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <Label Content="{DynamicResource Settings_GitSetupCommand}" Width="180"/>
+                                    <TextBox Width="380" VerticalContentAlignment="Center"
+                                             Text="{Binding WorktreeSetupCommand, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource Settings_GitSetupCommandHint}"
+                                           Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
+
+                                <CheckBox Content="{DynamicResource Settings_GitCreatesWorkspace}"
+                                          IsChecked="{Binding WorktreeCreatesWorkspace}"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ── Gadgets: any CLI by name, Ctrl+F2 (6.30) ─────────────────── -->
+            <TabItem x:Name="GadgetsTabItem" Header="{DynamicResource Settings_GadgetsTab}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{loc:Live Settings_GadgetsHint}"
+                               TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,6"/>
+
+                    <!-- Row backgrounds come from the theme's DataGrid style, not attributes: a local
+                         RowBackground beats the row style's IsSelected trigger (TRAP-49). -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Gadgets}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              Background="{DynamicResource BackgroundAltBrush}"
+                              GridLinesVisibility="None">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Settings_GadgetName}"
+                                                Binding="{Binding Name}" Width="110"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_GadgetCommand}"
+                                                Binding="{Binding Command}" Width="110"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_GadgetArguments}"
+                                                Binding="{Binding Arguments}" Width="*"/>
+                            <DataGridTextColumn Header="{DynamicResource Settings_GadgetWorkingDir}"
+                                                Binding="{Binding WorkingDirectory}" Width="130"/>
+                            <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource Settings_GadgetInTerminal}"
+                                                    Binding="{Binding InTerminal}" Width="80"/>
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕" Style="{StaticResource GridRemoveButton}" AutomationProperties.Name="{DynamicResource Settings_Remove}"
+                                                Command="{Binding DataContext.RemoveGadgetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Button Grid.Row="2" Content="{DynamicResource Settings_GadgetAdd}"
+                            Command="{Binding AddGadgetCommand}"
+                            HorizontalAlignment="Left" Margin="0,6,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- ── Agent layer (6D) ─────────────────────────────────────────── -->
+            <TabItem Header="{DynamicResource Settings_AgentTab}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+
+                        <TextBlock Text="{DynamicResource Settings_AgentMcp}"
+                                   FontWeight="SemiBold" Margin="0,0,0,6" />
+
+                        <CheckBox Content="{DynamicResource Settings_AgentMcpEnabled}"
+                                  IsChecked="{Binding McpEnabled}" Margin="0,0,0,4" />
+                        <CheckBox Content="{DynamicResource Settings_AgentMcpAutoStart}"
+                                  IsChecked="{Binding McpAutoStart}"
+                                  IsEnabled="{Binding McpEnabled}" Margin="16,0,0,4" />
+                        <CheckBox Content="{DynamicResource Agent_AllowWrites}"
+                                  IsChecked="{Binding McpAllowWrites}" Margin="0,4,0,4" />
+                        <!-- An archive in a panel is gated by the approved directories; a server has no
+                             path to check, hence its own switch (ADR-0023). -->
+                        <CheckBox Content="{DynamicResource Settings_AgentRemotePanels}"
+                                  IsChecked="{Binding McpAllowRemotePanels}" Margin="0,0,0,6" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Label Content="{DynamicResource Settings_AgentMcpPort}" Width="220" />
+                            <TextBox Width="80" Text="{Binding McpPort}" VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Label Content="{DynamicResource Settings_AgentApprovalTimeout}" Width="220" />
+                            <TextBox Width="80" Text="{Binding ApprovalTimeoutSeconds}"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+
+                        <TextBlock Text="{loc:Live Settings_AgentMcpHint}"
+                                   Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+                        <TextBlock Text="{DynamicResource Settings_AgentLlm}"
+                                   FontWeight="SemiBold" Margin="0,0,0,6" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Label Content="{DynamicResource Settings_AgentEndpoint}" Width="160" />
+                            <TextBox Width="380" Text="{Binding LlmEndpoint}"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Label Content="{DynamicResource Settings_AgentApiKey}" Width="160" />
+                            <PasswordBox x:Name="LlmKeyBox" Width="380"
+                                         AutomationProperties.Name="{DynamicResource Settings_AgentApiKey}"
+                                         VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Label Content="{DynamicResource Settings_AgentModel}" Width="160" />
+                            <TextBox Width="240" Text="{Binding LlmModel}"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Label Content="{DynamicResource Settings_AgentEmbeddingModel}" Width="160" />
+                            <TextBox Width="240" Text="{Binding EmbeddingModel}"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <!-- Was settings.json-only; the «did not answer in time» message points here. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Label Content="{Binding LlmTimeoutLabel}" Target="{Binding ElementName=LlmTimeoutBox}"
+                                   MinWidth="160" />
+                            <TextBox x:Name="LlmTimeoutBox" Width="80" Text="{Binding LlmTimeoutSeconds}"
+                                     AutomationProperties.Name="{Binding LlmTimeoutLabel}"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+
+                        <TextBlock Text="{DynamicResource Settings_AgentLlmHint2}"
+                                   Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Guest window / save failure notices, then the buttons -->
+        <Grid Grid.Row="1" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource WarningBrush}"
+                           Text="{DynamicResource Settings_GuestNote}"
+                           Visibility="{Binding IsGuestWindow, Converter={StaticResource BoolVis}}"/>
+                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DangerBrush}"
+                           Text="{Binding SaveError}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="{DynamicResource Settings_Save}" Command="{Binding SaveCommand}"
+                        IsDefault="True" Margin="0,0,8,0"/>
+                <Button Content="{DynamicResource Cancel}" IsCancel="True" Click="CancelButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

@@ -1,0 +1,76 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.TransferQueueDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        xmlns:loc="clr-namespace:TCV.App.Localization"
+        Title="{DynamicResource Transfer_Title}"
+        Width="760" Height="400"
+        MinWidth="560" MinHeight="260"
+        ResizeMode="CanResizeWithGrip">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DataGrid Grid.Row="0"
+                  x:Name="TransferGrid"
+                  ItemsSource="{Binding}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  SelectionMode="Single"
+                  GridLinesVisibility="None"
+                  HeadersVisibility="Column"
+                  AutomationProperties.Name="{DynamicResource Transfer_Title}"
+                  SelectionChanged="TransferGrid_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{DynamicResource Transfer_Col_File}" Binding="{Binding FileName}" Width="*"/>
+                <DataGridTextColumn Header="{DynamicResource Transfer_Col_Direction}"
+                                    Binding="{Binding Direction, Converter={x:Static conv:EnumLocalizationConverter.Instance}, ConverterParameter=Transfer_Dir_}"
+                                    Width="100"/>
+                <DataGridTextColumn Header="{DynamicResource Transfer_Col_Status}"
+                                    Binding="{Binding Status, Converter={x:Static conv:EnumLocalizationConverter.Instance}, ConverterParameter=Transfer_Status_}"
+                                    Width="110"/>
+                <DataGridTemplateColumn Header="{DynamicResource Transfer_Col_Progress}" Width="160">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <ProgressBar Height="14" Minimum="0" Maximum="100"
+                                             Value="{Binding PercentComplete, Mode=OneWay}"/>
+                                <TextBlock HorizontalAlignment="Center" FontSize="10"
+                                           Foreground="{DynamicResource ForegroundBrush}"
+                                           Text="{Binding PercentComplete, StringFormat={}{0:F0}%}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{DynamicResource Transfer_Col_Error}" Binding="{Binding ErrorMessage}" Width="200"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="0" x:Name="EmptyText" Margin="16,36,16,0" TextWrapping="Wrap"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                   Foreground="{DynamicResource ForegroundDimBrush}"
+                   Text="{loc:Live Transfer_Empty}" IsHitTestVisible="False"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button x:Name="PauseButton" Content="{DynamicResource Transfer_Pause}"
+                    Click="PauseButton_Click" MinWidth="80" Margin="0,0,6,0"/>
+            <Button x:Name="ResumeButton" Content="{DynamicResource Transfer_Resume}"
+                    Click="ResumeButton_Click" MinWidth="80" Margin="0,0,6,0"/>
+            <Button x:Name="CancelTransferButton" Content="{DynamicResource Transfer_Cancel}"
+                    Click="CancelButton_Click" MinWidth="80" Margin="0,0,6,0"/>
+            <Button x:Name="RetryButton" Content="{DynamicResource Transfer_Retry}"
+                    Click="RetryButton_Click" MinWidth="80" Margin="0,0,16,0"/>
+            <Button x:Name="ClearButton" Content="{DynamicResource Transfer_Clear}"
+                    Click="ClearButton_Click" Margin="0,0,16,0"/>
+            <Button Content="{DynamicResource Transfer_Close}" Click="CloseButton_Click"
+                    IsCancel="True" MinWidth="80"/>
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

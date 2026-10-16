@@ -1,0 +1,72 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- UI / MVVM -->
+  <ItemGroup>
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <!-- DI / Hosting -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  </ItemGroup>
+
+  <!-- Logging -->
+  <ItemGroup>
+    <PackageVersion Include="Serilog" Version="4.2.0" />
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <!-- Self-update of the portable copy (ADR-0031). The vpk tool in dotnet-tools.json is the same version. -->
+    <PackageVersion Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <!-- Network plugins (Этап 2) -->
+  <ItemGroup>
+    <PackageVersion Include="FluentFTP" Version="50.0.1" />
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Text (Этап 5: internal viewer / F3 lister — Windows code pages 1251/1252/866/KOI8-R) -->
+  <ItemGroup>
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Archive plugins (Этап 2) -->
+  <ItemGroup>
+    <PackageVersion Include="SharpCompress" Version="0.48.1" />
+  </ItemGroup>
+
+  <!-- Git (Этап 4) -->
+  <ItemGroup>
+    <PackageVersion Include="LibGit2Sharp" Version="0.30.0" />
+  </ItemGroup>
+
+  <!-- Agent-aware layer (Этап 6D): локальный векторный индекс семантического поиска (ADR-0017) -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <!-- Пинуется явно: Microsoft.Data.Sqlite тянет 2.1.11, где нативный e_sqlite3 с
+         GHSA-2m69-gcr7-jv3q. Именно 2.1.12, а не 3.x: в 3.x нативные бинарники раздулись до 123 МБ
+         на 30 RID-ов, и они копируются в вывод каждого проекта. Отбор win-* — в
+         Directory.Build.targets. -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+    <PackageVersion Include="sqlite-vec" Version="0.1.7-alpha.2.1" />
+  </ItemGroup>
+
+  <!-- Testing -->
+  <ItemGroup>
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+</Project>

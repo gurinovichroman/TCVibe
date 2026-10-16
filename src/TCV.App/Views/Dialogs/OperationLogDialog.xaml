@@ -1,0 +1,81 @@
+<Window x:Class="TCV.App.Views.Dialogs.OperationLogDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Log_Title}"
+        Width="820" Height="520"
+        MinWidth="520" MinHeight="280"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource ForegroundBrush}"
+        AutomationProperties.Name="{DynamicResource Log_Title}"
+        PreviewKeyDown="OnPreviewKeyDown">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DataGrid Grid.Row="0"
+                  ItemsSource="{Binding Entries}"
+                  SelectedItem="{Binding Selected}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  SelectionMode="Extended"
+                  AutomationProperties.Name="{DynamicResource Log_Title}">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                    <Setter Property="ToolTip" Value="{Binding Error}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{DynamicResource Log_ColTime}"        Binding="{Binding TimeText}"    Width="140" />
+                <DataGridTextColumn Header="{DynamicResource Log_ColOperation}"   Binding="{Binding KindText}"    Width="110" />
+                <DataGridTextColumn Header="{DynamicResource Log_ColSource}"      Binding="{Binding Source}"      Width="*" />
+                <DataGridTextColumn Header="{DynamicResource Log_ColDestination}" Binding="{Binding Destination}" Width="*" />
+                <DataGridTextColumn Header="{DynamicResource Log_ColItems}"       Binding="{Binding ItemsText}"   Width="70" />
+                <DataGridTextColumn Header="{DynamicResource Log_ColResult}"      Binding="{Binding OutcomeText}" Width="90" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="0" Text="{DynamicResource Log_Empty}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{DynamicResource ForegroundDimBrush}"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" />
+
+        <DockPanel Grid.Row="1" LastChildFill="False" Margin="0,8,0,0">
+            <Button DockPanel.Dock="Left" Content="{DynamicResource Refresh}" Padding="12,4" Margin="0,0,6,0"
+                    ToolTip="F5"
+                    Command="{Binding RefreshCommand}" />
+            <!-- Clearing erases the only audit trail the agent-changes dashboard reads: it asks first. -->
+            <Button DockPanel.Dock="Left" Content="{DynamicResource Log_Clear}" Padding="12,4" Margin="0,0,6,0"
+                    ToolTip="{DynamicResource Log_ClearTip}"
+                    Click="OnClear" />
+            <!-- Turns the selected line into a replayable saved operation (6.22) -->
+            <Button DockPanel.Dock="Left" Content="{DynamicResource Log_SaveAsOperation}" Padding="12,4" Margin="0,0,6,0"
+                    IsEnabled="{Binding CanSaveSelected}" Click="OnSaveAsOperation" />
+            <!-- Takes a rename batch (AI rename) back after its own window is closed; asks first. -->
+            <Button DockPanel.Dock="Left" Content="{DynamicResource Log_UndoRename}" Padding="12,4"
+                    ToolTip="{DynamicResource Log_UndoRenameTip}"
+                    ToolTipService.ShowOnDisabled="True"
+                    Command="{Binding UndoSelectedCommand}"
+                    IsEnabled="{Binding CanUndoSelected}" />
+            <Button DockPanel.Dock="Right" Content="{DynamicResource Close}" Padding="12,4"
+                    IsCancel="True" IsDefault="True" Click="OnClose" />
+        </DockPanel>
+    </Grid>
+</Window>

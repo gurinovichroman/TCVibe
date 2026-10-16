@@ -1,0 +1,37 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- What does not depend on the theme: typography, geometry and the appearance defaults. The
+         palette is Dark.xaml / Light.xaml and the control styles are Controls.xaml; both read the keys
+         below with DynamicResource. -->
+
+    <!-- IBM Plex, the design's face, is compiled into the exe (Fonts/*.ttf, OFL): the look no longer
+         depends on what is installed. The fallbacks only cover glyphs Plex lacks. -->
+    <FontFamily x:Key="UiFontFamily">pack://application:,,,/TCV.App;component/Fonts/#IBM Plex Sans, Segoe UI</FontFamily>
+    <FontFamily x:Key="MonoFontFamily">pack://application:,,,/TCV.App;component/Fonts/#IBM Plex Mono, Cascadia Mono, Consolas</FontFamily>
+    <sys:Double x:Key="UiFontSize">12</sys:Double>
+
+    <!-- Corner radii: controls 4, floating surfaces (menus, popups) 6 -->
+    <CornerRadius x:Key="RadiusMd">4</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">6</CornerRadius>
+
+    <!-- Appearance settings (6.33): the defaults for an untouched settings.json. ThemeManager writes the
+         user's values over them into the theme dictionary (AppearanceResources), and the panels read
+         them with DynamicResource, so a save repaints without a restart. -->
+    <FontFamily x:Key="PanelFontFamily">pack://application:,,,/TCV.App;component/Fonts/#IBM Plex Sans, Segoe UI</FontFamily>
+    <sys:Double x:Key="PanelFontSize">11</sys:Double>
+    <Visibility x:Key="ChromeFunctionKeyBarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeDriveBarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeTabBarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromePathBarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeViewToolbarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeStatusBarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeToolbarVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeCommandLineVisibility">Visible</Visibility>
+    <Visibility x:Key="ChromeAppStatusBarVisibility">Visible</Visibility>
+    <!-- File icons in the lists: the design's line icons, or Windows' own (Settings → Appearance) -->
+    <Visibility x:Key="LineFileIconVisibility">Visible</Visibility>
+    <Visibility x:Key="SystemFileIconVisibility">Collapsed</Visibility>
+
+</ResourceDictionary>

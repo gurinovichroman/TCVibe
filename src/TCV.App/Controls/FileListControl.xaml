@@ -1,0 +1,852 @@
+<UserControl x:Class="TCV.App.Controls.FileListControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TCV.App.ViewModels"
+             xmlns:conv="clr-namespace:TCV.App.Converters"
+             xmlns:settings="clr-namespace:TCV.App.Settings"
+             xmlns:ctrl="clr-namespace:TCV.App.Controls"
+             xmlns:ag="clr-namespace:TCV.App.Agents">
+
+    <UserControl.Resources>
+        <conv:FileSizeConverter x:Key="SizeConverter" />
+        <conv:DateFormatConverter x:Key="DateConverter" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:ViewModeToVisibilityConverter x:Key="ViewModeVis" />
+        <conv:EnumToBoolConverter x:Key="EnumToBool" />
+
+        <!-- ── The line icon by type (FileIconClass): a shape per kind, the colour groups kinds (code teal,
+             documents blue, media pink, tables and programs green, archives sand, keys and slides amber,
+             PDF red); the rest is quiet. Rows add the hidden-file opacity (RowIcon); tree nodes take it as is. ── -->
+        <Style x:Key="KindIcon" TargetType="ctrl:Icon">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Data" Value="{StaticResource IconFile}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Folder}">
+                    <Setter Property="Data" Value="{StaticResource IconFolder}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DirectoryBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Code}">
+                    <Setter Property="Data" Value="{StaticResource IconFileCodeCorner}" />
+                    <Setter Property="Foreground" Value="{DynamicResource CodeBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Project}">
+                    <Setter Property="Data" Value="{StaticResource IconFileCodeCorner}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Document}">
+                    <Setter Property="Data" Value="{StaticResource IconFileText}" />
+                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Script}">
+                    <Setter Property="Data" Value="{StaticResource IconFileTerminal}" />
+                    <Setter Property="Foreground" Value="{DynamicResource CodeBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Config}">
+                    <Setter Property="Data" Value="{StaticResource IconFileSliders}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Archive}">
+                    <Setter Property="Data" Value="{StaticResource IconFolderArchive}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DirectoryBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Spreadsheet}">
+                    <Setter Property="Data" Value="{StaticResource IconFileSpreadsheet}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Presentation}">
+                    <Setter Property="Data" Value="{StaticResource IconFileChartColumn}" />
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Pdf}">
+                    <Setter Property="Data" Value="{StaticResource IconFileText}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Image}">
+                    <Setter Property="Data" Value="{StaticResource IconFileImage}" />
+                    <Setter Property="Foreground" Value="{DynamicResource MediaBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Video}">
+                    <Setter Property="Data" Value="{StaticResource IconFilePlay}" />
+                    <Setter Property="Foreground" Value="{DynamicResource MediaBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Audio}">
+                    <Setter Property="Data" Value="{StaticResource IconFileMusic}" />
+                    <Setter Property="Foreground" Value="{DynamicResource MediaBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Executable}">
+                    <Setter Property="Data" Value="{StaticResource IconAppWindow}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Binary}">
+                    <Setter Property="Data" Value="{StaticResource IconFileCog}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Font}">
+                    <Setter Property="Data" Value="{StaticResource IconFileType}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Key}">
+                    <Setter Property="Data" Value="{StaticResource IconFileKey}" />
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Database}">
+                    <Setter Property="Data" Value="{StaticResource IconDatabase}" />
+                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.DiskImage}">
+                    <Setter Property="Data" Value="{StaticResource IconDisc3}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="RowIcon" TargetType="ctrl:Icon" BasedOn="{StaticResource KindIcon}">
+            <Setter Property="Opacity" Value="{Binding IconOpacity}" />
+        </Style>
+
+        <!-- ── The extension on a badge (FileIconClass.BadgeFor): «PDF», «DOCX», «SLN» — for a file whose
+             line icon would be a plain page. Filled in the kind's colour, the letters in the background
+             colour; a four-letter extension is shrunk to fit. ── -->
+        <Style x:Key="TypeBadgeBox" TargetType="Border">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="MinWidth" Value="14" />
+            <Setter Property="MaxWidth" Value="22" />
+            <Setter Property="Padding" Value="1.5,0" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource ForegroundDimBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Pdf}">
+                    <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IconKind}" Value="{x:Static vm:FileIconKind.Document}">
+                    <Setter Property="Background" Value="{DynamicResource InfoBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ── A file's icon wherever a row or node shows one: the line icon or the badge, or Windows' own
+             icon when Settings → Appearance asks for it (two DynamicResource visibilities, so a save
+             repaints every list). Windows' icon is the type's, by extension: no file is read for it. ── -->
+        <ControlTemplate x:Key="FileIconTemplate" TargetType="Control">
+            <Grid Width="22" Height="16" VerticalAlignment="Center">
+                <Grid Visibility="{DynamicResource LineFileIconVisibility}">
+                    <ctrl:Icon x:Name="LineIcon" Style="{StaticResource KindIcon}" HorizontalAlignment="Left" Visibility="Collapsed" />
+                    <Border x:Name="Badge" Style="{StaticResource TypeBadgeBox}">
+                        <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                            <TextBlock Text="{Binding TypeBadge}" FontSize="7" FontWeight="Bold"
+                                       Foreground="{DynamicResource BackgroundBrush}" />
+                        </Viewbox>
+                    </Border>
+                </Grid>
+                <Image Source="{Binding SmallIcon}" Width="16" Height="16" HorizontalAlignment="Left"
+                       Visibility="{DynamicResource SystemFileIconVisibility}" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <DataTrigger Binding="{Binding TypeBadge}" Value="{x:Null}">
+                    <Setter TargetName="LineIcon" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="Badge" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- ── Who changed it (FileOriginIndex): a bot for an agent, a person for this manager, a question
+             mark for unknown — only in a project an agent has touched. ── -->
+        <Style x:Key="OriginIcon" TargetType="ctrl:Icon">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Margin" Value="7,0,0,0" />
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding OriginMark}" Value="{x:Static ag:FileOriginMark.Agent}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Setter Property="Data" Value="{StaticResource IconBot}" />
+                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding OriginMark}" Value="{x:Static ag:FileOriginMark.Human}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Setter Property="Data" Value="{StaticResource IconUser}" />
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding OriginMark}" Value="{x:Static ag:FileOriginMark.Unknown}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Setter Property="Data" Value="{StaticResource IconCircleHelp}" />
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ── Name cell: icon, name (or name without extension), the origin mark at the far end ──
+             The name takes the row's colour (a colour rule's, or the plain text colour). -->
+        <DataTemplate x:Key="NameCellTemplate" DataType="{x:Type vm:FileEntryViewModel}">
+            <DockPanel LastChildFill="True">
+                <Control DockPanel.Dock="Left" Template="{StaticResource FileIconTemplate}" Margin="0,0,3,0"
+                         Focusable="False" IsTabStop="False" Opacity="{Binding IconOpacity}" />
+                <Border DockPanel.Dock="Right" Background="Transparent" ToolTip="{Binding OriginToolTip}"
+                        Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVis}}">
+                    <ctrl:Icon Style="{StaticResource OriginIcon}" />
+                </Border>
+                <Grid>
+                    <TextBlock ctrl:MatchHighlight.Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               ctrl:MatchHighlight.Query="{Binding DataContext.QuickSearchText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                               x:Name="TbFullName"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                    <TextBlock ctrl:MatchHighlight.Text="{Binding NameWithoutExtension}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               ctrl:MatchHighlight.Query="{Binding DataContext.QuickSearchText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                               x:Name="TbShortName" Visibility="Collapsed"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                    <!-- Renaming in place (F2): the box stands where the name was, the whole name in it. -->
+                    <ctrl:NameEditBox Margin="-4,0,0,0" />
+                </Grid>
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding DataContext.ShowExtensions,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+                    <Setter TargetName="TbFullName" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="TbShortName" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <!-- Last, so it wins over the extensions switch above. -->
+                <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                    <Setter TargetName="TbFullName" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="TbShortName" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Size and the measured dev columns: right-aligned mono figures in the dim colour. -->
+        <Style x:Key="SizeCellText" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="FontFamily" Value="{DynamicResource MonoFontFamily}" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- The modified time: a mono 9px timestamp in the dim colour. -->
+        <Style x:Key="DateCellText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource MonoFontFamily}" />
+            <Setter Property="FontSize" Value="9" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <!-- ── Column header gripper (resize handle) ── -->
+        <Style x:Key="ColGripperStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="SizeWE" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── DataGrid column header style ──
+             A quiet caption on the card: dim text, no bold, one hairline underneath. The sort arrow is
+             the only accent. -->
+        <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="Height" Value="29" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <!-- The caption, then the sort direction as a quiet arrow right after it («Имя ↑»). -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                    <TextBlock x:Name="SortArrow"
+                                               Text="↑" Foreground="{DynamicResource ForegroundDimBrush}" FontSize="10"
+                                               Margin="4,0,0,0" VerticalAlignment="Center"
+                                               Visibility="Collapsed" />
+                                </StackPanel>
+                            </Border>
+                            <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left"
+                                   Style="{StaticResource ColGripperStyle}" />
+                            <Thumb x:Name="PART_RightHeaderGripper" HorizontalAlignment="Right"
+                                   Style="{StaticResource ColGripperStyle}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="SortDirection" Value="Ascending">
+                                <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="SortArrow" Property="Text" Value="↑" />
+                            </Trigger>
+                            <Trigger Property="SortDirection" Value="Descending">
+                                <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="SortArrow" Property="Text" Value="↓" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── DataGrid row style with color-rule support ──
+             Two independent states: IsSelected on the row is the cursor (the grid selects one row only);
+             IsSelected on the view model is a mark (Insert / Space / mask / Ctrl and Shift clicks).
+             A mark is what the commands act on, so it is the loud one and looks like a selection in any
+             Windows list: the selection slab with the accent bar at the left edge (MarkBar), the text in
+             its own colours. The bar is a shape, not a hue, so a mark still reads under a colour rule and
+             to an eye that does not tell green from grey. The cursor is a frame, as Explorer and VS Code
+             draw focus: the quiet slab in the panel's tone in the active panel, a dim frame without a
+             fill in the other. On a marked row both show, so taking a mark off visibly empties the row
+             (with the cursor as the green slab, a row just unmarked under it still looked marked). -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <!-- The cursor's frame, transparent off the cursor. -->
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <!-- The stock template plus the mark bar, and the frame drawn over the row rather than around
+                 it: a frame in the layout kept a transparent pixel at every edge, so marked rows stood
+                 apart with gaps between them instead of running together. The bar does not scroll
+                 sideways, like a row header. -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridRow">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border Background="{TemplateBinding Background}" />
+                            <SelectiveScrollingGrid>
+                                <SelectiveScrollingGrid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </SelectiveScrollingGrid.ColumnDefinitions>
+                                <SelectiveScrollingGrid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </SelectiveScrollingGrid.RowDefinitions>
+                                <DataGridCellsPresenter Grid.Column="1"
+                                                        ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                <DataGridDetailsPresenter Grid.Column="1" Grid.Row="1"
+                                                          Visibility="{TemplateBinding DetailsVisibility}"
+                                                          SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                              Converter={x:Static DataGrid.RowDetailsScrollingConverter},
+                                                              ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}}" />
+                                <DataGridRowHeader Grid.RowSpan="2"
+                                                   SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                                   Visibility="{Binding HeadersVisibility,
+                                                       RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                       Converter={x:Static DataGrid.HeadersVisibilityConverter},
+                                                       ConverterParameter={x:Static DataGridHeadersVisibility.Row}}" />
+                                <Border x:Name="MarkBar" Grid.Column="1" Grid.RowSpan="2" Width="3"
+                                        HorizontalAlignment="Left" Background="{DynamicResource AccentBrush}"
+                                        SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                        Visibility="Collapsed" />
+                            </SelectiveScrollingGrid>
+                            <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    IsHitTestVisible="False" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="MarkBar" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Color rules from settings (lower priority than the cursor and a mark) -->
+                <DataTrigger Binding="{Binding HasColorRule}" Value="True">
+                    <Setter Property="Background" Value="{Binding RowBackground}" />
+                    <Setter Property="Foreground" Value="{Binding RowForeground}" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                </Trigger>
+                <!-- The cursor of the inactive panel: a dim frame, no fill -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ForegroundDimBrush}" />
+                </Trigger>
+                <!-- The cursor of the active panel: the quiet slab in a frame of the panel's tone -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True" />
+                        <Condition Binding="{Binding DataContext.IsActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource SelectionHoverBrush}" />
+                    <Setter Property="BorderBrush"
+                            Value="{Binding DataContext.BorderBrush,
+                                    RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=2}}" />
+                </MultiDataTrigger>
+                <!-- A mark, wherever the cursor is: the selection slab (the bar is the template's) -->
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!-- Cells stay transparent and take the row's foreground: the stock cell paints the system
+             highlight over a selected row (bright blue in the active panel, near-white in the
+             inactive one), which ignored the theme and hid the row's own cursor colours. -->
+        <!-- Own template so the text sits in the middle of a taller row (the stock cell top-aligns). -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Rows of Brief and tiles of Thumbnails: the grid's look in a ListBox ──
+             Own template: the stock one paints the selected item in the system's pale highlight
+             (#3D26A0DA, a faint grey in the inactive panel) over the style's background, so the cursor
+             was hard to see and ignored the theme. Same states and looks as the grid rows: IsSelected on
+             the item is the cursor (the list selects one item only), IsSelected on the view model is a
+             mark. TRAP-59. -->
+        <Style x:Key="FileItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="2,1" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <!-- The cursor's frame, transparent off the cursor; drawn over the item, as on the grid rows. -->
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <!-- What a screen reader (and UI Automation) calls the item: the file, not the view model's type. -->
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                            <Border Background="{TemplateBinding Background}" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            <Border x:Name="MarkBar" Width="3" HorizontalAlignment="Left"
+                                    Background="{DynamicResource AccentBrush}" Visibility="Collapsed" />
+                            <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    IsHitTestVisible="False" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="MarkBar" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasColorRule}" Value="True">
+                    <Setter Property="Foreground" Value="{Binding RowForeground}" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                </Trigger>
+                <!-- The cursor of the inactive panel: a dim frame, no fill -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ForegroundDimBrush}" />
+                </Trigger>
+                <!-- The cursor of the active panel: the quiet slab in a frame of the panel's tone -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True" />
+                        <Condition Binding="{Binding DataContext.IsActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource SelectionHoverBrush}" />
+                    <Setter Property="BorderBrush"
+                            Value="{Binding DataContext.BorderBrush,
+                                    RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=2}}" />
+                </MultiDataTrigger>
+                <!-- A mark, wherever the cursor is: the selection slab (the bar or the tick is the item's) -->
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- A Thumbnails tile: the row's states with a thicker frame that still reads around a picture.
+             A mark is the slab and a tick in the corner (MarkTick in the list's item template), not the
+             bar: a bar down the side of a tile reads as a border. -->
+        <Style x:Key="ThumbnailItemStyle" TargetType="ListBoxItem" BasedOn="{StaticResource FileItemStyle}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <!-- The label is cut to two lines; the whole name is a hover away. -->
+            <Setter Property="ToolTip" Value="{Binding Name}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── View mode toggle button style ── -->
+        <Style x:Key="ViewModeBtn" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <!-- Own template: the stock one paints checked/hover in light blue, which hid the
+                 light glyph of a checked button in the dark theme. -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{DynamicResource RadiusMd}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- The chosen view: the selection slab and accent glyph, as the design marks an active tool. -->
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ── Small toolbar button style ── -->
+        <Style x:Key="ToolBtn" TargetType="ToggleButton" BasedOn="{StaticResource ViewModeBtn}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- The list itself, one control per view mode. The view buttons and the filter that used to sit
+             above it are the panel's (PanelView: the status line and the path bar), as in the design. -->
+
+        <!-- ── DETAILS mode (DataGrid) ── -->
+        <DataGrid
+                  x:Name="Grid"
+                  ItemsSource="{Binding Files}"
+                  SelectedItem="{Binding SelectedItem}"
+                  AutoGenerateColumns="False"
+                  HeadersVisibility="Column"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserResizeRows="False"
+                  CanUserSortColumns="True"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  EnableRowVirtualization="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.ScrollUnit="Item"
+                  Background="Transparent"
+                  Foreground="{DynamicResource ForegroundBrush}"
+                  FontFamily="{DynamicResource PanelFontFamily}"
+                  FontSize="{DynamicResource PanelFontSize}"
+                  AutomationProperties.Name="{DynamicResource Files_ListName}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource RowLineBrush}"
+                  MinRowHeight="29"
+                  BorderThickness="0"
+                  ColumnHeaderStyle="{StaticResource HeaderStyle}"
+                  Sorting="OnGridSorting"
+                  Visibility="{Binding ViewMode, Converter={StaticResource ViewModeVis},
+                               ConverterParameter=Details}">
+
+            <!-- Columns are built in code-behind from PanelSettings.Columns (6.19), so which ones
+                 are shown, in what order and how wide is user state rather than markup. The name
+                 cell keeps its template here; everything else is a plain text column. -->
+            <DataGrid.ContextMenu>
+                <ContextMenu x:Name="ColumnsMenu" Opened="OnColumnsMenuOpened" />
+            </DataGrid.ContextMenu>
+
+            <!-- Row backgrounds come from a style, not attributes: the grid pushes RowBackground
+                 onto every row with the priority it was set at, and a local value would beat the
+                 row style's triggers, so the cursor, marks and colour rules could never paint. -->
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="RowBackground" Value="Transparent" />
+                    <Setter Property="AlternatingRowBackground" Value="Transparent" />
+                </Style>
+            </DataGrid.Style>
+        </DataGrid>
+
+        <!-- ── BRIEF mode (compact list with icons + names) ──
+             Names run top to bottom in columns and the list scrolls sideways, as in Total Commander.
+             The panel virtualises (VirtualizingWrapPanel, 6.46) and scrolls itself, sideways only: the
+             vertical scroll bar is disabled so the list's height is the height the columns wrap at.
+             The arrows and the page keys are handled by the control (TryMoveCursor, WrapFlow.Columns), the
+             mouse wheel scrolls sideways (OnBriefMouseWheel). No ItemsSource or SelectedItem here: they
+             are bound only while this view is shown (SyncWrapViews in code-behind). Every column is one
+             width, as in TC: the panel's ItemWidth comes from the folder's longest name (BriefColumns,
+             whose numbers describe the item template below). -->
+        <ListBox
+                 x:Name="BriefList"
+                 SelectionMode="Single"
+                 PreviewMouseWheel="OnBriefMouseWheel"
+                 Background="Transparent"
+                 Foreground="{DynamicResource ForegroundBrush}"
+                 FontFamily="{DynamicResource PanelFontFamily}"
+                 FontSize="{DynamicResource PanelFontSize}"
+                 AutomationProperties.Name="{DynamicResource Files_ListName}"
+                 BorderThickness="0"
+                 ScrollViewer.CanContentScroll="True"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                 ItemContainerStyle="{StaticResource FileItemStyle}"
+                 Visibility="{Binding ViewMode, Converter={StaticResource ViewModeVis},
+                              ConverterParameter=Brief}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ctrl:VirtualizingWrapPanel Flow="Columns"
+                               ItemWidth="{Binding BriefColumnWidth, RelativeSource={RelativeSource AncestorType=ctrl:FileListControl}}" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:FileEntryViewModel}">
+                    <StackPanel Orientation="Horizontal" Margin="4,5"
+                                MinWidth="{x:Static ctrl:BriefColumns.MinRowWidth}"
+                                MaxWidth="{x:Static ctrl:BriefColumns.MaxRowWidth}">
+                        <Control Template="{StaticResource FileIconTemplate}" Margin="0,0,3,0"
+                                 Focusable="False" IsTabStop="False" Opacity="{Binding IconOpacity}" />
+                        <Grid>
+                            <TextBlock x:Name="BriefName" ctrl:MatchHighlight.Text="{Binding Name}"
+                                       ctrl:MatchHighlight.Query="{Binding DataContext.QuickSearchText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                            <ctrl:NameEditBox Margin="-4,-2,0,-2" MaxWidth="217" />
+                        </Grid>
+                    </StackPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                            <Setter TargetName="BriefName" Property="Visibility" Value="Hidden" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- ── THUMBNAILS mode (tiles: a picture for images on the disk, the icon otherwise) ──
+             A ListBox like BRIEF, so a tile takes focus, the cursor and Ctrl/Shift clicks. The arrows,
+             the page keys, Home and End are handled by the control (TryMoveCursor): the list alone
+             cannot step through rows of tiles in two dimensions. ItemsSource and SelectedItem are
+             bound only while shown (SyncWrapViews, TRAP-52); the panel makes tiles only for the rows
+             in view (VirtualizingWrapPanel, 6.46), and pictures only for those tiles
+             (FileListControl.Thumbnails.cs). The 80×80 picture box is ThumbnailPolicy.BoxSize. -->
+        <ListBox
+                 x:Name="ThumbnailList"
+                 SelectionMode="Single"
+                 Background="Transparent"
+                 Foreground="{DynamicResource ForegroundBrush}"
+                 FontFamily="{DynamicResource PanelFontFamily}"
+                 AutomationProperties.Name="{DynamicResource Files_ListName}"
+                 BorderThickness="0"
+                 Padding="2"
+                 ScrollViewer.CanContentScroll="True"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ItemContainerStyle="{StaticResource ThumbnailItemStyle}"
+                 Visibility="{Binding ViewMode, Converter={StaticResource ViewModeVis},
+                              ConverterParameter=Thumbnails}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ctrl:VirtualizingWrapPanel Flow="Rows" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:FileEntryViewModel}">
+                    <Grid>
+                        <StackPanel Width="96" Height="114">
+                            <Grid Width="80" Height="80" Margin="0,4,0,0" HorizontalAlignment="Center">
+                                <!-- A picture when the file has one, else the row's line icon at 32px (the design's
+                                     tile), or Windows' large icon when the settings ask for Windows' icons. -->
+                                <Grid Visibility="{DynamicResource LineFileIconVisibility}">
+                                    <ctrl:Icon Width="32" Height="32">
+                                        <ctrl:Icon.Style>
+                                            <Style TargetType="ctrl:Icon" BasedOn="{StaticResource RowIcon}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Thumbnail}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ctrl:Icon.Style>
+                                    </ctrl:Icon>
+                                </Grid>
+                                <Grid Visibility="{DynamicResource SystemFileIconVisibility}">
+                                    <Image Width="32" Height="32" Opacity="{Binding IconOpacity}">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Thumbnail}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Setter Property="Source" Value="{Binding LargeIcon}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Grid>
+                                <!-- DownOnly: a picture shrinks to fit, never grows past its size. -->
+                                <Image Source="{Binding Thumbnail}"
+                                       MaxWidth="80" MaxHeight="80"
+                                       Stretch="Uniform" StretchDirection="DownOnly"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Opacity="{Binding IconOpacity}"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock x:Name="TileName" ctrl:MatchHighlight.Text="{Binding Name}"
+                                           ctrl:MatchHighlight.Query="{Binding DataContext.QuickSearchText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           FontSize="10"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxHeight="28"
+                                           Margin="2,2,2,0" />
+                                <!-- Two lines of the tile, as the name takes; a longer name scrolls inside. -->
+                                <ctrl:NameEditBox FontSize="10" TextAlignment="Center" TextWrapping="Wrap"
+                                                  VerticalAlignment="Top" MaxHeight="30" Margin="0,1,0,0" />
+                            </Grid>
+                        </StackPanel>
+                        <!-- A mark: the tick in the corner, as Explorer and photo grids mark a tile. -->
+                        <Border x:Name="MarkTick" Width="16" Height="16" CornerRadius="8" Margin="3"
+                                HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Background="{DynamicResource AccentBrush}" Visibility="Collapsed">
+                            <ctrl:Icon Data="{StaticResource IconCheck}" Width="11" Height="11"
+                                       Foreground="{DynamicResource AccentForegroundBrush}" />
+                        </Border>
+                    </Grid>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                            <Setter TargetName="TileName" Property="Visibility" Value="Hidden" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                            <Setter TargetName="MarkTick" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- ── TREE mode (directory TreeView) ── -->
+        <TreeView
+                  x:Name="TreeViewPanel"
+                  Background="Transparent"
+                  Foreground="{DynamicResource ForegroundBrush}"
+                  FontFamily="{DynamicResource PanelFontFamily}"
+                  FontSize="{DynamicResource PanelFontSize}"
+                  AutomationProperties.Name="{DynamicResource Files_ListName}"
+                  BorderThickness="0"
+                  Visibility="{Binding ViewMode, Converter={StaticResource ViewModeVis},
+                               ConverterParameter=Tree}"
+                  ItemsSource="{Binding TreeRoots}"
+                  SelectedItemChanged="OnTreeViewSelectedItemChanged"
+                  TreeViewItem.Selected="OnTreeViewItemSelected">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type vm:TreeNodeViewModel}"
+                                          ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Margin="0,3">
+                        <Control x:Name="NodeIcon" Template="{StaticResource FileIconTemplate}" Margin="0,0,3,0"
+                                 Focusable="False" IsTabStop="False" />
+                        <ctrl:Icon x:Name="DriveIcon" Data="{StaticResource IconHardDrive}" Width="14" Height="14" Margin="0,0,7,0"
+                                   Foreground="{DynamicResource ForegroundDimBrush}" Visibility="Collapsed" />
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <HierarchicalDataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsDriveRoot}" Value="True">
+                            <Setter TargetName="NodeIcon" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="DriveIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </HierarchicalDataTemplate.Triggers>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TreeView.ItemContainerStyle>
+        </TreeView>
+
+        <!-- Empty folder / unreadable folder / no filter match. The text never intercepts clicks; a server
+             that stopped answering gets Reconnect and Disconnect right under its error, and while it is being
+             reconnected by itself (6.82), Retry now and Stop. -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" MaxWidth="420"
+                    Visibility="{Binding EmptyStateText, Converter={StaticResource BoolToVis}}">
+        <TextBlock Text="{Binding EmptyStateText}"
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   IsHitTestVisible="False"
+                   AutomationProperties.Name="{Binding EmptyStateText}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasLoadError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsReconnecting}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
+                        Visibility="{Binding IsConnectionFailed, Converter={StaticResource BoolToVis}}">
+                <Button Content="{DynamicResource Menu_Reconnect}" Tag="Reconnect" Click="OnRunConnectionCommand"
+                        Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource Chip_Disconnect}" Tag="Disconnect" Click="OnRunConnectionCommand" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
+                        Visibility="{Binding IsReconnecting, Converter={StaticResource BoolToVis}}">
+                <Button Content="{DynamicResource Conn_ReconnectNow}" Tag="Reconnect" Click="OnRunConnectionCommand"
+                        Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource Conn_ReconnectStop}" Click="OnStopReconnect" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Loading overlay -->
+        <Grid
+              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <Border Background="{DynamicResource BackgroundBrush}" Opacity="0.6" />
+            <TextBlock Text="{DynamicResource Files_Loading}" Foreground="{DynamicResource ForegroundBrush}" FontSize="16"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+    </Grid>
+</UserControl>

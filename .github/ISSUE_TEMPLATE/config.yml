@@ -1,0 +1,9 @@
+# Issues are bug reports only; everything else has its own place.
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/gurinovichroman/TCVibe/discussions
+    about: How do I…, feature ideas, your setup. Also in the program — Help → Questions and ideas.
+  - name: Security vulnerability
+    url: https://github.com/gurinovichroman/TCVibe/security/advisories/new
+    about: Please report it privately, not as a public issue.

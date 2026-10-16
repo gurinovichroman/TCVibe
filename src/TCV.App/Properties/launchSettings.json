@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TCV.App": {
+      "commandName": "Project",
+      "commandLineArgs": "--data \"D:\\Portable Programs\\tcv\\data\""
+    },
+    "TCV.App (portable data)": {
+      "commandName": "Project",
+      "commandLineArgs": "--data \"D:\\Portable Programs\\tcv\\data\""
+    }
+  }
+}

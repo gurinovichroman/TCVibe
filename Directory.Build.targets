@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    Продукт — только Windows (ADR-0002: portable ZIP, self-contained win-x64). SQLitePCLRaw,
+    который приходит с Microsoft.Data.Sqlite ради векторного индекса (6.16, ADR-0017), везёт
+    нативные сборки под 30 RID-ов: Android, iOS, wasm, linux-s390x, maccatalyst и так далее.
+    Они копируются в вывод КАЖДОГО проекта, который их видит транзитивно, — это десятки мегабайт
+    на проект в дереве сборки и столько же в portable-архиве, при том что ни один из них никогда
+    не будет загружен.
+
+    Поэтому из копирования убирается всё, кроме runtimes\win-*. Файл лежит в корне решения, а не в
+    одном csproj, потому что фильтровать надо у всех потребителей (приложение и тестовые проекты),
+    а не только там, где объявлена зависимость.
+  -->
+  <Target Name="TrimNonWindowsNativeAssets" AfterTargets="ResolveReferences">
+    <ItemGroup>
+      <!-- Двумя шагами, а не одним Remove с условием: условие на Remove не батчится по метаданным
+           элемента, поэтому собрать список надо через Include. Метаданные квалифицированы именем
+           списка — managed-сборки в нём DestinationSubDirectory не имеют вовсе (MSB4096). -->
+      <_NonWindowsNativeAsset Include="@(ReferenceCopyLocalPaths)"
+                              Condition="'%(ReferenceCopyLocalPaths.DestinationSubDirectory)' != ''
+                                         AND $([System.String]::Copy('%(ReferenceCopyLocalPaths.DestinationSubDirectory)').StartsWith('runtimes'))
+                                         AND !$([System.String]::Copy('%(ReferenceCopyLocalPaths.DestinationSubDirectory)').Contains('win-'))" />
+      <ReferenceCopyLocalPaths Remove="@(_NonWindowsNativeAsset)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

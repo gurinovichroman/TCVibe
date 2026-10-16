@@ -1,0 +1,163 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.ChecksumDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource CS_Title}" Height="560" Width="800"
+        MinHeight="360" MinWidth="620">
+
+    <Window.Resources>
+        <Style TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+            <Setter Property="Margin" Value="0,0,14,0"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+            <Setter Property="Foreground" Value="{DynamicResource InfoBrush}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Algorithm selector -->
+        <GroupBox Grid.Row="0" Header="{DynamicResource CS_Algorithm}" Margin="0,0,0,6">
+            <StackPanel Orientation="Horizontal" Margin="8,4">
+                <RadioButton Content="MD5" GroupName="Algorithm"
+                             IsChecked="{Binding SelectedAlgorithm,
+                                 Converter={x:Static conv:ChecksumAlgorithmConverter.Instance},
+                                 ConverterParameter=MD5}"/>
+                <RadioButton Content="SHA1" GroupName="Algorithm"
+                             IsChecked="{Binding SelectedAlgorithm,
+                                 Converter={x:Static conv:ChecksumAlgorithmConverter.Instance},
+                                 ConverterParameter=SHA1}"/>
+                <RadioButton Content="SHA256" GroupName="Algorithm"
+                             IsChecked="{Binding SelectedAlgorithm,
+                                 Converter={x:Static conv:ChecksumAlgorithmConverter.Instance},
+                                 ConverterParameter=SHA256}"/>
+                <RadioButton Content="SHA512" GroupName="Algorithm"
+                             IsChecked="{Binding SelectedAlgorithm,
+                                 Converter={x:Static conv:ChecksumAlgorithmConverter.Instance},
+                                 ConverterParameter=SHA512}"/>
+                <RadioButton Content="{DynamicResource CS_Crc32}" GroupName="Algorithm"
+                             IsChecked="{Binding SelectedAlgorithm,
+                                 Converter={x:Static conv:ChecksumAlgorithmConverter.Instance},
+                                 ConverterParameter=CRC32}"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Tab control: Calculate / Verify -->
+        <TabControl Grid.Row="1">
+
+            <!-- Calculate tab -->
+            <TabItem Header="{DynamicResource CS_TabCalculate}">
+                <Grid>
+                    <DataGrid ItemsSource="{Binding Entries}" Margin="0,4,0,0"
+                              AutomationProperties.Name="{DynamicResource CS_TabCalculate}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColFile}" Binding="{Binding FileName}" Width="220"/>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColSize}" Binding="{Binding SizeText}" Width="80"/>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColHash}" Binding="{Binding Hash}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Verify tab: selected while the window verifies a checksum file, including one it was opened on -->
+            <TabItem Header="{DynamicResource CS_TabVerify}" IsSelected="{Binding VerifyMode}">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="{DynamicResource CS_SumsFile}" Target="{Binding ElementName=VerifyPathBox}"/>
+                        <TextBox Grid.Column="1" x:Name="VerifyPathBox" Text="{Binding VerifyFilePath, Mode=OneWay}" IsReadOnly="True"/>
+                        <Button Grid.Column="2" Content="{DynamicResource CS_Open}" Margin="8,0,0,0"
+                                Command="{Binding LoadChecksumForVerifyCommand}"/>
+                    </Grid>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding VerifyResults}"
+                              AutomationProperties.Name="{DynamicResource CS_TabVerify}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColFile}" Binding="{Binding FileName}" Width="220"/>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColExpected}" Binding="{Binding ExpectedHash}" Width="180"/>
+                            <DataGridTextColumn Header="{DynamicResource CS_ColActual}" Binding="{Binding ActualHash}" Width="180"/>
+                            <DataGridTemplateColumn Header="{DynamicResource CS_ColStatus}" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   FontWeight="SemiBold"
+                                                   Padding="4,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="OK">
+                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="FAILED">
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Missing">
+                                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Progress bar -->
+        <ProgressBar Grid.Row="2" Height="8" Margin="0,6,0,0"
+                     Value="{Binding ProgressValue}"
+                     Maximum="100"
+                     Foreground="{DynamicResource AccentBrush}"/>
+
+        <!-- Status text -->
+        <TextBlock Grid.Row="3" Text="{Binding StatusText}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource InfoBrush}" Margin="0,4,0,4"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource CS_Calculate}"
+                    Command="{Binding CalculateCommand}"
+                    IsDefault="True"
+                    Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource CS_Stop}"
+                    Command="{Binding CancelCalculationCommand}"
+                    Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource CS_Save}"
+                    Command="{Binding SaveChecksumFileCommand}"
+                    Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource Close}" Click="CloseButton_Click" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

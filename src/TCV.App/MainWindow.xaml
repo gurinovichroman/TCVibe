@@ -1,0 +1,937 @@
+<Window x:Class="TCV.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:TCV.App.ViewModels"
+        xmlns:panels="clr-namespace:TCV.App.Views.Panels"
+        xmlns:ctrl="clr-namespace:TCV.App.Controls"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        xmlns:loc="clr-namespace:TCV.App.Localization"
+        xmlns:settings="clr-namespace:TCV.App.Settings"
+        mc:Ignorable="d"
+        Title="{Binding DisplayTitle}"
+        Height="760" Width="1180"
+        MinHeight="480" MinWidth="760"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource CardBrush}"
+        Foreground="{DynamicResource ForegroundBrush}"
+        FontFamily="{DynamicResource UiFontFamily}"
+        Closing="OnClosing"
+        PreviewKeyDown="OnPreviewKeyDown">
+
+    <!-- The design's own frame (ADR-0030): the title bar is drawn by the window, WindowChrome keeps what
+         Windows gives a caption — dragging, double-click to maximise, Aero Snap, the system menu on a
+         right-click, resizing at the edges. Buttons in the bar opt in with IsHitTestVisibleInChrome.
+         The glass frame must not be 0: without it WindowChrome clips the window with SetWindowRgn on
+         every size change, and the whole window flickers while it is resized (TRAP-74). With no region,
+         the corners and the shadow are Windows' own; WindowChrome.CornerRadius would only shape that
+         region, so it is not set. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="39"
+                      ResizeBorderThickness="6"
+                      GlassFrameThickness="0,0,0,1"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <!-- Maximised, a WindowChrome window overhangs the screen by its frame; MainWindow.Chrome pads it back. -->
+    <Border x:Name="WindowRoot" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            Background="{DynamicResource BackgroundBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- 0 title bar with the menu -->
+            <RowDefinition Height="Auto" />  <!-- 1 the workspace's line -->
+            <RowDefinition Height="Auto" />  <!-- 2 tool strip -->
+            <RowDefinition Height="*" />     <!-- 3 rail | side bar | panels -->
+            <RowDefinition Height="Auto" />  <!-- 4 the latest agent run -->
+            <RowDefinition Height="Auto" />  <!-- 5 command line -->
+            <RowDefinition Height="Auto" />  <!-- 6 F-keys -->
+            <RowDefinition Height="Auto" />  <!-- 7 status line -->
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════ Title bar (.titlebar, 39px) ═══════════
+             The menu rides in the title bar, as in VS Code: the window's name is on the taskbar and the
+             project's in the status line. The DockPanel hands out the width in the order of its children —
+             the caption buttons, the logo and the menu first, the notes after — so a narrow window gives up
+             the notes, never the menu or the buttons. Whatever is clicked here opts in with
+             IsHitTestVisibleInChrome (TRAP-69); the empty rest of the bar drags the window. -->
+        <Border Grid.Row="0" Height="39" Padding="14,0,0,0" Background="{DynamicResource CardBrush}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="16,0,0,0">
+                    <StackPanel.Resources>
+                        <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource ToolButton}">
+                            <Setter Property="Width" Value="40" />
+                            <Setter Property="Height" Value="38" />
+                            <Setter Property="Focusable" Value="False" />
+                            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+                        </Style>
+                    </StackPanel.Resources>
+                    <Button Style="{StaticResource CaptionButton}" Click="OnMinimizeClick"
+                            AutomationProperties.Name="{DynamicResource Shell_Minimize}" ToolTip="{DynamicResource Shell_Minimize}">
+                        <ctrl:Icon Data="{StaticResource IconMinus}" Width="12" Height="12" />
+                    </Button>
+                    <!-- Windows 11 shows its snap layouts over this button: MainWindow.Snap answers the
+                         hit test for it as the system's maximise button (HTMAXBUTTON). -->
+                    <Button x:Name="MaximizeButton" Style="{StaticResource CaptionButton}" Click="OnMaximizeClick"
+                            AutomationProperties.Name="{DynamicResource Shell_Maximize}" ToolTip="{DynamicResource Shell_Maximize}">
+                        <ctrl:Icon x:Name="MaximizeIcon" Data="{StaticResource IconSquare}" Width="10" Height="10" />
+                    </Button>
+                    <Button Click="OnCloseWindowClick"
+                            AutomationProperties.Name="{DynamicResource Shell_CloseWindow}" ToolTip="{DynamicResource Shell_CloseWindow}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerForegroundBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <ctrl:Icon Data="{StaticResource IconX}" Width="13" Height="13" />
+                    </Button>
+                </StackPanel>
+
+                <!-- The app's logo; the window's tone rides on the line under the title bar. The dark
+                     bar swallows the logo's navy half, so the dark theme takes a rimmed copy. -->
+                <Image DockPanel.Dock="Left" Width="23" Height="23" VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality">
+                    <Image.Style>
+                        <Style TargetType="Image">
+                            <Setter Property="Source" Value="/Assets/Logo/tcv-logo-128-dark.png" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLightTheme}" Value="True">
+                                    <Setter Property="Source" Value="/Assets/Logo/tcv-logo-128.png" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+
+                <!-- Menu bar. Every header and item is a string-dictionary key (Menu_*); shortcut text is not typed here
+                     but read from HotkeyManager by MenuGestures, so it follows a rebind. Alt mnemonics avoid the letters
+                     the app already owns as Alt+key hotkeys (Alt+G, Alt+S, Alt+W, Alt+N, Alt+T, Alt+B), so Git is G_it.
+                     IsHitTestVisibleInChrome is inherited, so it reaches every item. -->
+                <Menu DockPanel.Dock="Left" x:Name="MainMenu" DataContext="{Binding}" Margin="8,0,0,0" Padding="0"
+                      BorderThickness="0" VerticalAlignment="Center" Background="Transparent"
+                      WindowChrome.IsHitTestVisibleInChrome="True">
+                    <MenuItem Header="{DynamicResource Menu_Files}">
+                        <MenuItem Header="{DynamicResource Menu_Rename}"        Command="{Binding Files.RenameCommand}"         ctrl:MenuGestures.CommandId="Rename" />
+                        <MenuItem Header="{DynamicResource Menu_View}"          Command="{Binding Files.ViewFileCommand}"       ctrl:MenuGestures.CommandId="View" />
+                        <MenuItem Header="{DynamicResource Menu_Edit}"          Command="{Binding Files.EditFileCommand}"       ctrl:MenuGestures.CommandId="Edit" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_Copy}"          Command="{Binding Files.CopyCommand}"           ctrl:MenuGestures.CommandId="Copy" />
+                        <MenuItem Header="{DynamicResource Menu_Move}"          Command="{Binding Files.MoveCommand}"           ctrl:MenuGestures.CommandId="Move" />
+                        <MenuItem Header="{DynamicResource Menu_NewFolder}"     Command="{Binding Files.NewFolderCommand}"      ctrl:MenuGestures.CommandId="NewFolder" />
+                        <MenuItem Header="{DynamicResource Menu_NewFile}"       Command="{Binding Files.NewFileCommand}"        ctrl:MenuGestures.CommandId="NewFile" />
+                        <MenuItem Header="{DynamicResource Menu_Delete}"        Command="{Binding Files.DeleteCommand}"         ctrl:MenuGestures.CommandId="Delete" />
+                        <MenuItem Header="{DynamicResource Menu_DeletePermanent}" Command="{Binding Files.DeletePermanentCommand}" ctrl:MenuGestures.CommandId="DeletePermanent" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_SelectByMask}"  Command="{Binding Files.SelectByMaskCommand}"   ctrl:MenuGestures.CommandId="SelectByMask" />
+                        <MenuItem Header="{DynamicResource Menu_UnselectByMask}" Command="{Binding Files.UnselectByMaskCommand}" ctrl:MenuGestures.CommandId="UnselectByMask" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_CopyFullPath}"  Command="{Binding Files.CopyFullPathToClipboardCommand}" ctrl:MenuGestures.CommandId="CopyFullPath" />
+                        <MenuItem Header="{DynamicResource Menu_CopyNames}"     Command="{Binding Files.CopyNamesToClipboardCommand}"    ctrl:MenuGestures.CommandId="CopyNames" />
+                        <!-- The parameters are the hours of ReadLinks.Lifetimes. -->
+                        <MenuItem Header="{DynamicResource Menu_CopyReadLink}" ctrl:MenuGestures.CommandId="CopyReadLink">
+                            <MenuItem Header="{DynamicResource Link_ForHour}" Command="{Binding Files.CopyReadLinkCommand}" CommandParameter="1" />
+                            <MenuItem Header="{DynamicResource Link_ForDay}"  Command="{Binding Files.CopyReadLinkCommand}" CommandParameter="24" />
+                            <MenuItem Header="{DynamicResource Link_ForWeek}" Command="{Binding Files.CopyReadLinkCommand}" CommandParameter="168" />
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_Properties}"    Command="{Binding Files.ShowWindowsPropertiesCommand}"   ctrl:MenuGestures.CommandId="Properties" />
+                        <MenuItem Header="{DynamicResource Menu_FolderSizes}"   Command="{Binding Files.CalculateFolderSizesCommand}"    ctrl:MenuGestures.CommandId="CalculateFolderSizes" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_Pack}"          Command="{Binding Files.PackFilesCommand}"      ctrl:MenuGestures.CommandId="Pack" />
+                        <MenuItem Header="{DynamicResource Menu_Unpack}"        Command="{Binding Files.UnpackFilesCommand}"    ctrl:MenuGestures.CommandId="Unpack" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_Exit}"          Click="OnMenuQuit"                              ctrl:MenuGestures.CommandId="Quit" />
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Menu_Commands}">
+                        <MenuItem Header="{DynamicResource Menu_FindInProject}" Command="{Binding OpenFileFinderCommand}"       ctrl:MenuGestures.CommandId="FindFiles" />
+                        <MenuItem Header="{DynamicResource Menu_FindFiles}"     Command="{Binding OpenSearchCommand}"           ctrl:MenuGestures.CommandId="Search" />
+                        <MenuItem Header="{DynamicResource Menu_NameSearch}"    Command="{Binding OpenNameSearchCommand}"       ctrl:MenuGestures.CommandId="NameSearch" />
+                        <MenuItem Header="{DynamicResource Menu_QuickFilter}"   Click="OnQuickFilterMenuClick"                  ctrl:MenuGestures.CommandId="QuickFilter" />
+                        <MenuItem Header="{DynamicResource Menu_MultiRename}"   Command="{Binding Files.OpenMultiRenameCommand}" ctrl:MenuGestures.CommandId="MultiRename" />
+                        <MenuItem Header="{DynamicResource Menu_Checksums}"     Command="{Binding Services.OpenChecksumCommand}" ctrl:MenuGestures.CommandId="Checksums" />
+                        <MenuItem Header="{DynamicResource Menu_OperationLog}"  Command="{Binding Services.OpenOperationLogCommand}" ctrl:MenuGestures.CommandId="OperationLog" />
+                        <MenuItem Header="{DynamicResource Menu_CompareDirs}"   Command="{Binding CompareDirectoriesCommand}"   ctrl:MenuGestures.CommandId="CompareDirectories" />
+                        <MenuItem Header="{DynamicResource Menu_SavedOps}"      Command="{Binding OpenSavedOperationsCommand}"  ctrl:MenuGestures.CommandId="SavedOperations" />
+                        <MenuItem Header="{DynamicResource Menu_SavedOpsManage}" Command="{Binding ManageSavedOperationsCommand}" ctrl:MenuGestures.CommandId="SavedOperationsManager" />
+                        <MenuItem Header="{DynamicResource Menu_DropStackAdd}"  Command="{Binding DropStackAddCommand}"         ctrl:MenuGestures.CommandId="DropStackAdd" />
+                        <MenuItem Header="{DynamicResource Menu_DropStackShow}" Command="{Binding DropStackShowCommand}"        ctrl:MenuGestures.CommandId="DropStackShow" />
+                        <MenuItem Header="{DynamicResource Menu_RunGadget}"     Command="{Binding RunGadgetCommand}"            ctrl:MenuGestures.CommandId="RunGadget" />
+                        <MenuItem Header="{DynamicResource Menu_GadgetsManage}" Command="{Binding Services.OpenGadgetsManagerCommand}" ctrl:MenuGestures.CommandId="GadgetsManager" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_Terminal}"      Command="{Binding Services.OpenTerminalCommand}" ctrl:MenuGestures.CommandId="Terminal" />
+                        <MenuItem Header="{DynamicResource Menu_ShellsManage}"  Command="{Binding Services.OpenShellsManagerCommand}" ctrl:MenuGestures.CommandId="ShellsManager" />
+                        <MenuItem Header="{DynamicResource Menu_OpenInEditor}"  Command="{Binding Services.OpenInEditorCommand}" ctrl:MenuGestures.CommandId="OpenInEditor" />
+                        <MenuItem Header="{DynamicResource Menu_OpenInEditorPicker}" Command="{Binding Services.OpenInEditorPickerCommand}" ctrl:MenuGestures.CommandId="OpenInEditorPicker" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_GoRoot}"        Command="{Binding GoToRootCommand}"             ctrl:MenuGestures.CommandId="GoToRoot" />
+                        <MenuItem Header="{DynamicResource Menu_GoHome}"        Command="{Binding GoHomeCommand}"               ctrl:MenuGestures.CommandId="GoHome" />
+                        <MenuItem Header="{DynamicResource Menu_GoClipboard}"   Command="{Binding GoToClipboardPathCommand}"   ctrl:MenuGestures.CommandId="GoToClipboardPath" />
+                        <MenuItem Header="{DynamicResource Menu_EditPath}"      Command="{Binding EditPathCommand}"            ctrl:MenuGestures.CommandId="EditPath" />
+                        <MenuItem Header="{DynamicResource Menu_OpenExplorer}"  Command="{Binding OpenInExplorerCommand}"      ctrl:MenuGestures.CommandId="OpenInExplorer" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_UserTools}"     Command="{Binding Services.OpenUserToolsManagerCommand}" ctrl:MenuGestures.CommandId="UserToolsManager" />
+                        <!-- The tools themselves (6.29): empty until the dialog above defines one -->
+                        <MenuItem Header="{DynamicResource UserTool_Menu}"
+                                  ItemsSource="{Binding Services.UserToolMenuEntries}">
+                            <MenuItem.ItemContainerStyle>
+                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Setter Property="Header" Value="{Binding Header}" />
+                                    <Setter Property="InputGestureText" Value="{Binding Gesture}" />
+                                    <Setter Property="Command"
+                                            Value="{Binding DataContext.Services.RunUserToolCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Setter Property="CommandParameter" Value="{Binding Tool}" />
+                                </Style>
+                            </MenuItem.ItemContainerStyle>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Menu_ConnectionManager}" Command="{Binding Mounts.OpenConnectionManagerCommand}" ctrl:MenuGestures.CommandId="ConnectionManager" />
+                        <MenuItem Header="{DynamicResource Menu_QuickConnect}"  Command="{Binding Mounts.QuickConnectCommand}"  ctrl:MenuGestures.CommandId="QuickConnect" />
+                        <MenuItem Header="{DynamicResource Menu_Reconnect}"     Command="{Binding Mounts.ReconnectCommand}"     ctrl:MenuGestures.CommandId="Reconnect" />
+                        <MenuItem Header="{DynamicResource Menu_Disconnect}"    Command="{Binding Mounts.DisconnectCommand}"    ctrl:MenuGestures.CommandId="Disconnect" />
+                        <MenuItem Header="{DynamicResource Menu_QueueTransfer}" Command="{Binding Mounts.QueueTransferCommand}" ctrl:MenuGestures.CommandId="QueueTransfer" />
+                        <MenuItem Header="{DynamicResource Menu_TransferQueue}" Command="{Binding Mounts.OpenTransferQueueCommand}" ctrl:MenuGestures.CommandId="TransferQueue" />
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Git_Menu}">
+                        <MenuItem Header="{DynamicResource Git_Menu_Worktrees}"   Command="{Binding OpenWorktreeDashboardCommand}" ctrl:MenuGestures.CommandId="GitWorktrees" />
+                        <MenuItem Header="{DynamicResource Git_Menu_NewWorktree}" Command="{Binding NewWorktreeCommand}"           ctrl:MenuGestures.CommandId="GitNewWorktree" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Git_Menu_Commit}"      Command="{Binding OpenGitCommitCommand}"         ctrl:MenuGestures.CommandId="GitCommit" />
+                        <MenuItem Header="{DynamicResource Git_Menu_Branches}"    Command="{Binding OpenGitBranchCommand}"         ctrl:MenuGestures.CommandId="GitBranch" />
+                        <MenuItem Header="{DynamicResource Git_Menu_Stage}"       Command="{Binding GitStageSelectionCommand}"     ctrl:MenuGestures.CommandId="GitStage" />
+                        <MenuItem Header="{DynamicResource Git_Menu_Unstage}"     Command="{Binding GitUnstageSelectionCommand}"   ctrl:MenuGestures.CommandId="GitUnstage" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Git_Menu_Stash}"       Command="{Binding GitStashCommand}"              ctrl:MenuGestures.CommandId="GitStash" />
+                        <MenuItem Header="{DynamicResource Git_Menu_StashPop}"    Command="{Binding GitStashPopCommand}"           ctrl:MenuGestures.CommandId="GitStashPop" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Git_Menu_Diff}"        Command="{Binding OpenGitDiffCommand}"           ctrl:MenuGestures.CommandId="GitDiff" />
+                        <MenuItem Header="{DynamicResource Git_Menu_Clone}"       Command="{Binding GitCloneCommand}"              ctrl:MenuGestures.CommandId="GitClone" />
+                    </MenuItem>
+
+                    <!-- The agent layer: it used to be reachable only from the palette and its shortcuts. -->
+                    <MenuItem Header="{DynamicResource Menu_Agents}">
+                        <MenuItem Header="{DynamicResource Menu_AgentChanges}"  Command="{Binding OpenAgentChangesCommand}"     ctrl:MenuGestures.CommandId="AgentChanges" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_AgentLaunch}"   Command="{Binding LaunchAgentCommand}"          ctrl:MenuGestures.CommandId="AgentLaunch" />
+                        <MenuItem Header="{DynamicResource Menu_RunAgent}"      Command="{Binding Services.RunAgentHereCommand}" ctrl:MenuGestures.CommandId="RunAgentHere" />
+                        <MenuItem Header="{DynamicResource Menu_RunAgentPicker}" Command="{Binding Services.RunAgentPickerCommand}" ctrl:MenuGestures.CommandId="RunAgentPicker" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_AiRename}"      Command="{Binding AiRenameSelectionCommand}"    ctrl:MenuGestures.CommandId="AiRename" />
+                        <MenuItem Header="{DynamicResource Menu_SemanticSearch}" Command="{Binding OpenSemanticSearchCommand}"  ctrl:MenuGestures.CommandId="SemanticSearch" />
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Menu_Settings}">
+                        <MenuItem Header="{DynamicResource Menu_Options}"       Command="{Binding Services.OpenSettingsCommand}" ctrl:MenuGestures.CommandId="Settings" />
+                        <MenuItem Header="{DynamicResource Menu_Hotkeys}"       Command="{Binding Services.OpenHotkeySettingsCommand}" ctrl:MenuGestures.CommandId="HotkeySettings" />
+                        <MenuItem Header="{DynamicResource Menu_PluginManager}" Command="{Binding Services.OpenPluginManagerCommand}" ctrl:MenuGestures.CommandId="PluginManager" />
+                        <Separator />
+                        <!-- How the active panel lists its files; the tick follows the active panel. -->
+                        <MenuItem Header="{DynamicResource Menu_ViewMode}">
+                            <MenuItem Header="{DynamicResource Menu_ViewDetails}"
+                                      Command="{Binding SetViewModeCommand}"
+                                      CommandParameter="{x:Static settings:ViewMode.Details}"
+                                      IsChecked="{Binding ActivePanel.FileList.ViewMode, Mode=OneWay,
+                                                  Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Details}"
+                                      ctrl:MenuGestures.CommandId="ViewModeDetails" />
+                            <MenuItem Header="{DynamicResource Menu_ViewBrief}"
+                                      Command="{Binding SetViewModeCommand}"
+                                      CommandParameter="{x:Static settings:ViewMode.Brief}"
+                                      IsChecked="{Binding ActivePanel.FileList.ViewMode, Mode=OneWay,
+                                                  Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Brief}"
+                                      ctrl:MenuGestures.CommandId="ViewModeBrief" />
+                            <MenuItem Header="{DynamicResource Menu_ViewThumbnails}"
+                                      Command="{Binding SetViewModeCommand}"
+                                      CommandParameter="{x:Static settings:ViewMode.Thumbnails}"
+                                      IsChecked="{Binding ActivePanel.FileList.ViewMode, Mode=OneWay,
+                                                  Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Thumbnails}"
+                                      ctrl:MenuGestures.CommandId="ViewModeThumbnails" />
+                            <MenuItem Header="{DynamicResource Menu_ViewTree}"
+                                      Command="{Binding SetViewModeCommand}"
+                                      CommandParameter="{x:Static settings:ViewMode.Tree}"
+                                      IsChecked="{Binding ActivePanel.FileList.ViewMode, Mode=OneWay,
+                                                  Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Tree}"
+                                      ctrl:MenuGestures.CommandId="ViewModeTree" />
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Menu_SplitVertical}"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding SplitVertical}"
+                                  ctrl:MenuGestures.CommandId="ToggleSplit" />
+                        <MenuItem Header="{DynamicResource Menu_SwapPanels}"    Command="{Binding SwapPanelsCommand}"           ctrl:MenuGestures.CommandId="SwapPanels" />
+                        <MenuItem Header="{DynamicResource Menu_ToggleTheme}"   Command="{Binding ToggleThemeCommand}"          ctrl:MenuGestures.CommandId="ToggleTheme" />
+                        <MenuItem Header="{DynamicResource Menu_FolderTree}"
+                                  Command="{Binding ToggleFolderTreeCommand}"
+                                  IsChecked="{Binding ShowFolderTree, Mode=OneWay}"
+                                  ctrl:MenuGestures.CommandId="FolderTree" />
+                        <!-- A checkmark: the setting is remembered, and folders it hides would otherwise just look missing. -->
+                        <MenuItem Header="{DynamicResource Menu_HideIgnored}"
+                                  Command="{Binding ToggleIgnoredCommand}"
+                                  IsChecked="{Binding ActivePanel.FileList.HideIgnored, Mode=OneWay}"
+                                  ctrl:MenuGestures.CommandId="ToggleIgnored" />
+                        <MenuItem Header="{DynamicResource Menu_ShowHidden}"
+                                  Command="{Binding ToggleHiddenFilesCommand}"
+                                  IsChecked="{Binding ActivePanel.FileList.ShowHiddenFiles, Mode=OneWay}"
+                                  ctrl:MenuGestures.CommandId="ToggleHiddenFiles" />
+                        <MenuItem Header="{DynamicResource Menu_ShowExtensions}"
+                                  Command="{Binding ToggleExtensionsCommand}"
+                                  IsChecked="{Binding ActivePanel.FileList.ShowExtensions, Mode=OneWay}"
+                                  ctrl:MenuGestures.CommandId="ToggleExtensions" />
+                        <MenuItem Header="{DynamicResource Menu_FoldersFirst}"
+                                  Command="{Binding ToggleFoldersFirstCommand}"
+                                  IsChecked="{Binding ActivePanel.FileList.FoldersFirst, Mode=OneWay}"
+                                  ctrl:MenuGestures.CommandId="ToggleFoldersFirst" />
+                        <MenuItem Header="{DynamicResource Menu_Columns}"       Command="{Binding OpenColumnSettingsCommand}"   ctrl:MenuGestures.CommandId="ColumnSettings" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_ExportSettings}" Command="{Binding ExportSettingsCommand}"      ctrl:MenuGestures.CommandId="ExportSettings" />
+                        <MenuItem Header="{DynamicResource Menu_ImportSettings}" Command="{Binding ImportSettingsCommand}"      ctrl:MenuGestures.CommandId="ImportSettings" />
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Menu_Bookmarks}" x:Name="BookmarksMenu" SubmenuOpened="OnBookmarksMenuOpened">
+                        <MenuItem Header="{DynamicResource Menu_AddBookmark}"
+                                  Command="{Binding Services.AddBookmarkCommand}"
+                                  ctrl:MenuGestures.CommandId="AddBookmark"/>
+                        <MenuItem Header="{DynamicResource Menu_ManageBookmarks}"
+                                  Command="{Binding Services.OpenBookmarksManagerCommand}"
+                                  ctrl:MenuGestures.CommandId="BookmarksManager"/>
+                        <Separator/>
+                        <!-- Dynamic bookmark items injected in code-behind -->
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Menu_Workspaces}" x:Name="WorkspacesMenu" SubmenuOpened="OnWorkspacesMenuOpened">
+                        <MenuItem Header="{DynamicResource Menu_Ws_New}"
+                                  Command="{Binding Workspaces.NewWorkspaceCommand}"
+                                  ctrl:MenuGestures.CommandId="NewWorkspace"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_Save}"
+                                  Command="{Binding Workspaces.SaveWorkspaceCommand}"
+                                  ctrl:MenuGestures.CommandId="SaveWorkspace"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_Switch}"
+                                  Click="OnSwitchWorkspaceMenu"
+                                  ctrl:MenuGestures.CommandId="WorkspaceSwitcher"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_Notes}"
+                                  Command="{Binding Workspaces.OpenWorkspaceNotesCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceNotes"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_Terminal}"
+                                  Command="{Binding Workspaces.RunWorkspaceTerminalCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceTerminal"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_NewWindow}"
+                                  Command="{Binding Workspaces.OpenWorkspaceInNewWindowCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceNewWindow"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_Sidebar}"
+                                  Command="{Binding Workspaces.ToggleWorkspaceSidebarCommand}"
+                                  IsChecked="{Binding Workspaces.ShowWorkspaceSidebar, Mode=OneWay}"
+                                  IsCheckable="False"
+                                  ctrl:MenuGestures.CommandId="WorkspaceSidebar"/>
+                        <Separator/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_OpenDefinition}"
+                                  Command="{Binding Workspaces.OpenWorkspaceDefinitionCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceOpenDefinition"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_ExportDefinition}"
+                                  Command="{Binding Workspaces.ExportWorkspaceDefinitionCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceExportDefinition"/>
+                        <Separator/>
+                        <!-- Dynamic workspace items injected in code-behind (see StaticWorkspaceMenuItems) -->
+                    </MenuItem>
+
+                    <MenuItem Header="{DynamicResource Menu_Help}">
+                        <MenuItem Header="{DynamicResource Menu_HelpContents}"  Click="OnMenuHelp"    ctrl:MenuGestures.CommandId="Help" />
+                        <MenuItem Header="{DynamicResource Menu_Palette}"       Click="OnMenuPalette" ctrl:MenuGestures.CommandId="CommandPalette" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_ReportBug}"     Command="{Binding Services.ReportBugCommand}"       ctrl:MenuGestures.CommandId="ReportBug" />
+                        <MenuItem Header="{DynamicResource Menu_Discussions}"   Command="{Binding Services.OpenDiscussionsCommand}" ctrl:MenuGestures.CommandId="Discussions" />
+                        <MenuItem Header="{DynamicResource Menu_OpenLogFolder}" Command="{Binding Services.OpenLogFolderCommand}"   ctrl:MenuGestures.CommandId="OpenLogFolder" />
+                        <Separator />
+                        <MenuItem Header="{DynamicResource Menu_CheckUpdates}"  Command="{Binding Services.CheckForUpdateCommand}" ctrl:MenuGestures.CommandId="CheckForUpdates" />
+                    </MenuItem>
+                </Menu>
+
+                <!-- The rest of the bar. In its middle, the workspace box, where VS Code has its command centre:
+                     the active workspace, and a click drops the workspaces down to switch to. A passing notice
+                     (uploaded, waiting for the second key of a chord) takes the box's place while it lasts. On the
+                     right, the notes, from the most needed: the drop stack, a guest window's warning.
+                     The box has the room first and the notes give way to it whole; with less room than its
+                     MinWidth it goes too (the Workspaces menu and the rail still switch). -->
+                <ctrl:FitPanel>
+                    <Grid Margin="16,0,12,0" MinWidth="160">
+                        <Button Style="{StaticResource ComboButton}" Focusable="False"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="160" MaxWidth="320"
+                                WindowChrome.IsHitTestVisibleInChrome="True" Click="OnWorkspaceBoxClick"
+                                ToolTip="{loc:Live Shell_WorkspaceBoxTip}" AutomationProperties.Name="{DynamicResource Shell_WorkspaceBox}"
+                                Visibility="{Binding TransientNotice, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}">
+                            <Grid>
+                                <TextBlock Text="{Binding WorkspaceTitle}" FontSize="12" FontWeight="Medium"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{DynamicResource Shell_NoWorkspace}" FontSize="12"
+                                           Foreground="{DynamicResource ForegroundDimBrush}" TextTrimming="CharacterEllipsis"
+                                           Visibility="{Binding WorkspaceTitle, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                            </Grid>
+                        </Button>
+                        <TextBlock Text="{Binding TransientNotice}" FontSize="11"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                    <!-- Drop-stack count (6.51): the stack is otherwise invisible until opened. A menu of its own so it
+                         looks like the menu next to it; IsMainMenu is off so Alt still goes to the real one. -->
+                    <Menu IsMainMenu="False" BorderThickness="0" Padding="0" VerticalAlignment="Center"
+                          Background="Transparent" WindowChrome.IsHitTestVisibleInChrome="True"
+                          Visibility="{Binding DropStackBadge.IsVisible, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <MenuItem Header="{Binding DropStackBadge.Text}"
+                                  ToolTip="{Binding DropStackBadge.ToolTip}"
+                                  AutomationProperties.Name="{Binding DropStackBadge.ToolTip}"
+                                  Command="{Binding DropStackShowCommand}" />
+                    </Menu>
+                    <!-- A window opened for one workspace does not write the shared settings (TRAP-22): what is
+                         changed in it, bookmarks included, is gone with it. The main window has nothing to say here. -->
+                    <StackPanel Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Background="Transparent" ToolTip="{DynamicResource Shell_GuestWindowHint}"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                TextElement.Foreground="{DynamicResource WarningBrush}"
+                                Visibility="{Binding IsSecondaryWindow, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <ctrl:Icon Data="{StaticResource IconLockKeyhole}" Width="12" Height="12" Margin="0,0,6,0" />
+                        <TextBlock Text="{DynamicResource Shell_GuestWindow}" FontSize="11" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ctrl:FitPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════ The workspace's line (.project-line, 2px) ═══════════
+             With several windows open this is what tells them apart. -->
+        <Border Grid.Row="1" Height="2" Background="{Binding ToneBrush}" />
+
+        <!-- ═══════════ Tool strip (.main-toolbar, 48px) ═══════════ -->
+        <Border Grid.Row="2" Height="48" Padding="15,0" Background="{DynamicResource BackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                Visibility="{DynamicResource ChromeToolbarVisibility}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource ToolbarAction}" Margin="0,0,7,0"
+                            Command="{Binding OpenGitCommitCommand}"
+                            ToolTip="{loc:Live Tool_CommitTip}" AutomationProperties.Name="{DynamicResource Tool_Commit}">
+                        <StackPanel Orientation="Horizontal">
+                            <ctrl:Icon Data="{StaticResource IconGitCommitHorizontal}" Width="15" Height="15" Margin="0,0,8,0" />
+                            <TextBlock Text="{DynamicResource Tool_Commit}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarOutlineAction}" Margin="0,0,7,0"
+                            Command="{Binding OpenAgentChangesCommand}"
+                            ToolTip="{loc:Live Tool_AgentChangesTip}" AutomationProperties.Name="{DynamicResource Tool_AgentChanges}">
+                        <StackPanel Orientation="Horizontal">
+                            <ctrl:Icon Data="{StaticResource IconBot}" Width="15" Height="15" Margin="0,0,8,0" />
+                            <TextBlock Text="{DynamicResource Tool_AgentChanges}" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CountBadge}" Margin="8,0,0,0"
+                                    Visibility="{Binding Status.HasAgentChanges, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                                <TextBlock Text="{Binding Status.AgentChangeCount}" />
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                    <Border Style="{StaticResource ToolbarSeparator}" />
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Command="{Binding ToggleThemeCommand}"
+                            ToolTip="{loc:Live Tool_ThemeTip}" AutomationProperties.Name="{DynamicResource Tool_Theme}">
+                        <ctrl:Icon>
+                            <ctrl:Icon.Style>
+                                <Style TargetType="ctrl:Icon">
+                                    <Setter Property="Data" Value="{StaticResource IconSun}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLightTheme}" Value="True">
+                                            <Setter Property="Data" Value="{StaticResource IconMoon}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ctrl:Icon.Style>
+                        </ctrl:Icon>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Command="{Binding Services.OpenSettingsCommand}"
+                            ToolTip="{loc:Live Tool_SettingsTip}" AutomationProperties.Name="{DynamicResource Tool_Settings}">
+                        <ctrl:Icon Data="{StaticResource IconSettings}" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ToggleButton Style="{StaticResource ToolToggle}" Margin="0,0,7,0"
+                                  IsChecked="{Binding ShowFolderTree, Mode=OneWay}" Command="{Binding ToggleFolderTreeCommand}"
+                                  ToolTip="{loc:Live Tool_FolderTreeTip}" AutomationProperties.Name="{DynamicResource Tool_FolderTree}">
+                        <ctrl:Icon Data="{StaticResource IconPanelLeft}" />
+                    </ToggleButton>
+                    <ToggleButton Style="{StaticResource ToolToggle}" Margin="0,0,7,0"
+                                  IsChecked="{Binding SplitVertical}"
+                                  ToolTip="{loc:Live Tool_SplitTip}" AutomationProperties.Name="{DynamicResource Tool_Split}">
+                        <ctrl:Icon Data="{StaticResource IconColumns2}" />
+                    </ToggleButton>
+                    <Button Style="{StaticResource ToolButton}" Command="{Binding SwapPanelsCommand}"
+                            ToolTip="{loc:Live Tool_SwapTip}" AutomationProperties.Name="{DynamicResource Tool_Swap}">
+                        <ctrl:Icon Data="{StaticResource IconArrowLeftRight}" />
+                    </Button>
+                    <Border Style="{StaticResource ToolbarSeparator}" Margin="13,0" />
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Command="{Binding OpenSearchCommand}"
+                            ToolTip="{loc:Live Tool_SearchTip}" AutomationProperties.Name="{DynamicResource Tool_Search}">
+                        <ctrl:Icon Data="{StaticResource IconSearch}" />
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Command="{Binding Mounts.OpenConnectionManagerCommand}"
+                            ToolTip="{loc:Live Tool_ConnectionsTip}" AutomationProperties.Name="{DynamicResource Tool_Connections}">
+                        <ctrl:Icon Data="{StaticResource IconNetwork}" />
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Command="{Binding Services.OpenOperationLogCommand}"
+                            ToolTip="{loc:Live Tool_LogTip}" AutomationProperties.Name="{DynamicResource Tool_Log}">
+                        <ctrl:Icon Data="{StaticResource IconHistory}" />
+                    </Button>
+                    <!-- The active panel's branch and how many files changed in its repository -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding Status.HasRepository, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <Border Style="{StaticResource ToolbarSeparator}" Margin="13,0" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="Transparent"
+                                    ToolTip="{loc:Live Tool_BranchTip}"
+                                    TextElement.Foreground="{DynamicResource ForegroundDimBrush}">
+                            <ctrl:Icon Data="{StaticResource IconGitBranch}" Width="14" Height="14" Margin="0,0,7,0" />
+                            <TextBlock Text="{Binding Status.Branch}" FontFamily="{DynamicResource MonoFontFamily}" FontSize="11"
+                                       VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis" />
+                            <Border Style="{StaticResource CountBadge}" Margin="7,0,0,0">
+                                <TextBlock Text="{Binding Status.ChangeCount}" />
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════ Rail | side bar | panels ═══════════
+             The rail and the side bar live outside PanelGrid because ApplySplitOrientation rebuilds that
+             grid's rows and columns from code-behind. -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <!-- The side bar's width lives on the column, set from code (ApplyFolderTreeColumn):
+                     a fixed width on the tree itself left a gap or clipped it when the splitter moved. -->
+                <ColumnDefinition x:Name="FolderTreeColumn" Width="0" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Workspace rail (.workspace-rail, 64px): the switcher, the pinned workspaces by their icon or
+                 two letters under their group's heading, the active one if it is not pinned, «new workspace»;
+                 the terminal line and help at the foot. A pinned workspace is dragged to another place in
+                 its group; a folder dropped here becomes a workspace (MainWindow.Rail, 6.79). ── -->
+            <Border x:Name="WorkspaceRail" Grid.Column="0" Width="64" Padding="8,15"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                    AllowDrop="True" DragEnter="OnRailDragOver" DragOver="OnRailDragOver"
+                    DragLeave="OnRailDragLeave" Drop="OnRailDrop"
+                    Visibility="{Binding Workspaces.IsWorkspaceSidebarVisible, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                <Border.Resources>
+                    <!-- One workspace: its icon, else its two letters, in a 39×38 button, a dot in its colour; the
+                         one the panels are on is framed and filled in its colour with a bar at the rail's edge.
+                         Shared by the pinned ones and the unpinned active one. WPF draws the emoji in one colour,
+                         so the icon takes the letters' colours, as the tool strip's icons do. -->
+                    <ControlTemplate x:Key="RailWorkspaceTemplate" TargetType="Button">
+                        <Grid Width="39" Height="38">
+                            <Border x:Name="Bar" Width="3" Height="22" Margin="-13.5,0,0,0"
+                                    HorizontalAlignment="Left" CornerRadius="0,3,3,0"
+                                    Background="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Visibility="Hidden" />
+                            <Border x:Name="Bd" CornerRadius="4" BorderThickness="1"
+                                    BorderBrush="Transparent" Background="Transparent" />
+                            <Border x:Name="Tint" CornerRadius="4" Opacity="0"
+                                    Background="{DynamicResource HoverBrush}" />
+                            <TextBlock x:Name="TagText" Text="{Binding Name, Converter={x:Static conv:WorkspaceTagConverter.Instance}}"
+                                       FontFamily="{DynamicResource MonoFontFamily}" FontSize="11"
+                                       Foreground="{DynamicResource ForegroundDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                            <TextBlock x:Name="IconText" Text="{Binding Icon}" FontSize="16"
+                                       Foreground="{DynamicResource ForegroundDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            <Ellipse Width="5" Height="5" Margin="0,0,5,5"
+                                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                     Fill="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tint" Property="Opacity" Value="1" />
+                                <Setter TargetName="TagText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                                <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                            </Trigger>
+                            <DataTrigger Value="True">
+                                <DataTrigger.Binding>
+                                    <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
+                                        <Binding Path="Name" />
+                                        <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
+                                                 RelativeSource="{RelativeSource AncestorType=Window}" />
+                                    </MultiBinding>
+                                </DataTrigger.Binding>
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <Setter TargetName="TagText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <Setter TargetName="IconText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </DataTrigger>
+                            <!-- No colour of its own (the dot is not drawn): the frame, the bar and the
+                                 letters would all be null on the slab, so the current accent stands in.
+                                 After the trigger above, so it wins. -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Value="True">
+                                        <Condition.Binding>
+                                            <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
+                                                <Binding Path="Name" />
+                                                <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
+                                                         RelativeSource="{RelativeSource AncestorType=Window}" />
+                                            </MultiBinding>
+                                        </Condition.Binding>
+                                    </Condition>
+                                    <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static conv:NullToVisibilityConverter.Instance}}"
+                                               Value="{x:Static Visibility.Collapsed}" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="TagText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Border.Resources>
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Tag="Help" Click="OnRunCommandClick"
+                                ToolTip="{loc:Live Rail_HelpTip}" AutomationProperties.Name="{DynamicResource Rail_Help}">
+                            <ctrl:Icon Data="{StaticResource IconCircleHelp}" />
+                        </Button>
+                    </StackPanel>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <StackPanel HorizontalAlignment="Center">
+                            <Button Style="{StaticResource ToolButton}" Tag="WorkspaceSwitcher" Click="OnRunCommandClick"
+                                    ToolTip="{loc:Live Rail_SwitcherTip}" AutomationProperties.Name="{DynamicResource Rail_Switcher}">
+                                <ctrl:Icon Data="{StaticResource IconLayers}" />
+                            </Button>
+
+                            <ItemsControl x:Name="RailPinnedList" ItemsSource="{Binding Workspaces.PinnedGroups}" Focusable="False"
+                                          PreviewMouseLeftButtonDown="OnRailPinnedMouseDown" PreviewMouseMove="OnRailPinnedMouseMove"
+                                          PreviewMouseLeftButtonUp="OnRailPinnedMouseUp">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <!-- A group's heading, in the side bar's section-label style and cut to the rail;
+                                                 the whole name in its tooltip. The ungrouped block, first, has none. -->
+                                            <TextBlock Text="{Binding Label}" ToolTip="{Binding Header}"
+                                                       Visibility="{Binding HasHeader, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                                                       Margin="0,16,0,-4" MaxWidth="48" HorizontalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" FontSize="9" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource ForegroundDimBrush}" />
+                                            <ItemsControl ItemsSource="{Binding Items}" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <!-- A right-click opens its actions from the Workspaces menu. -->
+                                                        <Button x:Name="WorkspaceButton"
+                                                                Margin="0,13,0,0"
+                                                                Cursor="Hand" Focusable="False"
+                                                                ToolTip="{Binding Name}"
+                                                                AutomationProperties.Name="{Binding Name}"
+                                                                ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
+                                                                Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
+                                                                Template="{StaticResource RailWorkspaceTemplate}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- The workspace the panels are on when it is not pinned: after a rule, as the taskbar shows a
+                                 running program that is not pinned. It leaves the rail when you switch away; a right-click
+                                 pins it. Not dimmed: half strength means "unavailable" (DESIGN). -->
+                            <StackPanel DataContext="{Binding Workspaces.UnpinnedActiveWorkspace}"
+                                        Visibility="{Binding Converter={x:Static conv:NullToVisibilityConverter.Instance}}">
+                                <Border Width="24" Height="1" Margin="0,13,0,0" Background="{DynamicResource BorderBrush}" />
+                                <Button Margin="0,13,0,0"
+                                        Cursor="Hand" Focusable="False"
+                                        AutomationProperties.Name="{Binding Name}"
+                                        ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
+                                        Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
+                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
+                                        Template="{StaticResource RailWorkspaceTemplate}">
+                                    <Button.ToolTip>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" />
+                                            <TextBlock Text="{DynamicResource Rail_UnpinnedTip}" Foreground="{DynamicResource ForegroundDimBrush}" />
+                                        </StackPanel>
+                                    </Button.ToolTip>
+                                </Button>
+                            </StackPanel>
+
+                            <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Command="{Binding Workspaces.NewWorkspaceCommand}"
+                                    ToolTip="{loc:Live Rail_AddTip}" AutomationProperties.Name="{DynamicResource Rail_Add}">
+                                <ctrl:Icon Data="{StaticResource IconPlus}" />
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- ── Side bar «Explorer» (.folder-sidebar): the docked folder tree (6.21), the pinned folders
+                 (bookmarks) and the active panel's disk. Unlike the Tree view *mode*, which replaces one
+                 panel's file list, this stays put while both panels keep showing files. ── -->
+            <Border Grid.Column="1"
+                    Background="{DynamicResource BackgroundAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                    Visibility="{Binding ShowFolderTree, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionLabel}"
+                               Text="{DynamicResource Side_Explorer}" />
+
+                    <!-- The active panel's disk: how full it is -->
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                            Padding="15,14"
+                            Visibility="{Binding HasDisk, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:Icon Data="{StaticResource IconHardDrive}" Width="12" Height="12" Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding DiskCaption}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <ProgressBar Height="3" Margin="0,9" Maximum="1" Value="{Binding DiskUsed, Mode=OneWay}"
+                                         Foreground="{DynamicResource ForegroundDimBrush}" Background="{DynamicResource BorderBrush}"
+                                         IsHitTestVisible="False" />
+                            <TextBlock Text="{Binding DiskFreeText}" FontSize="11" Foreground="{DynamicResource ForegroundDimBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <StackPanel>
+                            <!-- Follows the active panel (6.52): the panel's folder is opened and selected, and
+                                 scrolled into view (TreeViewItem.Selected). -->
+                            <TreeView x:Name="FolderTree"
+                                      ItemsSource="{Binding FolderTreeRoots}"
+                                      BorderThickness="0"
+                                      Background="Transparent"
+                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+
+                                      SelectedItemChanged="OnFolderTreeSelectedItemChanged"
+                                      TreeViewItem.Selected="OnFolderTreeItemSelected"
+                                      PreviewMouseLeftButtonDown="OnFolderTreeMouseDown"
+                                      MouseLeftButtonUp="OnFolderTreeMouseUp">
+                                <TreeView.ItemContainerStyle>
+                                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource SideBarTreeItem}">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                    </Style>
+                                </TreeView.ItemContainerStyle>
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ctrl:Icon x:Name="NodeIcon" Data="{StaticResource IconFolder}" Width="14" Height="14" Margin="0,0,7,0" />
+                                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <HierarchicalDataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter TargetName="NodeIcon" Property="Data" Value="{StaticResource IconFolderOpen}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDriveRoot}" Value="True">
+                                                <Setter TargetName="NodeIcon" Property="Data" Value="{StaticResource IconHardDrive}" />
+                                            </DataTrigger>
+                                        </HierarchicalDataTemplate.Triggers>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <!-- Pinned folders: the bookmarks, one click away -->
+                            <StackPanel>
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Bookmarks.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Style="{StaticResource SectionLabel}" Margin="15,30,15,11"
+                                           Text="{DynamicResource Side_Pinned}" />
+                                <ItemsControl ItemsSource="{Binding Bookmarks}" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource SideBarRow}" ToolTip="{Binding Path}"
+                                                    AutomationProperties.Name="{Binding Name}"
+                                                    Command="{Binding DataContext.Services.NavigateToBookmarkCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding Path}">
+                                                <DockPanel>
+                                                    <ctrl:Icon DockPanel.Dock="Left" Data="{StaticResource IconFolder}" Width="14" Height="14" Margin="0,0,7,0" />
+                                                    <ctrl:Icon DockPanel.Dock="Right" Data="{StaticResource IconPin}" Width="10" Height="10" />
+                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                </DockPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Column="2" Width="4" HorizontalAlignment="Stretch"
+                          ResizeBehavior="PreviousAndNext"
+                          DragCompleted="OnFolderTreeSplitterDragCompleted"
+                          Margin="-2,0,-2,0"
+                          Background="Transparent" Cursor="SizeWE"
+                          Visibility="{Binding ShowFolderTree, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+
+            <!-- Dual panels: they meet at 1px of border (the splitter's line in a wider grab area) -->
+            <Grid Grid.Column="3" x:Name="PanelGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="200" />
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="*" MinWidth="200" />
+                </Grid.ColumnDefinitions>
+
+                <panels:PanelView x:Name="LeftPanelView"
+                                  Grid.Column="0"
+                                  DataContext="{Binding LeftPanel}"
+                                  PreviewMouseDown="OnLeftPanelMouseDown" />
+
+                <GridSplitter x:Name="PanelSplitter"
+                              Grid.Column="1"
+                              Width="5"
+                              HorizontalAlignment="Stretch"
+                              Cursor="SizeWE" />
+
+                <panels:PanelView x:Name="RightPanelView"
+                                  Grid.Column="2"
+                                  DataContext="{Binding RightPanel}"
+                                  PreviewMouseDown="OnRightPanelMouseDown" />
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════ The latest agent run (.agent-summary) ═══════════
+             What the agent left to review in the active panel's repository: shown while there is something. -->
+        <Border Grid.Row="4" MinHeight="64" Padding="16,13" Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                Visibility="{Binding Status.HasAgentRun, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+            <DockPanel>
+                <Border DockPanel.Dock="Left" Width="32" Height="32" CornerRadius="5" BorderThickness="1"
+                        BorderBrush="{DynamicResource BorderBrush}" TextElement.Foreground="{DynamicResource InfoBrush}">
+                    <ctrl:Icon Data="{StaticResource IconBot}" Width="19" Height="19" />
+                </Border>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" Background="Transparent"
+                                ToolTip="{Binding Status.AgentEvidenceHint}"
+                                TextElement.Foreground="{DynamicResource ForegroundDimBrush}">
+                        <ctrl:Icon Data="{StaticResource IconShieldCheck}" Width="12" Height="12" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding Status.AgentEvidence}" FontSize="11" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Style="{StaticResource ToolbarOutlineAction}" Command="{Binding OpenAgentChangesCommand}"
+                            AutomationProperties.Name="{DynamicResource Shell_ReviewChanges}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{DynamicResource Shell_ReviewChanges}" VerticalAlignment="Center" />
+                            <TextBlock Text="{loc:Live Shell_ReviewGesture}" Style="{StaticResource KbdText}" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock FontSize="12" FontWeight="Medium">
+                            <Run Text="{Binding Status.AgentTitle, Mode=OneWay}" />
+                            <Run Text="·" Foreground="{DynamicResource ForegroundDimBrush}" FontWeight="Normal" />
+                            <Run Text="{Binding Status.AgentTool, Mode=OneWay}" Foreground="{DynamicResource ForegroundDimBrush}" FontWeight="Normal" />
+                        </TextBlock>
+                        <TextBlock FontSize="10" Margin="0,4,0,0" Foreground="{DynamicResource ForegroundDimBrush}">
+                            <Run Text="{Binding Status.AgentFiles, Mode=OneWay}" />
+                            <Run Text="·" />
+                            <Run Text="{Binding Status.Branch, Mode=OneWay}" Foreground="{DynamicResource ForegroundBrush}" />
+                            <Run Text="·" />
+                            <Run Text="{Binding Status.AgentWhen, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0"
+                                Visibility="{Binding Status.HasLineStats, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <TextBlock Text="{Binding Status.LinesAdded}" FontFamily="{DynamicResource MonoFontFamily}" FontSize="10"
+                                   Foreground="{DynamicResource SuccessBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Status.LinesRemoved}" FontFamily="{DynamicResource MonoFontFamily}" FontSize="10"
+                                   Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════ Command line (.bottom-command, 36px) ═══════════
+             `cd` moves the active panel; anything else runs in a terminal in its folder, in the shell named
+             in the box on the left (cmd, PowerShell, Git Bash, WSL …). The box drops the shells down; it
+             takes no focus, so a click leaves the keyboard where it was. -->
+        <Border Grid.Row="5" Height="36" Padding="15,0" Background="{DynamicResource BackgroundAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                Visibility="{DynamicResource ChromeCommandLineVisibility}">
+            <DockPanel>
+                <Button x:Name="ShellBox" DockPanel.Dock="Left" Style="{StaticResource ComboButton}" Focusable="False"
+                        Height="24" Padding="8,0,24,0" MaxWidth="200" Margin="0,0,10,0" VerticalAlignment="Center"
+                        Click="OnShellBoxClick"
+                        ToolTip="{DynamicResource Shell_ShellBoxTip}" AutomationProperties.Name="{DynamicResource Shell_ShellBox}">
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:Icon Data="{StaticResource IconTerminal}" Width="12" Height="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,0,6,0" />
+                        <TextBlock Text="{Binding ShellName}" FontFamily="{DynamicResource MonoFontFamily}" FontSize="11"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Button>
+                <TextBlock DockPanel.Dock="Left" Text="{Binding CommandPrompt}" FontFamily="{DynamicResource MonoFontFamily}"
+                           FontSize="11" Foreground="{DynamicResource ForegroundDimBrush}" VerticalAlignment="Center"
+                           MaxWidth="420" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" />
+                <TextBlock DockPanel.Dock="Right" Text="{DynamicResource Shell_CommandEnter}" Style="{StaticResource KbdText}" Margin="10,0,0,0" />
+                <Grid>
+                    <TextBox x:Name="CommandLineBox"
+                             Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{DynamicResource Shell_CommandLine}"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             FontFamily="{DynamicResource MonoFontFamily}" FontSize="11"
+                             VerticalAlignment="Center"
+                             PreviewKeyDown="OnCommandLineKeyDown" />
+                    <TextBlock Text="{DynamicResource Shell_CommandPlaceholder}" IsHitTestVisible="False"
+                               FontFamily="{DynamicResource MonoFontFamily}" FontSize="11" Margin="2,0,0,0"
+                               Foreground="{DynamicResource ForegroundDimBrush}" VerticalAlignment="Center"
+                               Visibility="{Binding CommandText, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════ F-keys (.function-bar) ═══════════ -->
+        <ctrl:CommandBar Grid.Row="6" x:Name="FunctionKeyBar" DataContext="{Binding}"
+                         Visibility="{DynamicResource ChromeFunctionKeyBarVisibility}" />
+
+        <!-- ═══════════ Status line (.app-status, 25px) ═══════════ -->
+        <Border Grid.Row="7" Height="25" Padding="14,0" Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                TextElement.Foreground="{DynamicResource ForegroundDimBrush}" TextElement.FontSize="9"
+                Visibility="{DynamicResource ChromeAppStatusBarVisibility}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ctrl:Icon Data="{StaticResource IconCheck}" Width="10" Height="10" Margin="0,0,6,0" />
+                    <TextBlock Text="{Binding Status.OperationsText}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Status.AiText}" Margin="15,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Status.McpText}" Margin="15,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding VersionText}" Margin="15,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="5" Height="5" Fill="{Binding ToneBrush}" Margin="0,0,15,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ProjectName}" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding Status.HasRepository, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <ctrl:Icon Data="{StaticResource IconGitBranch}" Width="10" Height="10" Margin="15,0,6,0" />
+                        <TextBlock Text="{Binding Status.Branch}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Status.ChangeCountText}" Margin="15,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,96 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.AiRenameDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        xmlns:loc="clr-namespace:TCV.App.Localization"
+        Title="{Binding WindowTitle}"
+        Width="900" Height="540"
+        MinWidth="640" MinHeight="380">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,8">
+            <!-- loc:Live, not DynamicResource: the text names the operation log's shortcut. -->
+            <TextBlock Text="{loc:Live AiRename_Explain}"
+                       Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+            <!-- The file contents go to the model: say where. With a cloud endpoint they leave the machine. -->
+            <TextBlock Text="{Binding Destination}" Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap"
+                       Foreground="{DynamicResource WarningBrush}" />
+            <!-- Files the command left out of this batch (code, or past the batch size). -->
+            <TextBlock Text="{Binding Notice}" Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap"
+                       Visibility="{Binding HasNotice, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+        </StackPanel>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Rows}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  IsReadOnly="{Binding IsApplied}"
+                  AutomationProperties.Name="{DynamicResource AiRename_Title}"
+                  Background="{DynamicResource BackgroundBrush}"
+                  Foreground="{DynamicResource ForegroundBrush}"
+                  Style="{StaticResource StripedGrid}">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn ElementStyle="{StaticResource GridCheckBox}" EditingElementStyle="{StaticResource GridCheckBox}" Header="{DynamicResource AiRename_ColApply}" Width="60"
+                                        Binding="{Binding Apply, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridTextColumn Header="{DynamicResource AiRename_ColFrom}" Width="280"
+                                    Binding="{Binding Original}" IsReadOnly="True" />
+                <!-- Editable on purpose: a nearly-right name is faster to correct than to retype. -->
+                <DataGridTextColumn Header="{DynamicResource AiRename_ColTo}" Width="300"
+                                    Binding="{Binding Proposed, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridTemplateColumn Header="{DynamicResource AiRename_ColNote}" Width="*" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding NoteText}" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding NoteText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Problem}" Value="">
+                                                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}"
+                   Margin="0,8,0,0" Opacity="0.8" FontSize="11" TextWrapping="Wrap" />
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Button HorizontalAlignment="Left" MinWidth="150"
+                    Content="{DynamicResource AiRename_Propose}"
+                    Command="{Binding ProposeCommand}"
+                    IsEnabled="{Binding CanPropose}" />
+
+            <!-- Apply is deliberately not the default button: one Enter must not rename a whole batch. -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{DynamicResource AiRename_Undo}" MinWidth="110" Margin="0,0,8,0"
+                        Command="{Binding UndoCommand}"
+                        IsEnabled="{Binding CanUndo}" />
+                <Button Content="{DynamicResource AiRename_Apply}" MinWidth="150" Margin="0,0,8,0"
+                        Command="{Binding ApplyCommand}"
+                        IsEnabled="{Binding CanApply}" />
+                <Button Content="{DynamicResource Close}" MinWidth="90"
+                        Command="{Binding CancelCommand}"
+                        IsCancel="True" IsDefault="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</local:TcvDialog>

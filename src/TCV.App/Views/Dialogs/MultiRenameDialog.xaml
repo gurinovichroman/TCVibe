@@ -1,0 +1,247 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.MultiRenameDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        Title="{DynamicResource MR_Title}" Height="640" Width="860"
+        MinHeight="420" MinWidth="700"
+        FocusManager.FocusedElement="{Binding ElementName=TemplateBox}">
+
+    <Window.Resources>
+        <Style TargetType="GroupBox" BasedOn="{StaticResource {x:Type GroupBox}}">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource InfoBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" MinHeight="80"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Settings scroll on a small screen; the preview and the buttons never leave it -->
+        <ScrollViewer Grid.Row="0" MaxHeight="320" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Profiles -->
+                <GroupBox Header="{DynamicResource MR_Profile}" IsEnabled="{Binding ProfilesEnabled}">
+                    <StackPanel Orientation="Horizontal" Margin="8">
+                        <Label Content="{DynamicResource MR_ProfileLoad}" Target="{Binding ElementName=ProfileCombo}" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="ProfileCombo" Width="180" Margin="4,0,16,0" VerticalAlignment="Center"
+                                  ItemsSource="{Binding ProfileNames}"
+                                  SelectedItem="{Binding SelectedProfile}"/>
+                        <Label Content="{DynamicResource MR_ProfileName}" Target="{Binding ElementName=ProfileNameBox}" VerticalAlignment="Center"/>
+                        <TextBox x:Name="ProfileNameBox" Width="150" Margin="4,0,8,0" VerticalAlignment="Center"
+                                 Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="{DynamicResource MR_ProfileNameTip}"/>
+                        <Button Content="{DynamicResource MR_ProfileSave}" Margin="0,0,6,0" Padding="10,2"
+                                Command="{Binding SaveProfileCommand}"/>
+                        <Button Content="{DynamicResource MR_ProfileDelete}" Padding="10,2"
+                                Command="{Binding DeleteProfileCommand}"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Template input -->
+                <GroupBox Header="{DynamicResource MR_TemplateGroup}">
+                    <Grid Margin="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="6"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource MR_Template}" Target="{Binding ElementName=TemplateBox}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="TemplateBox"
+                                 Text="{Binding TemplateText, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="{DynamicResource MR_TemplateTip}"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="1" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                                   Text="{DynamicResource MR_Placeholders}"/>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Rules section -->
+                <GroupBox Header="{DynamicResource MR_RulesGroup}">
+                    <Grid Margin="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: case change + counter -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource MR_CaseTitle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <CheckBox Content="{DynamicResource MR_CaseUpper}" IsChecked="{Binding ApplyUppercase}" Margin="0,0,12,0"/>
+                                <CheckBox Content="{DynamicResource MR_CaseLower}" IsChecked="{Binding ApplyLowercase}" Margin="0,0,12,0"/>
+                                <CheckBox Content="{DynamicResource MR_CaseTitleCase}" IsChecked="{Binding ApplyTitleCase}"/>
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource MR_CounterTitle}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="{DynamicResource MR_CounterStart}" Target="{Binding ElementName=CounterStartBox}"/>
+                                <TextBox x:Name="CounterStartBox" Width="50" Margin="4,0,8,0"
+                                         Text="{Binding CounterStart, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="{DynamicResource MR_CounterStep}" Target="{Binding ElementName=CounterStepBox}"/>
+                                <TextBox x:Name="CounterStepBox" Width="50" Margin="4,0,8,0"
+                                         Text="{Binding CounterStep, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="{DynamicResource MR_CounterWidth}" Target="{Binding ElementName=CounterWidthBox}"/>
+                                <TextBox x:Name="CounterWidthBox" Width="50" Margin="4,0,0,0"
+                                         Text="{Binding CounterWidth, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="{DynamicResource MR_CounterWidthTip}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Right: regex replace -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource MR_RegexTitle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="4"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="4"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource MR_RegexFind}" Target="{Binding ElementName=RegexFindBox}"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" x:Name="RegexFindBox"
+                                         Text="{Binding RegexFind, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource MR_RegexReplace}" Target="{Binding ElementName=RegexReplaceBox}"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" x:Name="RegexReplaceBox"
+                                         Text="{Binding RegexReplace, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                <CheckBox Grid.Row="4" Grid.Column="1"
+                                          Content="{DynamicResource MR_RegexCase}"
+                                          IsChecked="{Binding RegexCaseSensitive}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Range rules: delete then insert -->
+                <GroupBox Header="{DynamicResource MR_RangeGroup}">
+                    <Grid Margin="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="6"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Left: delete range -->
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource MR_DeleteTitle}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="{DynamicResource MR_DeleteFrom}" Target="{Binding ElementName=DeleteStartBox}"/>
+                                <TextBox x:Name="DeleteStartBox" Width="60" Margin="4,0,12,0"
+                                         Text="{Binding DeleteStart, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="{DynamicResource MR_DeleteCount}" Target="{Binding ElementName=DeleteCountBox}"/>
+                                <TextBox x:Name="DeleteCountBox" Width="60" Margin="4,0,0,0"
+                                         Text="{Binding DeleteCount, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="{DynamicResource MR_DeleteCountTip}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Right: insert text -->
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource MR_InsertTitle}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="{DynamicResource MR_InsertText}" Target="{Binding ElementName=InsertTextBox}"/>
+                                <TextBox x:Name="InsertTextBox" Width="110" Margin="4,0,12,0"
+                                         Text="{Binding InsertText, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="{DynamicResource MR_InsertPosition}" Target="{Binding ElementName=InsertPositionBox}"/>
+                                <TextBox x:Name="InsertPositionBox" Width="60" Margin="4,0,0,0"
+                                         Text="{Binding InsertPosition, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="{DynamicResource MR_InsertPositionTip}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                            <CheckBox Content="{DynamicResource MR_SkipExtension}"
+                                      IsChecked="{Binding RangeRulesSkipExtension}"/>
+                            <TextBlock Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                                       Margin="0,4,0,0"
+                                       Text="{DynamicResource MR_RuleOrder}"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Preview DataGrid -->
+        <GroupBox Grid.Row="1" Header="{DynamicResource MR_Preview}">
+            <DataGrid ItemsSource="{Binding PreviewItems}" Margin="0"
+                      AutomationProperties.Name="{DynamicResource MR_Preview}">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasConflict}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource MR_ColOld}"
+                                        Binding="{Binding OldName}"
+                                        Width="*"/>
+                    <DataGridTextColumn Header="{DynamicResource MR_ColNew}"
+                                        Binding="{Binding NewName}"
+                                        Width="*"/>
+                    <DataGridTextColumn Header="{DynamicResource MR_ColConflict}"
+                                        Binding="{Binding ConflictText}"
+                                        Width="190"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- Status bar -->
+        <TextBlock Grid.Row="2"
+                   Text="{Binding StatusText}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource InfoBrush}"
+                   Margin="0,4,0,4"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource MR_Rename}"
+                    Command="{Binding ConfirmCommand}"
+                    IsDefault="True"
+                    MinWidth="110"
+                    Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource MR_Undo}"
+                    Command="{Binding UndoCommand}"
+                    MinWidth="110"
+                    ToolTip="{DynamicResource MR_UndoTip}"
+                    Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource Close}" Click="CloseButton_Click" IsCancel="True" MinWidth="90"/>
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

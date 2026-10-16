@@ -1,0 +1,90 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.AgentApprovalDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{Binding WindowTitle}"
+        Width="620" Height="440"
+        MinWidth="480" MinHeight="340">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{Binding Headline}"
+                   FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <!-- A delete or a move gets the warning colour; a copy does not need one. -->
+                        <DataTrigger Binding="{Binding IsDestructive}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TextBlock Grid.Row="1" Text="{DynamicResource AgentApprove_Targets}"
+                   Margin="0,14,0,4" Opacity="0.7" />
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding Targets}"
+                 AutomationProperties.Name="{DynamicResource AgentApprove_Targets}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+
+        <!-- A wrapping read-only box in a star column: a horizontal StackPanel measures its children
+             without a width limit, so TextTrimming never applied and a long destination was cut off by
+             the window edge — and the tail of a path is what says where the files end up. -->
+        <Grid Grid.Row="3" Margin="0,10,0,0"
+              Visibility="{Binding HasDestination, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{DynamicResource AgentApprove_Destination}" Opacity="0.7" />
+            <TextBox Grid.Column="1" Margin="6,0,0,0" Text="{Binding Destination, Mode=OneWay}"
+                     IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                     FontWeight="SemiBold" TextWrapping="Wrap"
+                     AutomationProperties.Name="{DynamicResource AgentApprove_Destination}" />
+        </Grid>
+
+        <TextBlock Grid.Row="4" Text="{Binding Consequence}" Margin="0,10,0,0"
+                   TextWrapping="Wrap" FontWeight="SemiBold"
+                   Visibility="{Binding HasConsequence, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ConsequenceIsSevere}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TextBlock Grid.Row="5" Text="{Binding Footnote}" Margin="0,12,0,0"
+                   Opacity="0.7" FontSize="11" TextWrapping="Wrap" />
+
+        <TextBlock Grid.Row="6" Text="{Binding CountdownText}" Margin="0,8,0,0" FontSize="11"
+                   Foreground="{DynamicResource WarningBrush}"
+                   Visibility="{Binding HasCountdown, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="{DynamicResource AgentApprove_Allow}" MinWidth="130" Margin="0,0,8,0"
+                    Command="{Binding ApproveCommand}" />
+            <!-- Refuse is the default: this window interrupts something else, and Enter must not
+                 become a way to approve a write without reading it. -->
+            <Button Content="{DynamicResource AgentApprove_Refuse}" MinWidth="130"
+                    Command="{Binding RefuseCommand}"
+                    IsDefault="True" IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

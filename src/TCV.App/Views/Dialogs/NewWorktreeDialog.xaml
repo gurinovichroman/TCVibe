@@ -1,0 +1,102 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.NewWorktreeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        Title="{Binding WindowTitle}"
+        Width="620" Height="470"
+        MinWidth="520" MinHeight="430">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0"
+                   Text="{DynamicResource Git_WtTask}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="0" Grid.Column="1"
+                 x:Name="TaskBox"
+                 Margin="0,0,0,6"
+                 Text="{Binding TaskTitle, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{DynamicResource Git_WtTask}"
+                 ToolTip="{DynamicResource Git_WtTaskHint}" />
+
+        <TextBlock Grid.Row="1" Grid.Column="0"
+                   Text="{DynamicResource Git_WtBranch}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="1" Grid.Column="1"
+                 Margin="0,0,0,6"
+                 Text="{Binding Branch, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{DynamicResource Git_WtBranch}"
+                 FontFamily="Consolas" />
+
+        <TextBlock Grid.Row="2" Grid.Column="0"
+                   Text="{DynamicResource Git_WtPath}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="2" Grid.Column="1"
+                 Margin="0,0,0,6"
+                 Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{DynamicResource Git_WtPath}"
+                 FontFamily="Consolas" />
+
+        <TextBlock Grid.Row="3" Grid.Column="0"
+                   Text="{DynamicResource Git_WtBase}"
+                   VerticalAlignment="Center" Margin="0,0,8,6" />
+        <TextBox Grid.Row="3" Grid.Column="1"
+                 Margin="0,0,0,6"
+                 Text="{Binding BaseCommittish, UpdateSourceTrigger=PropertyChanged}"
+                 ToolTip="{DynamicResource Git_WtBaseHint}"
+                 AutomationProperties.Name="{DynamicResource Git_WtBase}"
+                 FontFamily="Consolas" />
+
+        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,6,0,0">
+            <CheckBox Content="{DynamicResource Git_WtCarry}"
+                      IsChecked="{Binding CarryFiles}"
+                      ToolTip="{DynamicResource Git_WtCarryHint}"
+                      Margin="0,0,0,4" />
+            <CheckBox Content="{DynamicResource Git_WtRunSetup}"
+                      IsChecked="{Binding RunSetupCommand}"
+                      IsEnabled="{Binding HasSetupCommand}"
+                      ToolTip="{Binding SetupCommand}"
+                      Margin="0,0,0,4" />
+            <CheckBox Content="{DynamicResource Git_WtWorkspace}"
+                      IsChecked="{Binding CreateWorkspace}" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                   Text="{Binding ValidationMessage}"
+                   Foreground="{DynamicResource DangerBrush}"
+                   FontSize="11" TextWrapping="Wrap"
+                   Margin="0,8,0,0" />
+
+        <!-- Non-blocking note: an existing branch is checked out rather than created; a folder inside the repo shows up as untracked. -->
+        <TextBlock Grid.Row="5" Grid.Column="1"
+                   Text="{Binding InfoMessage}"
+                   Foreground="{DynamicResource ForegroundDimBrush}"
+                   FontSize="11" TextWrapping="Wrap"
+                   VerticalAlignment="Top" Margin="0,6,0,0" />
+
+        <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{DynamicResource Git_WtCreate}" MinWidth="110" Margin="0,0,8,0"
+                    Command="{Binding ConfirmCommand}"
+                    IsEnabled="{Binding CanConfirm}"
+                    IsDefault="True" />
+            <Button Content="{DynamicResource Cancel}" Width="90"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

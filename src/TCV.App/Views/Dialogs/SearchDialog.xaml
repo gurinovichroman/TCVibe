@@ -1,0 +1,244 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.SearchDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:vm="clr-namespace:TCV.App.ViewModels"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource Search_Title}" Height="700" Width="960"
+        MinHeight="480" MinWidth="720"
+        FocusManager.FocusedElement="{Binding ElementName=ContentBox}">
+
+    <local:TcvDialog.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Criteria panel -->
+        <GroupBox Grid.Row="0" Header="{DynamicResource Search_Criteria}"
+                  Margin="0,0,0,6">
+            <Grid Margin="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="6"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Path -->
+                <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource Search_Where}" Target="{Binding ElementName=PathBox}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" x:Name="PathBox"
+                         AutomationProperties.Name="{DynamicResource Search_Where}"
+                         Text="{Binding SearchPath, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <!-- Name pattern -->
+                <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource Search_FileName}" Target="{Binding ElementName=NameBox}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="NameBox"
+                         AutomationProperties.Name="{DynamicResource Search_FileName}"
+                         ToolTip="{DynamicResource Search_MaskHint}"
+                         Text="{Binding NamePattern, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2"
+                            Orientation="Horizontal" Margin="8,0,0,0">
+                    <CheckBox Content="RegEx" IsChecked="{Binding NameIsRegex}" Margin="0,0,12,0"
+                              AutomationProperties.Name="{DynamicResource Search_NameRegex}"
+                              VerticalAlignment="Center"/>
+                    <CheckBox Content="{DynamicResource Search_CaseSensitive}" IsChecked="{Binding CaseSensitive}"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Content -->
+                <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource Search_Content}" Target="{Binding ElementName=ContentBox}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="ContentBox"
+                         AutomationProperties.Name="{DynamicResource Search_Content}"
+                         Text="{Binding ContentText, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"
+                            Orientation="Horizontal" Margin="8,0,0,0">
+                    <CheckBox Content="RegEx" IsChecked="{Binding ContentIsRegex}" Margin="0,0,12,0"
+                              AutomationProperties.Name="{DynamicResource Search_ContentRegex}"
+                              VerticalAlignment="Center"/>
+                    <CheckBox Content="{DynamicResource Search_WholeWord}" IsChecked="{Binding WholeWord}" Margin="0,0,12,0"
+                              VerticalAlignment="Center"/>
+                    <CheckBox Content="{DynamicResource Search_SkipBinary}" IsChecked="{Binding SkipBinary}"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Exclusions (gitignore grammar) -->
+                <Label Grid.Row="6" Grid.Column="0" Content="{DynamicResource Search_Exclude}" Target="{Binding ElementName=ExcludeBox}"/>
+                <TextBox Grid.Row="6" Grid.Column="1" x:Name="ExcludeBox"
+                         AutomationProperties.Name="{DynamicResource Search_Exclude}"
+                         ToolTip="{DynamicResource Search_ExcludeHint}"
+                         Text="{Binding ExcludePatterns, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2"
+                            Orientation="Horizontal" Margin="8,0,0,0">
+                    <CheckBox Content="{DynamicResource Search_Gitignore}" IsChecked="{Binding RespectGitignore}"
+                              VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <Label Content="{DynamicResource Search_Encoding}" Target="{Binding ElementName=EncodingBox}" VerticalAlignment="Center"/>
+                    <ComboBox Width="140" Margin="4,0,12,0" VerticalAlignment="Center" x:Name="EncodingBox"
+                              AutomationProperties.Name="{DynamicResource Search_Encoding}"
+                              ItemsSource="{Binding Encodings}"
+                              SelectedItem="{Binding SelectedEncoding}"
+                              DisplayMemberPath="Name"/>
+                    <Label Content="{DynamicResource Search_Context}" Target="{Binding ElementName=ContextBox}" VerticalAlignment="Center"/>
+                    <TextBox Width="44" Margin="4,0,0,0" VerticalAlignment="Center" x:Name="ContextBox"
+                             AutomationProperties.Name="{DynamicResource Search_Context}"
+                             Text="{Binding ContextLines, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <!-- Size -->
+                <Label Grid.Row="8" Grid.Column="0" Content="{DynamicResource Search_Size}"/>
+                <StackPanel Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                    <Label Content="{DynamicResource Search_From}"/>
+                    <TextBox Width="120" Margin="4,0"
+                             AutomationProperties.Name="{DynamicResource Search_SizeFrom}"
+                             ToolTip="{DynamicResource Search_SizeHint}"
+                             Text="{Binding MinSizeText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Content="{DynamicResource Search_To}"/>
+                    <TextBox Width="120" Margin="4,0"
+                             AutomationProperties.Name="{DynamicResource Search_SizeTo}"
+                             ToolTip="{DynamicResource Search_SizeHint}"
+                             Text="{Binding MaxSizeText, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <!-- Modification date: whole days, both ends included; the same fields presets save -->
+                <Label Grid.Row="10" Grid.Column="0" Content="{DynamicResource Search_Date}"/>
+                <StackPanel Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                    <Label Content="{DynamicResource Search_From}"/>
+                    <TextBox Width="120" Margin="4,0"
+                             AutomationProperties.Name="{DynamicResource Search_DateFrom}"
+                             ToolTip="{DynamicResource Search_DateHint}"
+                             Text="{Binding ModifiedAfterText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Content="{DynamicResource Search_To}"/>
+                    <TextBox Width="120" Margin="4,0"
+                             AutomationProperties.Name="{DynamicResource Search_DateTo}"
+                             ToolTip="{DynamicResource Search_DateHint}"
+                             Text="{Binding ModifiedBeforeText, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <!-- Flags -->
+                <Label Grid.Row="12" Grid.Column="0" Content="{DynamicResource Search_Options}"/>
+                <StackPanel Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                    <CheckBox Content="{DynamicResource Search_Hidden}" IsChecked="{Binding IncludeHidden}" Margin="0,0,12,0"/>
+                    <CheckBox Content="{DynamicResource Search_System}" IsChecked="{Binding IncludeSystem}" Margin="0,0,12,0"/>
+                    <CheckBox Content="{DynamicResource Search_FilesOnly}" IsChecked="{Binding FilesOnly}" Margin="0,0,12,0"/>
+                    <CheckBox Content="{DynamicResource Search_DirsOnly}" IsChecked="{Binding DirectoriesOnly}" Margin="0,0,12,0"/>
+                    <CheckBox Content="{DynamicResource Search_InArchives}" IsChecked="{Binding SearchInsideArchives}"
+                              IsEnabled="{Binding CanSearchInsideArchives}"/>
+                </StackPanel>
+
+                <!-- Presets -->
+                <Label Grid.Row="14" Grid.Column="0" Content="{DynamicResource Search_Preset}" Target="{Binding ElementName=PresetBox}"/>
+                <StackPanel Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                    <ComboBox Width="240" ItemsSource="{Binding Presets}" x:Name="PresetBox"
+                              AutomationProperties.Name="{DynamicResource Search_Preset}"
+                              SelectedItem="{Binding SelectedPreset}"
+                              DisplayMemberPath="Name"/>
+                    <Button Content="{DynamicResource Search_PresetSave}" Margin="6,0,0,0" Padding="8,2"
+                            Click="SavePreset_Click"/>
+                    <Button Content="{DynamicResource Search_PresetDelete}" Margin="6,0,0,0" Padding="8,2"
+                            Click="DeletePreset_Click"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- Results -->
+        <GroupBox Grid.Row="1" Header="{DynamicResource Search_Results}">
+            <DataGrid x:Name="ResultsGrid"
+                      ItemsSource="{Binding Results}"
+                      SelectedItem="{Binding SelectedResult}"
+                      AutomationProperties.Name="{DynamicResource Search_Results}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      GridLinesVisibility="None"
+                      HeadersVisibility="Column"
+                      SelectionMode="Extended"
+                      SelectionChanged="ResultsGrid_SelectionChanged"
+                      MouseDoubleClick="ResultsGrid_MouseDoubleClick"
+                      PreviewKeyDown="ResultsGrid_PreviewKeyDown">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                        <Setter Property="ToolTip" Value="{Binding MatchContext}"/>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource Col_Name}" Binding="{Binding Name}" Width="200"/>
+                    <DataGridTextColumn Header="{DynamicResource Col_Size}" Binding="{Binding SizeText}" Width="80"/>
+                    <DataGridTextColumn Header="{DynamicResource Col_Modified}" Binding="{Binding LastModified, StringFormat=\{0:dd.MM.yyyy HH:mm\}}" Width="130"/>
+                    <DataGridTextColumn Header="{DynamicResource Col_Folder}" Binding="{Binding Directory}" Width="*"/>
+                    <DataGridTextColumn Header="{DynamicResource Col_Line}" Binding="{Binding MatchLine}" Width="60"/>
+                    <DataGridTextColumn Header="{DynamicResource Col_Match}" Binding="{Binding MatchText}" Width="240"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- Progress: indeterminate while the walk runs -->
+        <ProgressBar Grid.Row="2" Height="4" Margin="0,4,0,0" IsIndeterminate="True"
+                     AutomationProperties.Name="{DynamicResource Search_Running}"
+                     Visibility="{Binding IsSearching, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- Status bar; a mistake in the form is drawn in the danger colour -->
+        <TextBlock Grid.Row="3" Text="{Binding StatusText}" Margin="0,4,0,4" TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Buttons -->
+        <DockPanel Grid.Row="4" LastChildFill="False">
+            <!-- Operations straight from the hit list (6.17) -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="{DynamicResource Search_FeedToPanel}" Command="{Binding FeedResultsToPanelCommand}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Search_CopyTo}" Command="{Binding CopyResultsCommand}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Search_MoveTo}" Command="{Binding MoveResultsCommand}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Search_DeleteHits}" Command="{Binding DeleteResultsCommand}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Content="{DynamicResource Search_Start}"
+                        Command="{Binding StartCommand}" IsDefault="True"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Search_Stop}"
+                        Command="{Binding StopCommand}"
+                        IsEnabled="{Binding IsSearching}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Search_Clear}"
+                        Command="{Binding ClearCommand}"
+                        Margin="0,0,8,0" Padding="8,2"/>
+                <Button Content="{DynamicResource Close}" Click="CloseButton_Click" IsCancel="True" Padding="8,2"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</local:TcvDialog>

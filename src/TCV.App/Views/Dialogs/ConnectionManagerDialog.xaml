@@ -1,0 +1,531 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.ConnectionManagerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:vm="clr-namespace:TCV.App.ViewModels.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        xmlns:ctrl="clr-namespace:TCV.App.Controls"
+        xmlns:loc="clr-namespace:TCV.App.Localization"
+        Title="{DynamicResource ConnMgr_Title}"
+        Width="900" Height="640"
+        MinWidth="760" MinHeight="500"
+        ResizeMode="CanResizeWithGrip">
+
+    <!-- One window: the saved connections on the left, the selected one's fields on the right (like
+         FileZilla's Site Manager or WinSCP's Login). It replaced a list that opened a second modal
+         editor for every change, and it says which connections are open and where. -->
+    <local:TcvDialog.Resources>
+        <Style x:Key="HintText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+        </Style>
+        <Style x:Key="ErrorText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,6,12,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="FieldRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style x:Key="ChipButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,4,4" />
+            <Setter Property="Padding" Value="6,0" />
+        </Style>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="290" MinWidth="220" />
+            <ColumnDefinition Width="14" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- The address book could not be read normally: say so instead of showing a silent empty list -->
+        <Border Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,10" Padding="8,6"
+                BorderThickness="1" BorderBrush="{DynamicResource WarningBrush}"
+                Visibility="{Binding HasLoadWarning, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+            <TextBlock Text="{Binding LoadWarning}" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}" />
+        </Border>
+
+        <!-- ── Left: search, the saved connections, list actions ── -->
+        <DockPanel Grid.Row="1" Grid.Column="0">
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                <TextBox x:Name="FilterBox" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{DynamicResource ConnMgr_Search}" Padding="24,0,0,0" />
+                <ctrl:Icon Data="{StaticResource IconSearch}" Width="13" Height="13" Margin="7,0,0,0"
+                           HorizontalAlignment="Left" Foreground="{DynamicResource ForegroundDimBrush}" />
+                <TextBlock Text="{DynamicResource ConnMgr_Search}" Margin="26,0,0,0" VerticalAlignment="Center"
+                           IsHitTestVisible="False" Foreground="{DynamicResource ForegroundDimBrush}"
+                           Visibility="{Binding Filter, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+            </Grid>
+
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                <Button Style="{StaticResource ChipButton}" Command="{Binding NewCommand}"
+                        ToolTip="{DynamicResource ConnMgr_NewTip}" AutomationProperties.Name="{DynamicResource ConnMgr_New}">
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:Icon Data="{StaticResource IconPlus}" Width="13" Height="13" Margin="0,0,5,0" />
+                        <TextBlock Text="{DynamicResource ConnMgr_New}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ChipButton}" Command="{Binding DuplicateCommand}"
+                        ToolTip="{DynamicResource ConnMgr_DuplicateTip}" AutomationProperties.Name="{DynamicResource ConnMgr_Duplicate}">
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:Icon Data="{StaticResource IconCopy}" Width="13" Height="13" Margin="0,0,5,0" />
+                        <TextBlock Text="{DynamicResource ConnMgr_Duplicate}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ChipButton}" Command="{Binding DeleteCommand}"
+                        AutomationProperties.Name="{DynamicResource ConnMgr_Delete}"
+                        ToolTip="{DynamicResource ConnMgr_Delete}">
+                    <ctrl:Icon Data="{StaticResource IconTrash2}" Width="13" Height="13" />
+                </Button>
+                <!-- The hosts of ~/.ssh/config as SFTP connections, after a preview (6.82) -->
+                <Button Style="{StaticResource ChipButton}" Command="{Binding ImportSshConfigCommand}"
+                        ToolTip="{DynamicResource ConnMgr_ImportTip}" AutomationProperties.Name="{DynamicResource ConnMgr_ImportTip}">
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:Icon Data="{StaticResource IconFileKey}" Width="13" Height="13" Margin="0,0,5,0" />
+                        <TextBlock Text="{DynamicResource ConnMgr_Import}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+
+            <Grid>
+                <ListBox x:Name="ConnectionList"
+                         ItemsSource="{Binding Rows}"
+                         SelectedItem="{Binding SelectedRow}"
+                         AutomationProperties.Name="{DynamicResource ConnMgr_Title}"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         MouseDoubleClick="ConnectionList_MouseDoubleClick">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:ConnectionRowViewModel}">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <!-- The connection's colour tag: production in red tells itself apart -->
+                                <Border Grid.Column="0" Width="3" CornerRadius="1.5" Margin="0,1,6,1" Background="{Binding ColorBrush}" />
+                                <ctrl:Icon x:Name="KindIcon" Grid.Column="1" Data="{StaticResource IconServer}" Width="15" Height="15"
+                                           Margin="2,1,9,0" VerticalAlignment="Top" />
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Subtitle}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Subtitle}" Foreground="{DynamicResource ForegroundDimBrush}" />
+                                    <TextBlock FontSize="11" Foreground="{DynamicResource WarningBrush}"
+                                               Text="{DynamicResource ConnMgr_PasswordLost}"
+                                               Visibility="{Binding PasswordUnreadable, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                </StackPanel>
+                                <!-- Open now: a green dot and where (the mock's "Connected") -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,2,0,0"
+                                            ToolTip="{Binding WhereOpen}"
+                                            Visibility="{Binding IsOpen, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                                    <Ellipse Width="7" Height="7" Fill="{DynamicResource SuccessBrush}" Margin="0,0,5,0" />
+                                    <TextBlock Text="{DynamicResource ConnMgr_Open}" FontSize="11" Foreground="{DynamicResource SuccessBrush}" />
+                                </StackPanel>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Kind}" Value="cloud">
+                                    <Setter TargetName="KindIcon" Property="Data" Value="{StaticResource IconCloud}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Kind}" Value="share">
+                                    <Setter TargetName="KindIcon" Property="Data" Value="{StaticResource IconNetwork}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Empty state -->
+                <TextBlock Margin="12" TextWrapping="Wrap" VerticalAlignment="Top"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           Text="{DynamicResource ConnMgr_Empty}"
+                           IsHitTestVisible="False"
+                           Visibility="{Binding IsEmpty, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+            </Grid>
+        </DockPanel>
+
+        <!-- ── Right: the selected connection's fields ── -->
+        <DockPanel Grid.Row="1" Grid.Column="2">
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                <TextBlock Text="{Binding EditorTitle}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid x:Name="EditorPane" DataContext="{Binding Editor}" Margin="0,0,6,0"
+                      DataContextChanged="OnEditorChanged">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.ColumnSpan="2">
+
+                        <!-- Paste an address and the fields fill themselves -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Address}" Style="{StaticResource FieldLabel}" />
+                            <Grid Grid.Column="1">
+                                <TextBox x:Name="AddressBox" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{DynamicResource Conn_Address}"
+                                         PreviewKeyDown="OnAddressKeyDown" />
+                                <TextBlock Text="{DynamicResource Conn_AddressPlaceholder}" Margin="7,0,0,0" VerticalAlignment="Center"
+                                           IsHitTestVisible="False" FontSize="11" Foreground="{DynamicResource ForegroundDimBrush}"
+                                           Visibility="{Binding Address, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                            </Grid>
+                            <Button Grid.Column="2" Margin="6,0,0,0" Content="{DynamicResource Conn_AddressApply}"
+                                    Command="{Binding ApplyAddressCommand}" />
+                        </Grid>
+
+                        <Separator Margin="0,2,0,10" />
+
+                        <!-- Name -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource Conn_Name}" Target="{Binding ElementName=NameBox}" Padding="0,6,12,0" />
+                            <TextBox Grid.Column="1" x:Name="NameBox" Text="{Binding ConnectionName, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+
+                        <!-- Type -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource Conn_Protocol}" Target="{Binding ElementName=ProtocolCombo}" Padding="0,6,12,0" />
+                            <ComboBox Grid.Column="1" x:Name="ProtocolCombo"
+                                      ItemsSource="{Binding ProtocolOptions}" SelectedItem="{Binding SelectedProtocol}" />
+                        </Grid>
+
+                        <!-- S3: the provider fills the endpoint -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsS3, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Provider}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
+                                          DisplayMemberPath="Name"
+                                          AutomationProperties.Name="{DynamicResource Conn_Provider}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{Binding PresetHint}"
+                                           Visibility="{Binding PresetHint, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Host (endpoint, server) and port -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowHost, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding HostLabel}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{Binding HostLabel}" />
+                            <TextBlock Grid.Column="2" Text="{DynamicResource ConnMgr_Port}" Margin="10,6,6,0"
+                                       Visibility="{Binding ShowPort, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            <TextBox Grid.Column="3" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{DynamicResource ConnMgr_Port}"
+                                     Visibility="{Binding ShowPort, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                        </Grid>
+
+                        <!-- S3 region -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsS3, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Region}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding Region, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{DynamicResource Conn_Region}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_RegionHint}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Bucket / container -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsObjectStorage, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding BucketLabel}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding Bucket, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{Binding BucketLabel}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_BucketHint}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- User, access key id, account -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowUser, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding UserLabel}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{Binding UserLabel}" />
+                        </Grid>
+
+                        <!-- SSH: password or key -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsSftp, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource Conn_AuthMethod}" Target="{Binding ElementName=AuthCombo}" Padding="0,6,12,0" />
+                            <ComboBox Grid.Column="1" x:Name="AuthCombo"
+                                      ItemsSource="{Binding AuthOptions}" SelectedItem="{Binding SelectedAuthMethod}" />
+                        </Grid>
+
+                        <!-- Password, secret key, account key or SAS -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowPasswordField, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding PasswordLabel}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <PasswordBox x:Name="PasswordBox" AutomationProperties.Name="{Binding PasswordLabel}" />
+                                <TextBlock Style="{StaticResource HintText}" Foreground="{DynamicResource WarningBrush}"
+                                           Text="{DynamicResource Conn_PasswordUnreadable}"
+                                           Visibility="{Binding PasswordUnreadable, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_ClearTextWarning}"
+                                           Visibility="{Binding ClearTextWarningVisible, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- SSH key file and passphrase -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowKeyFields, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource Conn_KeyFile}" Target="{Binding ElementName=KeyBox}" Padding="0,6,12,0" />
+                            <TextBox Grid.Column="1" x:Name="KeyBox" Text="{Binding SshKeyPath, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Grid.Column="2" Margin="6,0,0,0" Content="{DynamicResource Conn_Browse}" Click="BrowseSshKey_Click" />
+                        </Grid>
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowKeyFields, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource Conn_Passphrase}" Target="{Binding ElementName=PassphraseBox}" Padding="0,6,12,0" />
+                            <PasswordBox Grid.Column="1" x:Name="PassphraseBox" />
+                        </Grid>
+
+                        <!-- S3: keys from an AWS profile instead -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsS3, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Profile}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding Profile, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{DynamicResource Conn_Profile}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_ProfileHint}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Drives: the application registered with the provider, and the sign-in -->
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsOAuth, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_ClientId}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding ClientId, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{DynamicResource Conn_ClientId}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{Binding ClientIdHint}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding ShowClientSecret, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_ClientSecret}" Style="{StaticResource FieldLabel}" />
+                            <PasswordBox Grid.Column="1" x:Name="ClientSecretBox" AutomationProperties.Name="{DynamicResource Conn_ClientSecret}" />
+                        </Grid>
+                        <Grid Style="{StaticResource FieldRow}"
+                              Visibility="{Binding IsOAuth, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_SignIn}" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SignInText}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                            <Button Grid.Column="2" Margin="6,0,0,0" Content="{DynamicResource Conn_SignOut}"
+                                    Command="{Binding SignOutCommand}"
+                                    Visibility="{Binding IsSignedIn, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                        </Grid>
+
+                        <!-- Folder, prefix, share -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding RemotePathLabel}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding RemotePath, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{Binding RemotePathLabel}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_SmbShareHint}"
+                                           Visibility="{Binding IsSmb, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Options -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Options}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1" Margin="0,5,0,0">
+                                <CheckBox Content="{DynamicResource Conn_PathStyle}" IsChecked="{Binding PathStyle}" Margin="0,0,0,6"
+                                          ToolTip="{DynamicResource Conn_PathStyleTip}"
+                                          Visibility="{Binding IsS3, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                <CheckBox Content="{DynamicResource Conn_UseHttp}" IsChecked="{Binding UseHttp}" Margin="0,0,0,6"
+                                          Visibility="{Binding IsObjectStorage, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                <CheckBox Content="{DynamicResource Conn_ReadOnly}" IsChecked="{Binding ReadOnly}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_ReadOnlyHint}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Colour tag -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Conn_Color}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1">
+                                <WrapPanel>
+                                    <Button Style="{StaticResource ChipButton}" Content="{DynamicResource WsProps_NoColor}"
+                                            Command="{Binding PickColorCommand}" CommandParameter="" />
+                                    <ItemsControl ItemsSource="{Binding Swatches}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Width="28" Height="28" Margin="0,0,4,4" Padding="0"
+                                                        ToolTip="{Binding Hex}" AutomationProperties.Name="{Binding Hex}"
+                                                        Background="Transparent"
+                                                        Command="{Binding DataContext.PickColorCommand, ElementName=EditorPane}"
+                                                        CommandParameter="{Binding Hex}">
+                                                    <Grid>
+                                                        <Ellipse Width="24" Height="24" StrokeThickness="2" Stroke="{DynamicResource ForegroundBrush}"
+                                                                 Visibility="{Binding IsSelected, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                                        <Ellipse Width="18" Height="18"
+                                                                 Fill="{Binding Hex, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </WrapPanel>
+                                <TextBlock Style="{StaticResource HintText}" Text="{DynamicResource Conn_ColorHint}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Test -->
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="1" Content="{DynamicResource Conn_Test}" Command="{Binding TestConnectionCommand}" />
+                            <TextBlock Grid.Column="2" Text="{Binding ConnectionStatus}" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ConnectionStatusIsError}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </DockPanel>
+
+        <!-- ── Bottom: why Save waits, then the actions ── -->
+        <DockPanel Grid.Row="3" Grid.ColumnSpan="3">
+            <Button DockPanel.Dock="Left" Content="{DynamicResource ConnMgr_ForgetHost}"
+                    Command="{Binding ForgetHostCommand}" ToolTip="{DynamicResource ConnMgr_ForgetHostTip}" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Command="{Binding DisconnectCommand}" Margin="0,0,8,0"
+                        AutomationProperties.Name="{DynamicResource ConnMgr_Disconnect}"
+                        Visibility="{Binding SelectedRow.IsOpen, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:Icon Data="{StaticResource IconUnplug}" Width="13" Height="13" Margin="0,0,6,0" />
+                        <TextBlock Text="{DynamicResource ConnMgr_Disconnect}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Content="{DynamicResource ConnMgr_Save}" Command="{Binding SaveCommand}" MinWidth="90" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource ConnMgr_Connect}" Command="{Binding ConnectCommand}"
+                        Style="{StaticResource PrimaryButton}" IsDefault="True" MinWidth="110" Margin="0,0,8,0" />
+                <Button Content="{DynamicResource ConnMgr_Close}" Command="{Binding CloseCommand}" MinWidth="90" />
+            </StackPanel>
+            <TextBlock Text="{Binding Editor.ValidationMessage}" Style="{StaticResource ErrorText}"
+                       VerticalAlignment="Center" Margin="12,0" TextTrimming="CharacterEllipsis" />
+        </DockPanel>
+    </Grid>
+</local:TcvDialog>

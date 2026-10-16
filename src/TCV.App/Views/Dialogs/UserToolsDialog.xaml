@@ -1,0 +1,140 @@
+<local:TcvDialog x:Class="TCV.App.Views.Dialogs.UserToolsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
+        xmlns:conv="clr-namespace:TCV.App.Converters"
+        Title="{DynamicResource UserTools_Title}" Height="540" Width="780"
+        MinHeight="420" MinWidth="620"
+        FocusManager.FocusedElement="{Binding ElementName=ToolList}">
+
+    <local:TcvDialog.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </local:TcvDialog.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <!-- Left: tool list + list buttons -->
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="8"/>
+                <!-- Right: edit form -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left panel -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <ListBox Grid.Row="0" x:Name="ToolList"
+                         AutomationProperties.Name="{DynamicResource UserTools_Title}"
+                         ItemsSource="{Binding ToolItems}"
+                         SelectedItem="{Binding SelectedItem}"
+                         DisplayMemberPath="DisplayName"/>
+
+                <!-- List action buttons -->
+                <WrapPanel Grid.Row="1" Margin="0,6,0,0" Orientation="Horizontal">
+                    <Button Content="{DynamicResource UserTools_Add}" Command="{Binding AddCommand}"
+                            Margin="0,0,4,4" MinWidth="70"/>
+                    <Button Content="{DynamicResource UserTools_Remove}" Command="{Binding RemoveCommand}"
+                            Margin="0,0,4,4" MinWidth="70"/>
+                    <Button Content="{DynamicResource UserTools_Up}" Command="{Binding MoveUpCommand}"
+                            Margin="0,0,4,4" MinWidth="70"/>
+                    <Button Content="{DynamicResource UserTools_Down}" Command="{Binding MoveDownCommand}"
+                            Margin="0,0,0,4" MinWidth="70"/>
+                </WrapPanel>
+            </Grid>
+
+            <!-- Right panel: edit form. Every keystroke goes into the selected copy; OK writes the copies back. -->
+            <GroupBox Grid.Column="2" Header="{DynamicResource UserTools_Properties}"
+                      IsEnabled="{Binding HasSelection}">
+                <Grid Margin="8,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Name -->
+                    <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource UserTools_Name}" Target="{Binding ElementName=NameBox}"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" x:Name="NameBox"
+                             AutomationProperties.Name="{DynamicResource UserTools_Name}"
+                             Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Command -->
+                    <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource UserTools_Command}" Target="{Binding ElementName=CommandBox}"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" x:Name="CommandBox"
+                             AutomationProperties.Name="{DynamicResource UserTools_Command}"
+                             Text="{Binding EditCommand, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Row="2" Grid.Column="2" Content="…" Width="28" Margin="4,0,0,0"
+                            Command="{Binding BrowseCommandCommand}"
+                            AutomationProperties.Name="{DynamicResource UserTools_Browse}"
+                            ToolTip="{DynamicResource UserTools_Browse}"/>
+
+                    <!-- Arguments -->
+                    <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource UserTools_Arguments}" Target="{Binding ElementName=ArgumentsBox}"/>
+                    <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" x:Name="ArgumentsBox"
+                             AutomationProperties.Name="{DynamicResource UserTools_Arguments}"
+                             Text="{Binding EditArguments, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="{DynamicResource UserTools_MacroHint}"/>
+
+                    <!-- Macro hints -->
+                    <TextBlock Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap"
+                               Text="{DynamicResource UserTools_MacroLine}"
+                               Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"/>
+
+                    <!-- Working directory -->
+                    <Label Grid.Row="7" Grid.Column="0" Content="{DynamicResource UserTools_WorkingDir}" Target="{Binding ElementName=WorkingDirBox}"/>
+                    <TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" x:Name="WorkingDirBox"
+                             AutomationProperties.Name="{DynamicResource UserTools_WorkingDir}"
+                             Text="{Binding EditWorkingDir, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="{DynamicResource UserTools_WorkingDirHint}"/>
+
+                    <!-- Hotkey -->
+                    <Label Grid.Row="9" Grid.Column="0" Content="{DynamicResource UserTools_Hotkey}" Target="{Binding ElementName=HotkeyBox}"/>
+                    <TextBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="2" x:Name="HotkeyBox"
+                             AutomationProperties.Name="{DynamicResource UserTools_Hotkey}"
+                             Text="{Binding EditHotkey, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="{DynamicResource UserTools_HotkeyHint}"/>
+                    <TextBlock Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap"
+                               Text="{Binding WarningText}"
+                               Foreground="{DynamicResource WarningBrush}" FontSize="11"
+                               Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- The first problem with the list; OK stays blocked until it is fixed -->
+        <TextBlock Grid.Row="1" Margin="0,8,0,0" TextWrapping="Wrap"
+                   Text="{Binding ErrorText}"
+                   Foreground="{DynamicResource DangerBrush}"
+                   Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- Bottom buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="{DynamicResource OK}" Command="{Binding SaveCommand}" Margin="0,0,8,0" MinWidth="80" IsDefault="True"/>
+            <Button Content="{DynamicResource Cancel}" Command="{Binding CancelCommand}" MinWidth="80" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</local:TcvDialog>

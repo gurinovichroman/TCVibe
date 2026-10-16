@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>TCV.Ai</RootNamespace>
+    <AssemblyName>TCV.Ai</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!-- Local vector index behind semantic search (6.16, ADR-0017). Microsoft.Data.Sqlite pulls an
+         older SQLitePCLRaw whose native e_sqlite3 carries GHSA-2m69-gcr7-jv3q, so the bundle is
+         pinned forward explicitly rather than left to transitive resolution. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+    <PackageReference Include="sqlite-vec" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TCV.Core\TCV.Core.csproj" />
+  </ItemGroup>
+
+</Project>

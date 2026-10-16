@@ -1,0 +1,29 @@
+<Project>
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Assembly info -->
+    <Company>TCVibe</Company>
+    <Product>TCVibe</Product>
+    <Copyright>Copyright © 2026</Copyright>
+    <!-- The one version number. AssemblyVersion and FileVersion follow it, so a release built with
+         -p:Version from its tag reports that version (release.yml checks the tag matches this). -->
+    <Version>0.9.0</Version>
+
+    <!-- Suppress XML-doc missing warning -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Test projects -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+</Project>

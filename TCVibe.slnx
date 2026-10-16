@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/plugins/">
+    <Project Path="plugins/TCV.TcBridge/TCV.TcBridge.csproj" />
+    <Project Path="plugins/TCV.RegistryPlugin/TCV.RegistryPlugin.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/TCV.App/TCV.App.csproj" />
+    <Project Path="src/TCV.Core/TCV.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/Plugins/">
+    <Project Path="src/Plugins/TCV.Archives/TCV.Archives.csproj" />
+    <Project Path="src/Plugins/TCV.MultiRename/TCV.MultiRename.csproj" />
+    <Project Path="src/Plugins/TCV.Network/TCV.Network.csproj" />
+    <Project Path="src/Plugins/TCV.Search/TCV.Search.csproj" />
+    <Project Path="src/Plugins/TCV.Tools/TCV.Tools.csproj" />
+    <Project Path="src/Plugins/TCV.Git/TCV.Git.csproj" />
+    <Project Path="src/Plugins/TCV.Ai/TCV.Ai.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TCV.Ai.Tests/TCV.Ai.Tests.csproj" />
+    <Project Path="tests/TCV.App.Tests/TCV.App.Tests.csproj" />
+    <Project Path="tests/TCV.Archives.Tests/TCV.Archives.Tests.csproj" />
+    <Project Path="tests/TCV.Core.Tests/TCV.Core.Tests.csproj" />
+    <Project Path="tests/TCV.Git.Tests/TCV.Git.Tests.csproj" />
+    <Project Path="tests/TCV.MultiRename.Tests/TCV.MultiRename.Tests.csproj" />
+    <Project Path="tests/TCV.Network.Tests/TCV.Network.Tests.csproj" />
+    <Project Path="tests/TCV.Search.Tests/TCV.Search.Tests.csproj" />
+    <Project Path="tests/TCV.Tools.Tests/TCV.Tools.Tests.csproj" />
+  </Folder>
+</Solution>

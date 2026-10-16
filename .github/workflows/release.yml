@@ -1,0 +1,110 @@
+name: Release
+
+# Runs in the public repository only (ADR-0036): the dev repository's publish-public.yml pushes each
+# released version there as one commit with its tag, and this builds the binaries from that public
+# code. The dev repository and forks skip the job.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write  # needed to create a GitHub Release and upload assets
+
+jobs:
+  build-and-release:
+    name: Build portable packages and publish release
+    if: github.repository == 'gurinovichroman/TCVibe'
+    runs-on: windows-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Version and release notes ────────────────────────────────────────
+      - name: Parse version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag.TrimStart('v')
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+          # The tag and Directory.Build.props must agree: a local build reports the props version.
+          [xml]$props = Get-Content Directory.Build.props
+          $propsVer = $props.SelectSingleNode('//Version').InnerText
+          if ($propsVer -ne $ver) {
+            Write-Error "Tag $tag does not match <Version>$propsVer</Version> in Directory.Build.props"
+            exit 1
+          }
+
+          # The change list is the body of the release commit, written by publish-public.yml from the
+          # dev history. The update prompt shows the first five lines as plain text, so it comes first.
+          # git writes UTF-8, and PowerShell decodes a native command's output with the console code
+          # page: without this an em dash in a commit subject reaches the release as mojibake.
+          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+          $changes = (git log -1 --format=%b $tag | Out-String).Trim()
+          if (-not $changes) { $changes = "See the commits: https://github.com/${{ github.repository }}/commits/$tag" }
+          $repo = "https://github.com/${{ github.repository }}"
+
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          @"
+          $changes
+
+          New here? Download ``TCVibe-win-x64-Portable.zip`` (``win-x86`` for 32-bit Windows), unpack it
+          into any folder and run ``TCVibe.exe``. Later versions install from Help → Check for updates;
+          settings and workspaces live in ``data\`` next to the program and stay.
+
+          Found a bug? Help → Report a bug in the program, or $repo/issues.
+          "@ | Set-Content -Encoding utf8 artifacts\release-notes.md
+          Get-Content artifacts\release-notes.md
+
+      # ── Setup .NET ───────────────────────────────────────────────────────
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ── Restore + Test ───────────────────────────────────────────────────
+      - name: Restore dependencies
+        run: |
+          dotnet restore TCVibe.slnx
+          dotnet tool restore
+
+      - name: Run tests
+        run: dotnet test TCVibe.slnx --configuration Release --no-restore --verbosity minimal
+
+      # ── Packages: each runtime is its own Velopack channel ──────────────
+      # The previous release is downloaded first so vpk can build a delta against it. The first
+      # release has none, which is not an error.
+      - name: Pack and upload
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ver = "${{ steps.version.outputs.VERSION }}"
+          $repo = "https://github.com/${{ github.repository }}"
+          $first = $true
+          foreach ($rid in 'win-x64', 'win-x86') {
+            $out = "artifacts\releases\$rid"
+            dotnet vpk download github --repoUrl $repo --channel $rid --outputDir $out --token $env:GITHUB_TOKEN
+            if ($LASTEXITCODE -ne 0) { Write-Host "No previous $rid release: full package only."; $global:LASTEXITCODE = 0 }
+
+            .\tools\publish-portable.ps1 -Version $ver -Runtime $rid -ReleaseNotes artifacts\release-notes.md
+
+            $upload = @('vpk', 'upload', 'github', '--repoUrl', $repo, '--token', $env:GITHUB_TOKEN,
+                        '--channel', $rid, '--outputDir', $out, '--publish',
+                        '--releaseName', "TCVibe v$ver", '--tag', "v$ver")
+            if (-not $first) { $upload += '--merge' }
+            dotnet @upload
+            if ($LASTEXITCODE -ne 0) { throw "vpk upload github ($rid) failed" }
+            $first = $false
+          }
+
+      # ── List produced artifacts ──────────────────────────────────────────
+      - name: List artifacts
+        shell: pwsh
+        run: Get-ChildItem artifacts\releases -Recurse -File | Format-Table Name, Length
