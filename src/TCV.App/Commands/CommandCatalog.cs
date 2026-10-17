@@ -1,14 +1,33 @@
+using TCV.App.Localization;
 using TCV.App.Settings;
 
 namespace TCV.App.Commands;
 
 /// <summary>A palette-visible command: the id routed through <see cref="MainWindow"/>'s dispatcher,
-/// with a localised title and category.</summary>
+/// with a localised title and category. English and Russian live here; every other language reads
+/// <c>Cmd_&lt;Id&gt;</c> and <c>CmdCat_&lt;Category&gt;</c> from its string dictionary (English when missing).</summary>
 public sealed record CommandDescriptor(
     string Id, string TitleEn, string TitleRu, string CategoryEn, string CategoryRu)
 {
-    public string Title(string lang) => lang == "ru" ? TitleRu : TitleEn;
-    public string Category(string lang) => lang == "ru" ? CategoryRu : CategoryEn;
+    public const string TitleKeyPrefix = "Cmd_";
+    public const string CategoryKeyPrefix = "CmdCat_";
+
+    /// <summary>Dictionary key of a category's name in the languages that keep it there.</summary>
+    public static string CategoryKey(string categoryEn) => CategoryKeyPrefix + categoryEn.Replace(" ", string.Empty);
+
+    public string Title(string lang) => lang switch
+    {
+        "ru" => TitleRu,
+        "en" => TitleEn,
+        _ => LocalizationManager.TryGet(lang, TitleKeyPrefix + Id) ?? TitleEn,
+    };
+
+    public string Category(string lang) => lang switch
+    {
+        "ru" => CategoryRu,
+        "en" => CategoryEn,
+        _ => LocalizationManager.TryGet(lang, CategoryKey(CategoryEn)) ?? CategoryEn,
+    };
 }
 
 /// <summary>A ready-to-show palette row: localised title/category plus the current key gesture.</summary>

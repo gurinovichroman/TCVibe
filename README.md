@@ -34,7 +34,7 @@ that. TCVibe builds on it.
   `.gitignore`, fast content search, syntax highlighting and Markdown in the viewer (F3).
 - **The classics.** Tabs, an operation queue with pause and a log, archives (ZIP, 7z, RAR, TAR, ISO,
   CAB), FTP/FTPS/SFTP/WebDAV and S3/Azure right in the panel, multi-rename with undo, checksums,
-  themes, English and Russian.
+  themes, ten interface languages (English, Russian, German, French, Spanish, Italian, Portuguese, Polish, Ukrainian, Dutch).
 
 ## Install
 

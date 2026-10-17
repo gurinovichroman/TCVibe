@@ -76,8 +76,8 @@ public class SavedOperationsManagerTests : IDisposable
     public void KindLabels_ExistForEveryKind_InBothDictionaries()
     {
         // The label is looked up by the enum member's name (TRAP-11): a new kind without a key
-        // would show "[SavedOp_Kind_…]" in the picker and the manager.
-        foreach (var language in new[] { "ru", "en" })
+        // would show "[SavedOp_Kind_…]" in the picker and the manager. (Any language, not just two.)
+        foreach (var language in TCV.App.Localization.LocalizationManager.SupportedLanguages)
         {
             var keys = DictionaryKeys(language);
             Enum.GetValues<SavedOperationKind>()

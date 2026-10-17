@@ -230,7 +230,7 @@ public sealed partial class ServiceCommands : ObservableObject
     /// <summary>Palette rows for the user's tools, appended to the static catalogue.</summary>
     public IReadOnlyList<CommandPaletteItem> UserToolPaletteItems(string lang)
     {
-        var category = lang == "ru" ? "Пользовательские инструменты" : "User tools";
+        var category = LocalizationManager.Get("Palette_UserTools");
         return UserToolItems
             .Select(t => new CommandPaletteItem(
                 CommandId(t), t.Name, category,

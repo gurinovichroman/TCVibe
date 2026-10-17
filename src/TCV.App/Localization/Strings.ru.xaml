@@ -2108,4 +2108,7 @@
     <sys:String x:Key="Settings_ShowAppStatusBar">Строку состояния окна</sys:String>
     <sys:String x:Key="Help_Cmd_SwapPanels">Меняет местами папки левой и правой панели, как одноимённая команда Total Commander. Не работает, пока одна из панелей в архиве, на сервере или в результатах поиска.</sys:String>
     <sys:String x:Key="Help_Cmd_ToggleTheme">Переключает светлую и тёмную тему (кнопка с солнцем или луной справа на панели инструментов). Выбор запоминается, «как в Windows» при этом выключается.</sys:String>
+    <sys:String x:Key="Palette_Title">Палитра команд</sys:String>
+    <sys:String x:Key="Palette_Placeholder">Введите команду…</sys:String>
+    <sys:String x:Key="Palette_UserTools">Пользовательские инструменты</sys:String>
 </ResourceDictionary>

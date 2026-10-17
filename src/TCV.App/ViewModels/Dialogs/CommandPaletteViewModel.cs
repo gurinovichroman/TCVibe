@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TCV.App.Commands;
+using TCV.App.Localization;
 
 namespace TCV.App.ViewModels.Dialogs;
 
@@ -29,8 +30,8 @@ public partial class CommandPaletteViewModel : ObservableObject
     {
         _all = allItems;
         Language = language;
-        Title = title ?? (language == "ru" ? "Палитра команд" : "Command Palette");
-        Placeholder = placeholder ?? (language == "ru" ? "Введите команду…" : "Type a command…");
+        Title = title ?? LocalizationManager.Get("Palette_Title");
+        Placeholder = placeholder ?? LocalizationManager.Get("Palette_Placeholder");
         Refilter();
     }
 

@@ -116,7 +116,110 @@ public class PluralFormatTests
     [Fact]
     public void Format_UnknownLanguage_UsesTheEnglishRule()
     {
-        PluralFormat.Format("de", "{0:plural:Datei|Dateien}", 1).Should().Be("Datei");
-        PluralFormat.Format("de", "{0:plural:Datei|Dateien}", 3).Should().Be("Dateien");
+        PluralFormat.Format("xx", "{0:plural:Datei|Dateien}", 1).Should().Be("Datei");
+        PluralFormat.Format("xx", "{0:plural:Datei|Dateien}", 3).Should().Be("Dateien");
+    }
+
+    [Theory]
+    [InlineData("de", 1, 0)]
+    [InlineData("de", 0, 1)]
+    [InlineData("nl", 2, 1)]
+    [InlineData("es", 1, 0)]
+    [InlineData("it", 5, 1)]
+    [InlineData("pt", 0, 1)]
+    public void FormIndex_GermanicAndRomance_SingularOnlyForOne(string language, int count, int form)
+    {
+        PluralFormat.FormIndex(language, count).Should().Be(form);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 0)]
+    [InlineData(2, 1)]
+    [InlineData(100, 1)]
+    public void FormIndex_French_CountsZeroAsSingular(int count, int form)
+    {
+        PluralFormat.FormIndex("fr", count).Should().Be(form);
+    }
+
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(2, 1)]
+    [InlineData(4, 1)]
+    [InlineData(5, 2)]
+    [InlineData(12, 2)]
+    [InlineData(14, 2)]
+    [InlineData(21, 2)]   // unlike Russian, 21 is "many" in Polish
+    [InlineData(22, 1)]
+    [InlineData(112, 2)]
+    [InlineData(0, 2)]
+    public void FormIndex_Polish_OneIsExactlyOne(int count, int form)
+    {
+        PluralFormat.FormIndex("pl", count).Should().Be(form);
+    }
+
+    [Theory]
+    [InlineData(1, "1 файл")]
+    [InlineData(2, "2 файли")]
+    [InlineData(5, "5 файлів")]
+    [InlineData(11, "11 файлів")]
+    [InlineData(21, "21 файл")]
+    [InlineData(0, "0 файлів")]
+    public void Format_Ukrainian_PicksOneFewOrMany(int count, string expected)
+    {
+        PluralFormat.Format("uk", "{0} {0:plural:файл|файли|файлів}", count).Should().Be(expected);
+    }
+
+    [Fact]
+    public void FormCount_MatchesTheFormsEachRuleCanReturn()
+    {
+        foreach (var language in LocalizationManager.SupportedLanguages)
+        {
+            var highest = Enumerable.Range(0, 200).Max(n => PluralFormat.FormIndex(language, n));
+            (highest + 1).Should().Be(PluralFormat.FormCount(language), language);
+        }
+    }
+
+    [Fact]
+    public void EverySupportedLanguage_HasACulture()
+    {
+        foreach (var language in LocalizationManager.SupportedLanguages)
+        {
+            LocalizationManager.CultureOf(language).TwoLetterISOLanguageName.Should().Be(language);
+        }
+    }
+}
+
+/// <summary>
+/// English and Russian titles of commands and columns live in code, every other language in its
+/// dictionary. Without a loaded dictionary (a headless test, a first-run race) the others read as
+/// English — never as a blank or a «[key]» placeholder.
+/// </summary>
+public class CatalogTitleTests
+{
+    [Fact]
+    public void CommandTitles_InAnyOtherLanguage_FallBackToEnglishWithoutADictionary()
+    {
+        foreach (var command in TCV.App.Commands.CommandCatalog.All)
+        {
+            command.Title("de").Should().Be(command.TitleEn, command.Id);
+            command.Category("pl").Should().Be(command.CategoryEn, command.Id);
+        }
+    }
+
+    [Fact]
+    public void ColumnTitles_InAnyOtherLanguage_FallBackToEnglishWithoutADictionary()
+    {
+        foreach (var column in TCV.App.Columns.ColumnCatalog.All)
+        {
+            column.Title("fr").Should().Be(column.TitleEn, column.Id);
+        }
+    }
+
+    [Fact]
+    public void CategoryKey_DropsTheSpaces()
+    {
+        TCV.App.Commands.CommandDescriptor.CategoryKey("Agent layer").Should().Be("CmdCat_Agentlayer");
+        TCV.App.Commands.CommandDescriptor.CategoryKey("Files").Should().Be("CmdCat_Files");
     }
 }

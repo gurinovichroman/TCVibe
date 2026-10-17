@@ -48,26 +48,43 @@ public sealed class PluralFormat : IFormatProvider, ICustomFormatter
             : arg?.ToString() ?? string.Empty;
     }
 
+    /// <summary>How many forms a language's strings carry: three for the Slavic languages (one, few,
+    /// many), two for the rest (one, other). <c>LocalizationGuardTests</c> counts them.</summary>
+    public static int FormCount(string language) => language is "ru" or "uk" or "pl" ? 3 : 2;
+
     /// <summary>
-    /// Which form a count takes: 0 — one, 1 — few (Russian) or other (English), 2 — many. Russian
-    /// follows the last two digits: 1, 21, 101 → one; 2–4, 22–24 → few; 0, 5–20, 25 → many.
+    /// Which form a count takes: 0 — one, 1 — few (Slavic) or other, 2 — many (Slavic). Russian and
+    /// Ukrainian follow the last two digits: 1, 21, 101 → one; 2–4, 22–24 → few; 0, 5–20, 25 → many.
+    /// Polish has "one" for 1 alone (21 is many), few for 2–4, 22–24, many for the rest. French counts
+    /// 0 as singular ("0 fichier"); the other languages put 0 with the plural.
     /// </summary>
     public static int FormIndex(string language, long count)
     {
         var n = Math.Abs(count);
-        if (language != "ru")
-        {
-            return n == 1 ? 0 : 1;
-        }
-
         var lastTwo = n % 100;
         var last = n % 10;
-        if (last == 1 && lastTwo != 11)
-        {
-            return 0;
-        }
 
-        return last is >= 2 and <= 4 && lastTwo is < 12 or > 14 ? 1 : 2;
+        switch (language)
+        {
+            case "ru" or "uk":
+                if (last == 1 && lastTwo != 11)
+                {
+                    return 0;
+                }
+
+                return last is >= 2 and <= 4 && lastTwo is < 12 or > 14 ? 1 : 2;
+            case "pl":
+                if (n == 1)
+                {
+                    return 0;
+                }
+
+                return last is >= 2 and <= 4 && lastTwo is < 12 or > 14 ? 1 : 2;
+            case "fr":
+                return n <= 1 ? 0 : 1;
+            default:
+                return n == 1 ? 0 : 1;
+        }
     }
 
     private static long ToCount(object? arg) => arg switch

@@ -2108,4 +2108,7 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Settings_ShowAppStatusBar">The window's status line</sys:String>
     <sys:String x:Key="Help_Cmd_SwapPanels">Swaps the folders of the left and right panels, as the same command of Total Commander does. Not while one of the panels is in an archive, on a server or in search results.</sys:String>
     <sys:String x:Key="Help_Cmd_ToggleTheme">Switches between the light and dark themes (the sun or moon button at the right of the tool strip). The choice is remembered and "follow Windows" is turned off.</sys:String>
+    <sys:String x:Key="Palette_Title">Command Palette</sys:String>
+    <sys:String x:Key="Palette_Placeholder">Type a command…</sys:String>
+    <sys:String x:Key="Palette_UserTools">User tools</sys:String>
 </ResourceDictionary>

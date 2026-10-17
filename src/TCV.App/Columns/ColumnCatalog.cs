@@ -1,3 +1,4 @@
+using TCV.App.Localization;
 using TCV.App.Settings;
 
 namespace TCV.App.Columns;
@@ -30,7 +31,16 @@ public sealed record ColumnDescriptor(
     ColumnAlignment Alignment = ColumnAlignment.Left,
     bool IsComputed = false)
 {
-    public string Title(string lang) => lang == "ru" ? TitleRu : TitleEn;
+    public const string TitleKeyPrefix = "ColTitle_";
+
+    /// <summary>English and Russian come from the record; every other language reads
+    /// <c>ColTitle_&lt;Id&gt;</c> from its string dictionary (English when missing).</summary>
+    public string Title(string lang) => lang switch
+    {
+        "ru" => TitleRu,
+        "en" => TitleEn,
+        _ => LocalizationManager.TryGet(lang, TitleKeyPrefix + Id) ?? TitleEn,
+    };
 }
 
 /// <summary>

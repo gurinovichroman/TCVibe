@@ -13,7 +13,16 @@ public static class LocalizationManager
 {
     /// <summary>Language codes with a Strings.&lt;code&gt;.xaml dictionary. The settings dialog builds
     /// its list from this, so a new language is added in one place.</summary>
-    public static IReadOnlyList<string> SupportedLanguages { get; } = ["en", "ru"];
+    public static IReadOnlyList<string> SupportedLanguages { get; } =
+        ["en", "ru", "de", "fr", "es", "it", "pt", "pl", "uk", "nl"];
+
+    // The culture whose number and date conventions go with each interface language. Portuguese is the
+    // European variety, like the dictionary itself.
+    private static readonly Dictionary<string, string> Cultures = new()
+    {
+        ["en"] = "en-US", ["ru"] = "ru-RU", ["de"] = "de-DE", ["fr"] = "fr-FR", ["es"] = "es-ES",
+        ["it"] = "it-IT", ["pt"] = "pt-PT", ["pl"] = "pl-PL", ["uk"] = "uk-UA", ["nl"] = "nl-NL",
+    };
 
     private static string _currentLanguage = "en";
 
@@ -34,7 +43,11 @@ public static class LocalizationManager
     public static string CurrentLanguage => _currentLanguage;
 
     /// <summary>Numbers in the interface's language («4 478», «1,2»), whatever the machine's culture is.</summary>
-    public static CultureInfo Culture => CultureInfo.GetCultureInfo(_currentLanguage == "ru" ? "ru-RU" : "en-US");
+    public static CultureInfo Culture => CultureOf(_currentLanguage);
+
+    /// <summary>The culture whose number format goes with <paramref name="language"/> (English when unknown).</summary>
+    public static CultureInfo CultureOf(string language) =>
+        CultureInfo.GetCultureInfo(Cultures.GetValueOrDefault(language, "en-US"));
 
     /// <summary>
     /// Lets <see cref="Get"/> fill <c>{gesture:…}</c> tokens with the live bindings. Called once at
@@ -81,6 +94,15 @@ public static class LocalizationManager
             : $"[{key}]";
 
     /// <summary>
+    /// The string for <paramref name="key"/> in <paramref name="language"/>, or null when that is not the
+    /// language on screen or the dictionary has no such key. For the code-side catalogues (command and
+    /// column titles), which keep English and Russian in code and every other language here: they fall
+    /// back to English instead of showing a <c>[key]</c> placeholder, and stay usable headless.
+    /// </summary>
+    public static string? TryGet(string language, string key) =>
+        language == _currentLanguage && Application.Current?.TryFindResource(key) is string text ? text : null;
+
+    /// <summary>
     /// <see cref="Get"/> plus <see cref="string.Format(string, object[])"/>, with plural forms
     /// (<c>{0:plural:file|files}</c>, see <see cref="PluralFormat"/>). A string that has them must be
     /// formatted here; the rest may be too.
@@ -117,13 +139,19 @@ public static class LocalizationManager
         var uri = new Uri($"Localization/Strings.{code}.xaml", UriKind.Relative);
         var dict = new ResourceDictionary { Source = uri };
 
-        // Replace the localization dictionary in the merged dictionaries
+        // Replace the localization dictionaries in the merged dictionaries
         var merged = Application.Current.Resources.MergedDictionaries;
-        var existing = merged.FirstOrDefault(d =>
-            d.Source?.OriginalString.StartsWith("Localization/Strings.") == true);
-
-        if (existing is not null)
+        foreach (var existing in merged
+                     .Where(d => d.Source?.OriginalString.StartsWith("Localization/Strings.") == true)
+                     .ToList())
+        {
             merged.Remove(existing);
+        }
+
+        // English goes underneath every other language: the later dictionary wins a lookup, so a
+        // string a translation lacks reads in English instead of as a "[key]" placeholder.
+        if (code != "en")
+            merged.Add(new ResourceDictionary { Source = new Uri("Localization/Strings.en.xaml", UriKind.Relative) });
 
         merged.Add(dict);
 
@@ -137,11 +165,7 @@ public static class LocalizationManager
 
     private static string DetectSystemLanguage()
     {
-        var culture = CultureInfo.CurrentUICulture;
-        return culture.TwoLetterISOLanguageName switch
-        {
-            "ru" => "ru",
-            _ => "en",
-        };
+        var code = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        return SupportedLanguages.Contains(code) ? code : "en";
     }
 }

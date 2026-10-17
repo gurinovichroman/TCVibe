@@ -24,6 +24,26 @@ public class LocalizationGuardTests
     private static readonly Lazy<Dictionary<string, string>> Ru = new(() => Load("ru"));
     private static readonly Lazy<Dictionary<string, string>> En = new(() => Load("en"));
 
+    /// <summary>Every shipped dictionary by language code.</summary>
+    private static readonly Lazy<Dictionary<string, Dictionary<string, string>>> All =
+        new(() => TCV.App.Localization.LocalizationManager.SupportedLanguages.ToDictionary(l => l, Load));
+
+    private static IEnumerable<string> Languages => TCV.App.Localization.LocalizationManager.SupportedLanguages;
+
+    /// <summary>The languages translated from English (every one but English itself).</summary>
+    private static IEnumerable<string> Translated => Languages.Where(l => l != "en");
+
+    /// <summary>
+    /// Titles that English and Russian keep in code (<c>CommandCatalog</c>, <c>ColumnCatalog</c>) and
+    /// every other language keeps in its dictionary.
+    /// </summary>
+    private static HashSet<string> CatalogKeys() =>
+    [
+        .. TCV.App.Commands.CommandCatalog.All.Select(c => TCV.App.Commands.CommandDescriptor.TitleKeyPrefix + c.Id),
+        .. TCV.App.Commands.CommandCatalog.All.Select(c => TCV.App.Commands.CommandDescriptor.CategoryKey(c.CategoryEn)),
+        .. TCV.App.Columns.ColumnCatalog.All.Select(c => TCV.App.Columns.ColumnDescriptor.TitleKeyPrefix + c.Id),
+    ];
+
     [Fact]
     public void Dictionaries_HaveTheSameKeys()
     {
@@ -32,11 +52,78 @@ public class LocalizationGuardTests
     }
 
     [Fact]
+    public void EveryTranslation_HasExactlyTheKeysOfEnglish_PlusTheCatalogTitles()
+    {
+        var expected = En.Value.Keys.Concat(CatalogKeys()).ToHashSet();
+        foreach (var language in Translated.Where(l => l != "ru"))
+        {
+            var keys = All.Value[language].Keys.ToHashSet();
+            expected.Except(keys).Should().BeEmpty($"Strings.{language}.xaml lacks these keys (TRAP-11)");
+            keys.Except(expected).Should().BeEmpty($"Strings.{language}.xaml has keys English does not");
+        }
+    }
+
+    [Fact]
+    public void Translations_AreNotCopiesOfEnglish()
+    {
+        // A dictionary that was only copied would pass every other check. Brand names, units and
+        // technical labels stay the same, so a quarter of the strings is already generous.
+        foreach (var language in Translated.Where(l => l != "ru"))
+        {
+            var words = En.Value.Where(kv => Regex.Matches(kv.Value, "[A-Za-z]{3,}").Count >= 2).ToList();
+            var same = words.Count(kv => All.Value[language].GetValueOrDefault(kv.Key) == kv.Value);
+            ((double)same / words.Count).Should().BeLessThan(0.2, $"Strings.{language}.xaml looks untranslated");
+        }
+    }
+
+    [Fact]
+    public void EveryDictionary_LoadsThroughWpf_WithTheSameValuesTheRegexSees()
+    {
+        // The guard tests read the files with a regex; the program reads them with the XAML loader,
+        // which is stricter (entities, markup characters) and folds white space.
+        foreach (var language in Languages)
+        {
+            var text = File.ReadAllText(Path.Combine(AppDir, "Localization", $"Strings.{language}.xaml"));
+            System.Windows.ResourceDictionary? loaded = null;
+            Exception? failure = null;
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    loaded = (System.Windows.ResourceDictionary)System.Windows.Markup.XamlReader.Parse(text);
+                }
+                catch (Exception ex)
+                {
+                    failure = ex;
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            failure.Should().BeNull($"Strings.{language}.xaml must load: {failure?.Message}");
+            loaded!.Count.Should().Be(All.Value[language].Count, language);
+        }
+    }
+
+    [Fact]
+    public void ListDate_IsAValidPattern_InEveryLanguage()
+    {
+        var date = new DateTime(2026, 10, 17, 13, 5, 0);
+        foreach (var language in Languages)
+        {
+            var pattern = All.Value[language]["Format_ListDate"];
+            var text = date.ToString(pattern, System.Globalization.CultureInfo.InvariantCulture);
+            text.Should().Contain("2026").And.Contain("13:05", $"Format_ListDate of {language}");
+        }
+    }
+
+    [Fact]
     public void MultiLineStrings_PreserveTheirLineBreaks()
     {
         // XAML folds whitespace in element text, a &#10; included: without xml:space="preserve"
         // every paragraph break in a message (and every line of a help article) became a space.
-        foreach (var language in new[] { "ru", "en" })
+        foreach (var language in Languages)
         {
             var text = File.ReadAllText(Path.Combine(AppDir, "Localization", $"Strings.{language}.xaml"));
             Regex.Matches(text, @"<sys:String x:Key=""([^""]+)""([^>]*)>([^<]*)</sys:String>")
@@ -49,7 +136,7 @@ public class LocalizationGuardTests
     [Fact]
     public void Dictionaries_HaveNoDuplicateKeys()
     {
-        foreach (var language in new[] { "ru", "en" })
+        foreach (var language in Languages)
         {
             var text = File.ReadAllText(Path.Combine(AppDir, "Localization", $"Strings.{language}.xaml"));
             var keys = Regex.Matches(text, @"<sys:String x:Key=""([^""]+)""").Select(m => m.Groups[1].Value);
@@ -61,12 +148,15 @@ public class LocalizationGuardTests
     [Fact]
     public void Translations_KeepTheSamePlaceholders()
     {
-        var mismatched = Ru.Value
-            .Where(kv => En.Value.ContainsKey(kv.Key))
-            .Where(kv => Placeholders(kv.Value) != Placeholders(En.Value[kv.Key]))
-            .Select(kv => kv.Key);
+        foreach (var language in Translated)
+        {
+            var mismatched = All.Value[language]
+                .Where(kv => En.Value.ContainsKey(kv.Key))
+                .Where(kv => Placeholders(kv.Value) != Placeholders(En.Value[kv.Key]))
+                .Select(kv => kv.Key);
 
-        mismatched.Should().BeEmpty("a {0} missing from one language breaks string.Format at runtime");
+            mismatched.Should().BeEmpty($"a {{0}} missing from {language} breaks string.Format at runtime");
+        }
     }
 
     // Plural forms ({0:plural:…}) are left out: one language may need them where another does not,
@@ -91,9 +181,12 @@ public class LocalizationGuardTests
         foreach (var (key, en) in En.Value)
         {
             var ids = GestureIds(en).OrderBy(x => x).ToList();
-            if (Ru.Value.TryGetValue(key, out var ru) && !ids.SequenceEqual(GestureIds(ru).OrderBy(x => x)))
+            foreach (var language in Translated)
             {
-                problems.Add($"{key}: the languages name different shortcuts");
+                if (All.Value[language].TryGetValue(key, out var other) && !ids.SequenceEqual(GestureIds(other).OrderBy(x => x)))
+                {
+                    problems.Add($"{key}: {language} names different shortcuts");
+                }
             }
 
             foreach (var id in ids)
@@ -146,7 +239,7 @@ public class LocalizationGuardTests
     public void Strings_DoNotTypeInACommandShortcut()
     {
         var typedIn = new Regex(@"\b(Ctrl|Alt|Shift)\+|\bF([1-9]|1[0-2])\b");
-        var offenders = En.Value.Concat(Ru.Value)
+        var offenders = All.Value.Values.SelectMany(d => d)
             .Where(kv => typedIn.IsMatch(kv.Value))
             .Select(kv => kv.Key)
             .Where(k => !FixedKeyTexts.Contains(k) && !(k.StartsWith("Viewer_") && k != "Viewer_Title"))
@@ -170,14 +263,18 @@ public class LocalizationGuardTests
                 .Where(m => m.Groups[1].Value.Split('|').Length != forms)
                 .Select(m => $"{kv.Key}: {m.Value}"));
 
-        Bad(En.Value, 2).Should().BeEmpty("English has one and other");
-        Bad(Ru.Value, 3).Should().BeEmpty("Russian has one, few and many");
+        // English, German, French… have one and other; Russian, Ukrainian and Polish one, few and many.
+        foreach (var language in Languages)
+        {
+            Bad(All.Value[language], TCV.App.Localization.PluralFormat.FormCount(language))
+                .Should().BeEmpty($"{language} has {TCV.App.Localization.PluralFormat.FormCount(language)} plural forms");
+        }
     }
 
     [Fact]
     public void KeysWithPluralForms_AreFormattedByLocalizationManager()
     {
-        var pluralKeys = En.Value.Concat(Ru.Value)
+        var pluralKeys = All.Value.Values.SelectMany(d => d)
             .Where(kv => kv.Value.Contains(":" + TCV.App.Localization.PluralFormat.Prefix))
             .Select(kv => kv.Key)
             .ToHashSet();
@@ -213,18 +310,33 @@ public class LocalizationGuardTests
     }
 
     [Fact]
-    public void EnglishStrings_ContainNoCyrillic()
+    public void LatinLanguages_ContainNoCyrillic()
     {
-        En.Value.Where(kv => Regex.IsMatch(kv.Value, "[а-яА-ЯёЁ]")).Select(kv => kv.Key)
-            .Where(k => k != "Settings_LanguageGroup") // "Language / Язык": the one label meant to be found in either language
-            .Should().BeEmpty("the English dictionary is what an English-speaking user sees");
+        foreach (var language in Languages.Where(l => l is not ("ru" or "uk")))
+        {
+            All.Value[language].Where(kv => Regex.IsMatch(kv.Value, "[а-яА-ЯёЁіїєґІЇЄҐ]")).Select(kv => kv.Key)
+                .Where(k => k != "Settings_LanguageGroup") // "Language / Язык": the one label meant to be found in either language
+                .Should().BeEmpty($"the {language} dictionary is what a {language}-speaking user sees");
+        }
+    }
+
+    [Fact]
+    public void Ukrainian_IsNotRussian()
+    {
+        // The letters that exist in Russian only; one of them in the Ukrainian dictionary is a slip.
+        All.Value["uk"].Where(kv => Regex.IsMatch(kv.Value, "[ыэъёЫЭЪЁ]")).Select(kv => kv.Key)
+            .Where(k => k != "Settings_LanguageGroup")
+            .Should().BeEmpty();
     }
 
     [Fact]
     public void EveryStringDefined_IsNonEmpty()
     {
-        Ru.Value.Where(kv => string.IsNullOrWhiteSpace(kv.Value)).Select(kv => kv.Key).Should().BeEmpty();
-        En.Value.Where(kv => string.IsNullOrWhiteSpace(kv.Value)).Select(kv => kv.Key).Should().BeEmpty();
+        foreach (var language in Languages)
+        {
+            All.Value[language].Where(kv => string.IsNullOrWhiteSpace(kv.Value)).Select(kv => kv.Key)
+                .Should().BeEmpty(language);
+        }
     }
 
     private static IEnumerable<string> XamlFiles() =>

@@ -232,8 +232,16 @@ public partial class SettingsDialogViewModel : ObservableObject
     /// <summary>Display names for the codes LocalizationManager actually ships a dictionary for.</summary>
     private static readonly Dictionary<string, string> _languageNames = new()
     {
-        ["ru"] = "Русский",
         ["en"] = "English",
+        ["ru"] = "Русский",
+        ["de"] = "Deutsch",
+        ["fr"] = "Français",
+        ["es"] = "Español",
+        ["it"] = "Italiano",
+        ["pt"] = "Português",
+        ["pl"] = "Polski",
+        ["uk"] = "Українська",
+        ["nl"] = "Nederlands",
     };
 
     // Built from LocalizationManager's list so the dialog cannot offer a language that
