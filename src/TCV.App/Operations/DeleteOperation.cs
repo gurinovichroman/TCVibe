@@ -37,6 +37,8 @@ public sealed class DeleteOperation : FileOperationBase
     /// </summary>
     public IProgress<ItemProgress>? Progress { get; set; }
 
+    public override OperationLane Lane => LaneOf(_fs);
+
     public override OperationLogDescriptor LogDescriptor => new(
         OperationKind.Delete,
         OperationLogDescriptor.DescribeEntries(_entries),

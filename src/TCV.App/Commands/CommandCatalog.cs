@@ -146,6 +146,7 @@ public static class CommandCatalog
         new("Search",          "Find files…",                 "Поиск файлов…",                  CatTools, CatToolsRu),
         new("MultiRename",     "Multi-rename…",           "Массовое переименование…",CatTools, CatToolsRu),
         new("OperationLog",    "Operation log…",          "Журнал операций…",        CatTools, CatToolsRu),
+        new("BackgroundOperations", "Background operations", "Фоновые операции",    CatTools, CatToolsRu),
         new("AddBookmark",     "Add bookmark…",            "Добавить закладку…",       CatTools, CatToolsRu),
         new("BookmarksManager", "Manage bookmarks…",      "Управление закладками…",  CatTools, CatToolsRu),
         new("Terminal",        "Open terminal here",      "Открыть терминал здесь",  CatTools, CatToolsRu),

@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">Nowa nazwa:</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Wstrzymaj</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Anuluj</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">W tle</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Wznów</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">_Zbiorcza zmiana nazw…</sys:String>
     <sys:String x:Key="Menu_Checksums">Sumy _kontrolne…</sys:String>
     <sys:String x:Key="Menu_OperationLog">Dziennik _operacji…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Operacje _w tle</sys:String>
     <sys:String x:Key="Menu_Terminal">Otwórz _terminal</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Powłoki wiersza poleceń…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Otwórz w _edytorze</sys:String>
@@ -1915,6 +1917,7 @@ Wysłanie teraz zastąpi te zmiany na serwerze. Zastąpić kopię na serwerze?</
     <sys:String x:Key="Help_Cmd_Search">Wyszukiwanie plików: według maski nazwy lub wyrażenia regularnego, zawartości, rozmiaru i atrybutów, także wewnątrz archiwów i z uwzględnieniem .gitignore; kryteria można zapisać jako ustawienia wstępne. Pokaż w panelu wyświetla trafienia w aktywnym panelu, gdzie działają na nich zwykłe polecenia. Przeszukuje dyski lokalne.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Zbiorcza zmiana nazw według szablonu ([N] nazwa, [E] rozszerzenie, [C] licznik, [D] i [T] data i godzina, [P] folder), zamiana wyrażeniem regularnym, wstawianie i usuwanie znaków oraz zmiana wielkości liter. Podgląd od razu pokazuje konflikty; po Zmień nazwę można nacisnąć Cofnij, dopóki okno jest otwarte. W archiwum ZIP cała partia to jedno przepisanie archiwum, wszystko albo nic; pozostałe formaty archiwów są tylko do odczytu.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Historia operacji na plikach, użytkownika i agentów: kopiowanie, przenoszenie, usuwanie, zmiana nazwy, tworzenie, pakowanie i rozpakowywanie, pobrania i wysyłki (kolejka transferu i zapisy pliku otwartego z serwera), z wynikiem i błędami. Wiersz można zapisać jako operację wielokrotnego użytku. Dziennik może cofnąć tylko jedno: partię zmian nazw lub zmianę nazw przez AI (Cofnij zmianę nazw); w pozostałych przypadkach drogą powrotną jest Kosz.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Ponownie pokazuje okna postępu ukryte przyciskiem „W tle”. Kopiowanie, przenoszenie lub usuwanie trwa dalej przy ukrytym oknie; pasek stanu pokazuje, ile operacji działa w tle i jak daleko zaszły, a kliknięcie go działa jak to polecenie. Operacje z serwerem po jednej stronie działają obok operacji na dysku, więc długie pobieranie nie wstrzymuje lokalnego kopiowania.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Dodaje bieżący folder aktywnego panelu do zakładek pod wybraną nazwą. Zakładki są w menu Zakładki.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Edytor zakładek: nazwa, ścieżka, kolejność i grupa (grupy stają się podmenu menu Zakładki), import i eksport jako JSON. Zmiany obowiązują po kliknięciu OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Otwiera terminal w folderze aktywnego panelu: Windows Terminal, jeśli jest zainstalowany, w przeciwnym razie PowerShell lub cmd. Tylko foldery dyskowe.</sys:String>
@@ -2089,6 +2092,9 @@ Wysłanie teraz zastąpi te zmiany na serwerze. Zastąpić kopię na serwerze?</
     <sys:String x:Key="Shell_Changes">{0} {0:plural:zmiana|zmiany|zmian}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Wszystkie operacje zakończone</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">W toku: {0}</sys:String>
+    <sys:String x:Key="Shell_Background">W tle: {0} · {1}%</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Pokaż okna postępu operacji działających w tle</sys:String>
+    <sys:String x:Key="Shell_NoBackground">Żadna operacja nie działa w tle</sys:String>
     <sys:String x:Key="Shell_AiOn">AI: wł.</sys:String>
     <sys:String x:Key="Shell_AiOff">AI: wył.</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: wł.</sys:String>
@@ -2191,6 +2197,7 @@ Wysłanie teraz zastąpi te zmiany na serwerze. Zastąpić kopię na serwerze?</
     <sys:String x:Key="Cmd_Search">Znajdź pliki…</sys:String>
     <sys:String x:Key="Cmd_MultiRename">Zbiorcza zmiana nazw…</sys:String>
     <sys:String x:Key="Cmd_OperationLog">Dziennik operacji…</sys:String>
+    <sys:String x:Key="Cmd_BackgroundOperations">Operacje w tle</sys:String>
     <sys:String x:Key="Cmd_AddBookmark">Dodaj zakładkę…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Zarządzaj zakładkami…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Otwórz terminal tutaj</sys:String>

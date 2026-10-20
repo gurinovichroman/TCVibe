@@ -71,6 +71,8 @@ public sealed class CopyOperation : FileOperationBase
     {
     }
 
+    public override OperationLane Lane => LaneOf(_sourceFs, _destFs);
+
     public override OperationLogDescriptor LogDescriptor => new(
         OperationKind.Copy,
         OperationLogDescriptor.DescribeEntries(_entries),

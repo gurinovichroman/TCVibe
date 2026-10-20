@@ -11,11 +11,20 @@ namespace TCV.Network;
 public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKeepAlive
 {
     private readonly ConnectionInfo _conn;
+    private readonly HostTrustPolicy? _trust;
     private readonly AsyncFtpClient _client;
 
     // One control connection can run one command at a time; a listing racing a transfer corrupts
-    // both. Streams keep the gate until they are closed.
+    // both. A stream on it (only when the server gives no transfer connection) keeps the gate until
+    // it is closed.
     private readonly SemaphoreSlim _gate = new(1, 1);
+
+    /// <summary>
+    /// Connections of their own for the file transfers, so a download does not hold the control
+    /// connection the panel lists through for as long as the file takes. A server that refuses
+    /// another connection gets its transfers on the control one, under the gate, as before.
+    /// </summary>
+    private readonly TransferConnectionPool<AsyncFtpClient> _transfers;
 
     /// <summary>When the control connection was last used (UTC ticks): the keep-alive pings only an idle one.</summary>
     private long _lastActivityTicks = DateTime.UtcNow.Ticks;
@@ -23,7 +32,9 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     public FtpFileSystem(ConnectionInfo conn, HostTrustPolicy? trust = null)
     {
         _conn = conn;
+        _trust = trust;
         _client = CreateClient(conn, trust);
+        _transfers = new TransferConnectionPool<AsyncFtpClient>(OpenTransferClientAsync, c => c.IsConnected, CloseInBackground);
     }
 
     /// <summary>
@@ -115,6 +126,9 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     /// </summary>
     public async Task KeepAliveAsync(CancellationToken ct)
     {
+        // A spare transfer connection is not pinged but closed: the next transfer opens a new one.
+        _transfers.CloseIdle(KeepAlivePolicy.IdleBeforePing);
+
         if (!KeepAlivePolicy.IsDue(new DateTime(Interlocked.Read(ref _lastActivityTicks), DateTimeKind.Utc), DateTime.UtcNow))
         {
             return;
@@ -235,14 +249,52 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
 
     // ── Streams ───────────────────────────────────────────────────────────────
 
-    public async Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default)
+    public Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default) =>
+        OpenTransferAsync(path, download: true, (client, remotePath) => client.OpenRead(remotePath, token: ct), ct);
+
+    public Task<Stream> OpenWriteAsync(VfsPath path, bool overwrite = false, CancellationToken ct = default) =>
+        OpenTransferAsync(path, download: false, (client, remotePath) => client.OpenWrite(remotePath, token: ct), ct);
+
+    /// <summary>
+    /// Opens a transfer stream on a connection of its own, so the panel keeps listing the server while
+    /// the file streams. A kept connection the server has dropped meanwhile is replaced once. Without a
+    /// spare connection the stream goes over the control one and holds the gate until it is closed.
+    /// </summary>
+    private async Task<Stream> OpenTransferAsync(
+        VfsPath path, bool download, Func<AsyncFtpClient, string, Task<Stream>> open, CancellationToken ct)
     {
+        var remotePath = ToRemotePath(path);
+        for (var attempt = 0; attempt < 2 && await _transfers.RentAsync(ct) is { } transfer; attempt++)
+        {
+            try
+            {
+                var stream = await open(transfer, remotePath);
+                return new TransferStream(stream, download, reusable => _transfers.Return(transfer, reusable));
+            }
+            catch (Exception) when (!transfer.IsConnected && !ct.IsCancellationRequested && attempt == 0)
+            {
+                _transfers.Return(transfer, reusable: false);
+            }
+            catch
+            {
+                // Refused (no such file, no permission): the connection itself is still good.
+                _transfers.Return(transfer, reusable: transfer.IsConnected && !ct.IsCancellationRequested);
+                throw;
+            }
+        }
+
         await _gate.WaitAsync(ct);
         try
         {
             await EnsureConnectedAsync(ct);
-            var stream = await _client.OpenRead(ToRemotePath(path), token: ct);
-            return new GatedStream(stream, _gate, Touch);
+            var stream = await open(_client, remotePath);
+
+            // The gate is handed back when the stream is closed, however the transfer went; a transfer counts as use.
+            return new TransferStream(stream, download, _ =>
+            {
+                Touch();
+                _gate.Release();
+            });
         }
         catch
         {
@@ -251,26 +303,50 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         }
     }
 
-    public async Task<Stream> OpenWriteAsync(VfsPath path, bool overwrite = false, CancellationToken ct = default)
+    /// <summary>A connected client for one transfer; it is closed again when the server refuses the login.</summary>
+    private async Task<AsyncFtpClient> OpenTransferClientAsync(CancellationToken ct)
     {
-        await _gate.WaitAsync(ct);
+        var client = CreateClient(_conn, _trust);
         try
         {
-            await EnsureConnectedAsync(ct);
-            var stream = await _client.OpenWrite(ToRemotePath(path), token: ct);
-            return new GatedStream(stream, _gate, Touch);
+            await client.Connect(ct);
+            return client;
         }
         catch
         {
-            _gate.Release();
+            CloseInBackground(client);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Runs a whole transfer on a connection of its own, or on the control connection under the gate
+    /// when the server gives no other. The connection is kept for the next transfer only after a success.
+    /// </summary>
+    private async Task WithTransferClientAsync(Func<AsyncFtpClient, Task> work, CancellationToken ct)
+    {
+        if (await _transfers.RentAsync(ct) is not { } transfer)
+        {
+            await GuardedAsync(() => work(_client), ct);
+            return;
+        }
+
+        var succeeded = false;
+        try
+        {
+            await work(transfer);
+            succeeded = true;
+        }
+        finally
+        {
+            _transfers.Return(transfer, succeeded);
         }
     }
 
     // ── Operations ────────────────────────────────────────────────────────────
 
     public Task CopyAsync(VfsPath source, VfsPath destination, IProgress<FileProgress>? progress, CancellationToken ct) =>
-        GuardedAsync(async () =>
+        WithTransferClientAsync(async client =>
         {
             // FTP has no server-side copy: down to a temp file and back up again.
             var tempFile = Path.GetTempFileName();
@@ -283,8 +359,8 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
                     : new Progress<FtpProgress>(p => progress.Report(new FileProgress(
                         p.TransferredBytes, 0, source.FileName, started.Elapsed)));
 
-                await _client.DownloadFile(tempFile, sourcePath, FtpLocalExists.Overwrite, token: ct, progress: adapter);
-                await _client.UploadFile(tempFile, ToRemotePath(destination), FtpRemoteExists.Overwrite, token: ct);
+                await client.DownloadFile(tempFile, sourcePath, FtpLocalExists.Overwrite, token: ct, progress: adapter);
+                await client.UploadFile(tempFile, ToRemotePath(destination), FtpRemoteExists.Overwrite, token: ct);
             }
             finally
             {
@@ -295,18 +371,22 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     public Task MoveAsync(VfsPath source, VfsPath destination, CancellationToken ct) =>
         GuardedAsync(() => _client.MoveFile(ToRemotePath(source), ToRemotePath(destination), token: ct), ct);
 
-    public Task DeleteAsync(VfsPath path, bool recursive, CancellationToken ct) =>
-        GuardedAsync(async () =>
+    public async Task DeleteAsync(VfsPath path, bool recursive, CancellationToken ct)
+    {
+        var remotePath = ToRemotePath(path);
+        var info = await GuardedAsync(() => _client.GetObjectInfo(remotePath, token: ct), ct);
+        if (info?.Type == FtpObjectType.Directory && recursive)
         {
-            var remotePath = ToRemotePath(path);
-            var info = await _client.GetObjectInfo(remotePath, token: ct);
+            // A tree is a command per file: on a connection of its own, so the panel lists meanwhile.
+            await WithTransferClientAsync(client => client.DeleteDirectory(remotePath, ct), ct);
+            return;
+        }
+
+        await GuardedAsync(async () =>
+        {
             if (info?.Type != FtpObjectType.Directory)
             {
                 await _client.DeleteFile(remotePath, ct);
-            }
-            else if (recursive)
-            {
-                await _client.DeleteDirectory(remotePath, ct);
             }
             else
             {
@@ -319,6 +399,7 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
                 }
             }
         }, ct);
+    }
 
     public Task CreateDirectoryAsync(VfsPath path, CancellationToken ct) =>
         GuardedAsync(() => _client.CreateDirectory(ToRemotePath(path), ct), ct);
@@ -365,82 +446,19 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     /// </summary>
     public void Dispose()
     {
-        var client = _client;
+        _transfers.Dispose();
+        CloseInBackground(_client);
+    }
+
+    private static void CloseInBackground(AsyncFtpClient client) =>
         _ = Task.Run(() =>
         {
             try { client.Dispose(); }
             catch { /* a connection that will not close cleanly is closed anyway */ }
         });
-    }
 
     private static string ToRemotePath(VfsPath path) =>
         path.Value.Replace('\\', '/');
-
-    /// <summary>Hands the file-system gate back when the data stream is closed; a transfer counts as use.</summary>
-    private sealed class GatedStream(Stream inner, SemaphoreSlim gate, Action used) : Stream
-    {
-        private int _released;
-
-        public override bool CanRead => inner.CanRead;
-        public override bool CanSeek => inner.CanSeek;
-        public override bool CanWrite => inner.CanWrite;
-        public override long Length => inner.Length;
-
-        public override long Position
-        {
-            get => inner.Position;
-            set => inner.Position = value;
-        }
-
-        public override void Flush() => inner.Flush();
-        public override Task FlushAsync(CancellationToken ct) => inner.FlushAsync(ct);
-        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default) => inner.ReadAsync(buffer, ct);
-        public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
-        public override void SetLength(long value) => inner.SetLength(value);
-        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken ct = default) => inner.WriteAsync(buffer, ct);
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                try
-                {
-                    inner.Dispose();
-                }
-                finally
-                {
-                    Release();
-                }
-            }
-
-            base.Dispose(disposing);
-        }
-
-        public override async ValueTask DisposeAsync()
-        {
-            try
-            {
-                await inner.DisposeAsync();
-            }
-            finally
-            {
-                Release();
-            }
-
-            await base.DisposeAsync();
-        }
-
-        private void Release()
-        {
-            if (Interlocked.Exchange(ref _released, 1) == 0)
-            {
-                used();
-                gate.Release();
-            }
-        }
-    }
 }
 
 /// <summary>Helpers for picking the meaningful failure out of nested library exceptions.</summary>

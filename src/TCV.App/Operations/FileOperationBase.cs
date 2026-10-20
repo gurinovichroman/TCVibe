@@ -38,6 +38,16 @@ public abstract class FileOperationBase : IFileOperation
     /// </summary>
     public string? Origin { get; set; }
 
+    /// <summary>
+    /// The lane of the queue that runs it: an operation with a server on one side goes beside the local
+    /// ones (ADR-0038). Operations that do not say run in the local lane, one at a time as always.
+    /// </summary>
+    public virtual OperationLane Lane => OperationLane.Local;
+
+    /// <summary>The network lane when one of <paramref name="fileSystems"/> is a server or a cloud store.</summary>
+    protected static OperationLane LaneOf(params IVirtualFileSystem[] fileSystems) =>
+        fileSystems.Any(fs => IsRemoteServer(fs) || IsCloudStorage(fs)) ? OperationLane.Network : OperationLane.Local;
+
     // ── Skips, warnings and per-item errors ───────────────────────────────────
 
     private int _skippedCount;

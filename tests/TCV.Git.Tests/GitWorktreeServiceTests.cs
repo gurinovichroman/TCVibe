@@ -71,6 +71,22 @@ public class GitWorktreeServiceTests
     }
 
     [Fact]
+    public async Task AddAsync_WorktreeRootDoesNotExistYet_CreatesIt()
+    {
+        // The default root, <repo>-worktrees, is not there before the first worktree; libgit2 only
+        // creates the last path level.
+        using var repo = new TempRepository("wt-noroot");
+        var target = Path.Combine(repo.SiblingPath("worktrees"), "task");
+
+        var result = await _service.AddAsync(new GitWorktreeRequest(
+            repo.Path, "task", CreateBranch: true, BaseCommittish: "", TargetPath: target));
+
+        result.Success.Should().BeTrue(result.Message);
+        File.Exists(Path.Combine(target, "README.md")).Should().BeTrue();
+        GitHeadReader.ReadBranch(target).Should().Be("task");
+    }
+
+    [Fact]
     public async Task AddAsync_ThenList_ShowsBothCheckouts()
     {
         using var repo = new TempRepository("wt-both");

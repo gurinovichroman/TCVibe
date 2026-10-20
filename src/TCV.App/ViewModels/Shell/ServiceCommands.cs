@@ -304,6 +304,16 @@ public sealed partial class ServiceCommands : ObservableObject
     [RelayCommand]
     private void OpenOperationLog() => _dialogs.ShowOperationLog(_operationLog, _shell.UndoLoggedRenameAsync);
 
+    /// <summary>Brings back the progress windows sent to the background, as a click on the status bar does (ADR-0038).</summary>
+    [RelayCommand]
+    private void ShowBackgroundOperations()
+    {
+        if (_dialogs.BackgroundProgress.BringBackAll() == 0)
+        {
+            _shell.ShowNotice(LocalizationManager.Get("Shell_NoBackground"));
+        }
+    }
+
     // Plugin Manager dialog (3.3)
     [RelayCommand]
     private Task OpenPluginManager() =>

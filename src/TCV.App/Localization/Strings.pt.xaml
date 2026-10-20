@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">Novo nome:</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Pausar</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Cancelar</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">Em segundo plano</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Retomar</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">_Mudança de nome em lote…</sys:String>
     <sys:String x:Key="Menu_Checksums">_Somas de verificação…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Registo de operações…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Operações em segu_ndo plano</sys:String>
     <sys:String x:Key="Menu_Terminal">Abrir _terminal</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Shells da linha de comandos…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Abrir no _editor</sys:String>
@@ -1915,6 +1917,7 @@ Carregar agora substitui essas alterações no servidor. Substituir a cópia no 
     <sys:String x:Key="Help_Cmd_Search">Pesquisa de ficheiros: por máscara de nome ou expressão regular, por conteúdo, tamanho e atributos, incluindo dentro de arquivos e respeitando .gitignore; os critérios podem ser guardados como predefinições. Mostrar no painel lista as ocorrências no painel ativo, onde os comandos habituais atuam sobre elas. Pesquisa nos discos locais.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Mudança de nome em lote com um modelo ([N] nome, [E] extensão, [C] contador, [D] e [T] data e hora, [P] pasta), substituição por expressão regular, inserção e eliminação de carateres e mudanças de maiúsculas/minúsculas. A pré-visualização mostra logo os conflitos; depois de Mudar o nome pode premir Anular enquanto a janela estiver aberta. Dentro de um arquivo ZIP, todo o lote é uma única reescrita do arquivo, tudo ou nada; os outros formatos de arquivo são só de leitura.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Histórico das operações com ficheiros, suas e dos agentes: copiar, mover, eliminar, mudar o nome, criar, compactar e extrair, transferências e carregamentos (a fila de transferências e as gravações de um ficheiro aberto a partir de um servidor), com resultado e erros. Uma linha pode ser guardada como operação reutilizável. A única coisa que o registo pode anular é um lote de mudança de nome ou a mudança de nome por IA (Anular mudança de nome); para o resto, o caminho de volta é a Reciclagem.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Volta a mostrar as janelas de progresso ocultadas com «Em segundo plano». Uma cópia, movimentação ou eliminação continua com a janela oculta; a barra de estado mostra quantas operações estão em segundo plano e quanto avançaram, e um clique nela faz o mesmo que este comando. As operações com um servidor de um lado correm ao lado das do disco, por isso uma transferência longa não atrasa uma cópia local.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Adiciona a pasta atual do painel ativo aos marcadores com um nome à sua escolha. Os marcadores estão no menu Marcadores.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Editor de marcadores: nome, caminho, ordem e grupo (os grupos tornam-se submenus do menu Marcadores), importação e exportação como JSON. As alterações aplicam-se em OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Abre um terminal na pasta do painel ativo: o Terminal do Windows se estiver instalado, caso contrário o PowerShell ou o cmd. Apenas pastas do disco.</sys:String>
@@ -2089,6 +2092,9 @@ Carregar agora substitui essas alterações no servidor. Substituir a cópia no 
     <sys:String x:Key="Shell_Changes">{0} {0:plural:alteração|alterações}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Todas as operações concluídas</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Em execução: {0}</sys:String>
+    <sys:String x:Key="Shell_Background">Em segundo plano: {0} · {1}%</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Mostrar as janelas de progresso das operações em segundo plano</sys:String>
+    <sys:String x:Key="Shell_NoBackground">Não há operações em segundo plano</sys:String>
     <sys:String x:Key="Shell_AiOn">IA: ativa</sys:String>
     <sys:String x:Key="Shell_AiOff">IA: inativa</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: ativo</sys:String>
@@ -2191,6 +2197,7 @@ Carregar agora substitui essas alterações no servidor. Substituir a cópia no 
     <sys:String x:Key="Cmd_Search">Procurar ficheiros…</sys:String>
     <sys:String x:Key="Cmd_MultiRename">Mudança de nome em lote…</sys:String>
     <sys:String x:Key="Cmd_OperationLog">Registo de operações…</sys:String>
+    <sys:String x:Key="Cmd_BackgroundOperations">Operações em segundo plano</sys:String>
     <sys:String x:Key="Cmd_AddBookmark">Adicionar marcador…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Gerir marcadores…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Abrir terminal aqui</sys:String>

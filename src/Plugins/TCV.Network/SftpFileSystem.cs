@@ -220,16 +220,22 @@ public sealed class SftpFileSystem : IVirtualFileSystem, IModifiedTimeWriter
             return true;
         }, ct);
 
-    public Task DeleteAsync(VfsPath path, bool recursive, CancellationToken ct) =>
-        RunAsync(() =>
+    public async Task DeleteAsync(VfsPath path, bool recursive, CancellationToken ct)
+    {
+        var remotePath = ToRemotePath(path);
+        if (await RunAsync(() => _client.GetAttributes(remotePath).IsDirectory, ct))
         {
-            var remotePath = ToRemotePath(path);
-            if (_client.GetAttributes(remotePath).IsDirectory)
-                DeleteDirectoryRecursive(remotePath, recursive);
-            else
+            await DeleteDirectoryAsync(remotePath, recursive, ct);
+        }
+        else
+        {
+            await RunAsync(() =>
+            {
                 _client.DeleteFile(remotePath);
-            return true;
-        }, ct);
+                return true;
+            }, ct);
+        }
+    }
 
     public Task CreateDirectoryAsync(VfsPath path, CancellationToken ct) =>
         RunAsync(() =>
@@ -289,18 +295,42 @@ public sealed class SftpFileSystem : IVirtualFileSystem, IModifiedTimeWriter
     private static NetworkFileEntry ToFileEntry(VfsPath parentPath, ISftpFile f) =>
         new(parentPath.Combine(f.Name), f.Name, f.IsDirectory, f.IsDirectory ? 0 : f.Length, f.LastWriteTime);
 
-    private void DeleteDirectoryRecursive(string remotePath, bool recursive)
+    /// <summary>
+    /// A tree goes one SSH call at a time, each under the gate on its own: holding the gate for the
+    /// whole tree kept the panel from listing until the last file was gone, and a cancel was only seen
+    /// once it was all over.
+    /// </summary>
+    private async Task DeleteDirectoryAsync(string remotePath, bool recursive, CancellationToken ct)
     {
-        if (!recursive)
+        if (recursive)
+        {
+            var children = await RunAsync(() => _client.ListDirectory(remotePath)
+                .Where(f => f.Name is not ("." or ".."))
+                .Select(f => (f.FullName, f.IsDirectory))
+                .ToList(), ct);
+
+            foreach (var (child, isDirectory) in children)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (isDirectory)
+                {
+                    await DeleteDirectoryAsync(child, recursive: true, ct);
+                }
+                else
+                {
+                    await RunAsync(() =>
+                    {
+                        _client.DeleteFile(child);
+                        return true;
+                    }, ct);
+                }
+            }
+        }
+
+        await RunAsync(() =>
         {
             _client.DeleteDirectory(remotePath);
-            return;
-        }
-        foreach (var f in _client.ListDirectory(remotePath).Where(f => f.Name is not ("." or "..")))
-        {
-            if (f.IsDirectory) DeleteDirectoryRecursive(f.FullName, recursive: true);
-            else _client.DeleteFile(f.FullName);
-        }
-        _client.DeleteDirectory(remotePath);
+            return true;
+        }, ct);
     }
 }

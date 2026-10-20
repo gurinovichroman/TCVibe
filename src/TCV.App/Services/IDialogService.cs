@@ -46,6 +46,9 @@ public interface IDialogService
     /// <summary>Shows the progress dialog as a non-blocking window and returns its ViewModel.</summary>
     ProgressDialogViewModel ShowProgressDialog(string title);
 
+    /// <summary>The progress windows sent to the background, which the status bar counts (ADR-0038).</summary>
+    BackgroundProgress BackgroundProgress { get; }
+
     /// <summary>
     /// Shows the connection manager (saved connections and their editor) until it is closed; what to
     /// open or close is read back from <paramref name="viewModel"/>.

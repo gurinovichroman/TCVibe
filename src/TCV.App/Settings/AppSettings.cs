@@ -510,7 +510,7 @@ public sealed class OperationSettings
     /// </summary>
     public bool ConfirmOverwrite { get; set; } = true;
 
-    /// <summary>Not used: the operation queue runs one operation at a time by design. Kept so old settings.json files load.</summary>
+    /// <summary>Not used: each lane of the operation queue runs one operation at a time by design (ADR-0038). Kept so old settings.json files load.</summary>
     public int MaxParallelOperations { get; set; } = 1;
 }
 

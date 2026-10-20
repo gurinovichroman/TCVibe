@@ -65,6 +65,8 @@ public sealed class MoveOperation : FileOperationBase
         _logger = logger;
     }
 
+    public override OperationLane Lane => LaneOf(_sourceFs, _destFs);
+
     public override OperationLogDescriptor LogDescriptor => new(
         OperationKind.Move,
         OperationLogDescriptor.DescribeEntries(_entries),

@@ -103,7 +103,8 @@ public partial class MainViewModel
             _agents.Sessions,
             _agents.Mcp,
             _agents.Llm,
-            () => _operationQueue.Running.Count + _operationQueue.Pending.Count + (Mounts.HasActiveTransfers ? 1 : 0));
+            () => _operationQueue.Running.Count + _operationQueue.Pending.Count + (Mounts.HasActiveTransfers ? 1 : 0),
+            _dialogs.BackgroundProgress);
 
         Status.OriginsChanged += (_, _) => PushOrigins();
         Status.PropertyChanged += (_, e) =>

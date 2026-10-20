@@ -26,6 +26,9 @@ public class TcvDialog : Window
 
     private bool _isClosed;
 
+    /// <summary>The window has been closed and cannot be shown again; true already in <see cref="Window.Closed"/>.</summary>
+    protected bool IsClosed => _isClosed;
+
     protected override void OnClosed(EventArgs e)
     {
         _isClosed = true;

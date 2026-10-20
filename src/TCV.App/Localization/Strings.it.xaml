@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">Nuovo nome:</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Pausa</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Annulla</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">In background</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Riprendi</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">Rinomina _multipla…</sys:String>
     <sys:String x:Key="Menu_Checksums">Chec_ksum…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Registro delle operazioni…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Operazioni in _background</sys:String>
     <sys:String x:Key="Menu_Terminal">Apri _terminale</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Shell della riga di comando…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Apri nell'_editor</sys:String>
@@ -1915,6 +1917,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Help_Cmd_Search">Ricerca di file: per maschera del nome o espressione regolare, per contenuto, dimensione e attributi, anche negli archivi e nel rispetto di .gitignore; i criteri si possono salvare come preimpostazioni. Mostra nel pannello elenca i risultati nel pannello attivo, dove i comandi consueti agiscono su di essi. Cerca nei dischi locali.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Rinomina in blocco con un modello ([N] nome, [E] estensione, [C] contatore, [D] e [T] data e ora, [P] cartella), sostituzione con espressioni regolari, inserimento ed eliminazione di caratteri e cambi di maiuscole/minuscole. L'anteprima mostra subito i conflitti; dopo Rinomina si può premere Annulla finché la finestra è aperta. In un archivio ZIP l'intero blocco è un'unica riscrittura dell'archivio, tutto o niente; gli altri formati di archivio sono di sola lettura.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Cronologia delle operazioni sui file, proprie e degli agenti: copia, spostamento, eliminazione, rinomina, creazione, compressione ed estrazione, download e upload (la coda di trasferimento e i salvataggi di un file aperto da un server), con esito ed errori. Una riga può essere salvata come operazione riutilizzabile. L'unica cosa che il registro può annullare è un blocco di rinomina o la rinomina con IA (Annulla rinomina); per il resto la via del ritorno è il Cestino.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Mostra di nuovo le finestre di avanzamento nascoste con «In background». Una copia, uno spostamento o un'eliminazione prosegue con la finestra nascosta; la barra di stato mostra quante operazioni sono in background e a che punto sono, e un clic su di essa fa lo stesso di questo comando. Le operazioni con un server da un lato vanno accanto a quelle sul disco, quindi un download lungo non trattiene una copia locale.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Aggiunge ai segnalibri la cartella corrente del pannello attivo con un nome a scelta. I segnalibri si trovano nel menu Segnalibri.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Editor dei segnalibri: nome, percorso, ordine e gruppo (i gruppi diventano sottomenu del menu Segnalibri), importazione ed esportazione come JSON. Le modifiche si applicano con OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Apre un terminale nella cartella del pannello attivo: Windows Terminal se installato, altrimenti PowerShell o cmd. Solo cartelle su disco.</sys:String>
@@ -2089,6 +2092,9 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Shell_Changes">{0} {0:plural:modifica|modifiche}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Tutte le operazioni completate</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">In esecuzione: {0}</sys:String>
+    <sys:String x:Key="Shell_Background">In background: {0} · {1}%</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Mostra le finestre di avanzamento delle operazioni in background</sys:String>
+    <sys:String x:Key="Shell_NoBackground">Nessuna operazione in background</sys:String>
     <sys:String x:Key="Shell_AiOn">IA: attiva</sys:String>
     <sys:String x:Key="Shell_AiOff">IA: disattivata</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: attivo</sys:String>
@@ -2191,6 +2197,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Cmd_Search">Trova file…</sys:String>
     <sys:String x:Key="Cmd_MultiRename">Rinomina multipla…</sys:String>
     <sys:String x:Key="Cmd_OperationLog">Registro delle operazioni…</sys:String>
+    <sys:String x:Key="Cmd_BackgroundOperations">Operazioni in background</sys:String>
     <sys:String x:Key="Cmd_AddBookmark">Aggiungi segnalibro…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Gestisci segnalibri…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Apri terminale qui</sys:String>

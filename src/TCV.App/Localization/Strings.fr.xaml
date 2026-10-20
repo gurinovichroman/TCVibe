@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">Nouveau nom :</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Pause</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Annuler</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">En arrière-plan</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Reprendre</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">_Renommage multiple…</sys:String>
     <sys:String x:Key="Menu_Checksums">Sommes de _contrôle…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Journal des opérations…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">_Opérations en arrière-plan</sys:String>
     <sys:String x:Key="Menu_Terminal">Ouvrir un _terminal</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Shells de la ligne de commande…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Ouvrir dans l’_éditeur</sys:String>
@@ -1915,6 +1917,7 @@ L'envoi remplace maintenant ces changements sur le serveur. Remplacer la copie d
     <sys:String x:Key="Help_Cmd_Search">Recherche de fichiers : par masque de nom ou expression régulière, par contenu, taille et attributs, y compris dans les archives et en respectant .gitignore ; les critères peuvent être enregistrés comme préréglages. Afficher dans le panneau liste les résultats dans le panneau actif, où les commandes habituelles s'appliquent. Recherche sur les disques locaux.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Renommage par lot avec un modèle ([N] nom, [E] extension, [C] compteur, [D] et [T] date et heure, [P] dossier), remplacement par expression régulière, insertion et suppression de caractères, et changements de casse. L'aperçu montre les conflits tout de suite ; après Renommer, vous pouvez cliquer sur Annuler tant que la fenêtre est ouverte. Dans une archive ZIP, tout le lot est une seule réécriture de l'archive, tout ou rien ; les autres formats d'archive sont en lecture seule.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Historique des opérations sur les fichiers, les vôtres et celles des agents : copie, déplacement, suppression, renommage, création, compression et décompression, téléchargements et envois (la file de transfert et les enregistrements d'un fichier ouvert depuis un serveur), avec résultat et erreurs. Une ligne peut être enregistrée comme opération réutilisable. La seule chose que le journal peut annuler est un lot de renommage ou un renommage par IA (Annuler le renommage) ; pour le reste, le retour passe par la Corbeille.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Réaffiche les fenêtres de progression masquées avec « En arrière-plan ». Une copie, un déplacement ou une suppression continue pendant que sa fenêtre est masquée ; la barre d'état indique combien d'opérations tournent en arrière-plan et où elles en sont, et un clic dessus fait la même chose que cette commande. Les opérations avec un serveur d'un côté s'exécutent à côté de celles sur le disque : un long téléchargement ne retarde pas une copie locale.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Ajoute le dossier courant du panneau actif aux favoris sous un nom de votre choix. Les favoris se trouvent dans le menu Favoris.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Éditeur de favoris : nom, chemin, ordre et groupe (les groupes deviennent des sous-menus du menu Favoris), importation et exportation en JSON. Les modifications s'appliquent avec OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Ouvre un terminal dans le dossier du panneau actif : Windows Terminal s'il est installé, sinon PowerShell ou cmd. Dossiers du disque uniquement.</sys:String>
@@ -2089,6 +2092,9 @@ L'envoi remplace maintenant ces changements sur le serveur. Remplacer la copie d
     <sys:String x:Key="Shell_Changes">{0} {0:plural:modification|modifications}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Toutes les opérations sont terminées</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">En cours : {0}</sys:String>
+    <sys:String x:Key="Shell_Background">En arrière-plan : {0} · {1} %</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Afficher les fenêtres de progression des opérations en arrière-plan</sys:String>
+    <sys:String x:Key="Shell_NoBackground">Aucune opération en arrière-plan</sys:String>
     <sys:String x:Key="Shell_AiOn">IA : activée</sys:String>
     <sys:String x:Key="Shell_AiOff">IA : désactivée</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP : activé</sys:String>
@@ -2191,6 +2197,7 @@ L'envoi remplace maintenant ces changements sur le serveur. Remplacer la copie d
     <sys:String x:Key="Cmd_Search">Rechercher des fichiers…</sys:String>
     <sys:String x:Key="Cmd_MultiRename">Renommage multiple…</sys:String>
     <sys:String x:Key="Cmd_OperationLog">Journal des opérations…</sys:String>
+    <sys:String x:Key="Cmd_BackgroundOperations">Opérations en arrière-plan</sys:String>
     <sys:String x:Key="Cmd_AddBookmark">Ajouter un favori…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Gérer les favoris…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Ouvrir un terminal ici</sys:String>

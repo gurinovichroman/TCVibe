@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">New name:</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Pause</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Cancel</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">In background</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Resume</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">_Multi-rename…</sys:String>
     <sys:String x:Key="Menu_Checksums">Chec_ksums…</sys:String>
     <sys:String x:Key="Menu_OperationLog">Operation _log…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Background _operations</sys:String>
     <sys:String x:Key="Menu_Terminal">Open _terminal</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Command-line shells…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Open in _editor</sys:String>
@@ -1915,6 +1917,7 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Help_Cmd_Search">File search: by name mask or regular expression, by content, size and attributes, including inside archives and honouring .gitignore; criteria can be saved as presets. Show in panel lists the hits in the active panel, where the usual commands work on them. Searches local disks.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Batch rename with a template ([N] name, [E] extension, [C] counter, [D] and [T] date and time, [P] folder), regular-expression replace, inserting and deleting characters, and case changes. The preview shows conflicts straight away; after Rename you can press Undo while the window is open. Inside a ZIP archive the whole batch is one rewrite of the archive, all or nothing; other archive formats are read-only.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">History of file operations, yours and agents': copy, move, delete, rename, create, pack and extract, downloads and uploads (the transfer queue and saves of a file opened from a server), with result and errors. A line can be saved as a reusable operation. The one thing the log can undo is a rename batch of AI rename (Undo rename); for the rest the way back is the Recycle Bin.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Shows again the progress windows hidden with the In background button. A copy, move or delete keeps running while its window is hidden; the status bar shows how many operations run in the background and how far they have got, and a click there does what this command does. Operations with a server on one side run beside those on the disk, so a long download does not hold up a local copy.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Adds the active panel's current folder to the bookmarks under a name you choose. Bookmarks are in the Bookmarks menu.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Bookmark editor: name, path, order and group (groups become submenus of the Bookmarks menu), import and export as JSON. Changes apply on OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Opens a terminal in the active panel's folder: Windows Terminal if installed, otherwise PowerShell or cmd. Disk folders only.</sys:String>
@@ -2089,6 +2092,9 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Shell_Changes">{0} {0:plural:change|changes}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">All operations complete</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Running: {0}</sys:String>
+    <sys:String x:Key="Shell_Background">In background: {0} · {1}%</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Show the progress windows of the operations running in the background</sys:String>
+    <sys:String x:Key="Shell_NoBackground">No operations are running in the background</sys:String>
     <sys:String x:Key="Shell_AiOn">AI: on</sys:String>
     <sys:String x:Key="Shell_AiOff">AI: off</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: on</sys:String>

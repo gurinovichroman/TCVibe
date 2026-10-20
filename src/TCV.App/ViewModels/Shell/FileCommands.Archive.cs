@@ -351,6 +351,9 @@ public sealed partial class FileCommands
         string archivePath, IReadOnlyList<string> entryPaths, string targetDirectory, string? newName,
         bool isMove, CopyOptions options, IConflictStrategy conflicts)
     {
+        // Taken now: the extraction can run in the background while the user works in the other panel (TRAP-92).
+        var otherPanel = ActivePanel == LeftPanel ? RightPanel : LeftPanel;
+
         if (await OpenArchiveEngineAsync(archivePath) is not { } opened)
         {
             return;
@@ -384,7 +387,6 @@ public sealed partial class FileCommands
             }
         }
 
-        var otherPanel = ActivePanel == LeftPanel ? RightPanel : LeftPanel;
         otherPanel.FileList.PrepareForRefresh();
         await otherPanel.FileList.LoadAsync(otherPanel.CurrentPath);
     }

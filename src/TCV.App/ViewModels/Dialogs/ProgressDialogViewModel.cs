@@ -64,6 +64,19 @@ public partial class ProgressDialogViewModel : ObservableObject, IProgress<FileP
     /// <summary>The Pause button is shown while the work runs and only when it can pause.</summary>
     public bool ShowPause => CanPause && !IsCompleted;
 
+    /// <summary>
+    /// The window is hidden and the work goes on: the status bar counts it, and a click there brings the
+    /// window back (ADR-0038). Hiding is not closing — closing the window still cancels the work.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isInBackground;
+
+    [RelayCommand]
+    private void SendToBackground() => IsInBackground = true;
+
+    /// <summary>Shows the window again (the status bar, the BackgroundOperations command).</summary>
+    public void BringBack() => IsInBackground = false;
+
     public CancellationTokenSource Cts { get; } = new();
 
     public event EventHandler? CloseRequested;

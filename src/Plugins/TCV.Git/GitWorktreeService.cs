@@ -127,6 +127,7 @@ public sealed class GitWorktreeService
 
             var createdBranch = false;
             string? registeredName = null;
+            string? createdParent = null;
 
             try
             {
@@ -200,6 +201,16 @@ public sealed class GitWorktreeService
                 // a non-empty one was rejected above.
                 if (Directory.Exists(request.TargetPath)) Directory.Delete(request.TargetPath);
 
+                // ...but only the last level: its mkdir has no "-p". The default root
+                // (<repo>-worktrees) does not exist before the first worktree, so without this the
+                // first worktree of every repository failed with "The system cannot find the path".
+                var parent = Path.GetDirectoryName(request.TargetPath.TrimEnd('\\', '/'));
+                if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+                {
+                    Directory.CreateDirectory(parent);
+                    createdParent = parent;
+                }
+
                 var worktreeName = UniqueWorktreeName(repo, folderName, request.Branch);
                 var worktree = repo.Worktrees.Add(
                     request.Branch, worktreeName, request.TargetPath, isLocked: false);
@@ -229,6 +240,10 @@ public sealed class GitWorktreeService
                 // command there. It goes first, since it holds the branch the next step removes.
                 if (registeredName is not null) RollBackWorktree(mainGitDir, registeredName, request.TargetPath);
                 if (createdBranch) RollBackBranch(mainGitDir, request.Branch);
+                if (createdParent is not null)
+                {
+                    RollBackParent(createdParent);
+                }
 
                 // Classified, not passed through: libgit2's English reached the agent launcher
                 // verbatim (ROADMAP 6.53).
@@ -363,6 +378,23 @@ public sealed class GitWorktreeService
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "Could not roll back the worktree {Name}", worktreeName);
+        }
+    }
+
+    /// <summary>Removes the worktree root created for a failed attempt, provided nothing else has
+    /// landed in it since — an empty <c>&lt;repo&gt;-worktrees</c> left behind is litter.</summary>
+    private void RollBackParent(string parent)
+    {
+        try
+        {
+            if (Directory.Exists(parent) && !Directory.EnumerateFileSystemEntries(parent).Any())
+            {
+                Directory.Delete(parent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Could not remove the worktree root {Path}", parent);
         }
     }
 

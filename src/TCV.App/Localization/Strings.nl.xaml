@@ -48,6 +48,7 @@
     <sys:String x:Key="Dlg_Rename_NewName">Nieuwe naam:</sys:String>
     <sys:String x:Key="Dlg_Progress_Pause">Onderbreken</sys:String>
     <sys:String x:Key="Dlg_Progress_Cancel">Annuleren</sys:String>
+    <sys:String x:Key="Dlg_Progress_Background">Op de achtergrond</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Hervatten</sys:String>
 
     <!-- Search -->
@@ -1191,6 +1192,7 @@
     <sys:String x:Key="Menu_MultiRename">_Meervoudig hernoemen…</sys:String>
     <sys:String x:Key="Menu_Checksums">_Controlesommen…</sys:String>
     <sys:String x:Key="Menu_OperationLog">Bewerkings_logboek…</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">_Achtergrondbewerkingen</sys:String>
     <sys:String x:Key="Menu_Terminal">_Terminal openen</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Opdrachtregelshells…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">In _editor openen</sys:String>
@@ -1915,6 +1917,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_Search">Bestanden zoeken: op naammasker of reguliere expressie, op inhoud, grootte en kenmerken, ook in archieven en met inachtneming van .gitignore; criteria kunnen als voorinstellingen worden opgeslagen. Weergeven in paneel toont de resultaten in het actieve paneel, waar de gebruikelijke opdrachten erop werken. Doorzoekt lokale schijven.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Hernoemen in batch met een sjabloon ([N] naam, [E] extensie, [C] teller, [D] en [T] datum en tijd, [P] map), vervangen met reguliere expressies, tekens invoegen en verwijderen, en hoofdlettergebruik wijzigen. Het voorbeeld toont conflicten meteen; na Naam wijzigen kunt u op Ongedaan maken drukken zolang het venster open is. In een ZIP-archief is de hele batch één herschrijving van het archief, alles of niets; andere archiefindelingen zijn alleen-lezen.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Geschiedenis van bestandsbewerkingen, van u en van agents: kopiëren, verplaatsen, verwijderen, hernoemen, maken, inpakken en uitpakken, downloads en uploads (de overdrachtswachtrij en opslagen van een bestand dat vanaf een server is geopend), met resultaat en fouten. Een regel kan worden opgeslagen als herbruikbare bewerking. Het enige wat het logboek ongedaan kan maken is een hernoembatch of AI-hernoemen (Hernoemen ongedaan maken); voor de rest is de Prullenbak de weg terug.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Toont de voortgangsvensters die met Op de achtergrond zijn verborgen opnieuw. Kopiëren, verplaatsen of verwijderen gaat door terwijl het venster verborgen is; de statusbalk toont hoeveel bewerkingen op de achtergrond lopen en hoe ver ze zijn, en een klik erop doet hetzelfde als deze opdracht. Bewerkingen met een server aan één kant lopen naast die op de schijf, zodat een lange download een lokale kopie niet ophoudt.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Voegt de huidige map van het actieve paneel toe aan de bladwijzers onder een naam die u kiest. Bladwijzers staan in het menu Bladwijzers.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Bladwijzereditor: naam, pad, volgorde en groep (groepen worden submenu's van het menu Bladwijzers), importeren en exporteren als JSON. Wijzigingen worden toegepast met OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Opent een terminal in de map van het actieve paneel: Windows Terminal indien geïnstalleerd, anders PowerShell of cmd. Alleen schijfmappen.</sys:String>
@@ -2089,6 +2092,9 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Shell_Changes">{0} {0:plural:wijziging|wijzigingen}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Alle bewerkingen voltooid</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Bezig: {0}</sys:String>
+    <sys:String x:Key="Shell_Background">Op de achtergrond: {0} · {1}%</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">De voortgangsvensters van de bewerkingen op de achtergrond tonen</sys:String>
+    <sys:String x:Key="Shell_NoBackground">Er lopen geen bewerkingen op de achtergrond</sys:String>
     <sys:String x:Key="Shell_AiOn">AI: aan</sys:String>
     <sys:String x:Key="Shell_AiOff">AI: uit</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: aan</sys:String>
@@ -2191,6 +2197,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_Search">Bestanden zoeken…</sys:String>
     <sys:String x:Key="Cmd_MultiRename">Meervoudig hernoemen…</sys:String>
     <sys:String x:Key="Cmd_OperationLog">Bewerkingslogboek…</sys:String>
+    <sys:String x:Key="Cmd_BackgroundOperations">Achtergrondbewerkingen</sys:String>
     <sys:String x:Key="Cmd_AddBookmark">Bladwijzer toevoegen…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Bladwijzers beheren…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Terminal hier openen</sys:String>

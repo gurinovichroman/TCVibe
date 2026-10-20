@@ -201,12 +201,17 @@ public sealed partial class FileCommands : ObservableObject
     /// <summary>F8 on the current selection.</summary>
     internal Task DeleteSelectionAsync() => Delete();
 
-    // F5 — Copy
-    [RelayCommand]
+    // F5 — Copy. Concurrent: a copy runs in the background (the progress window hides), and the next
+    // F5 from the menu must not wait for it (ADR-0038).
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task Copy()
     {
         var selected = GetSelectedOrCurrent();
         if (selected.Count == 0) return;
+
+        // The panels as they are now: by the time the copy ends the user may be working in the other one (TRAP-92).
+        var sourcePanel = ActivePanel;
+        var targetPanel = OppositePanel;
         if (await RejectIfReadOnlyAsync(OppositePanel))
         {
             return;
@@ -235,6 +240,10 @@ public sealed partial class FileCommands : ObservableObject
         var landsInActive = false;
         using (LeasePanelFileSystems())
         {
+            // Read before the first await: an edited target is looked up on the server, and the user
+            // may switch panels meanwhile — the selection belongs to this file system (TRAP-92).
+            var sourceVfs = SourceVfs;
+            var sourceFolder = new VfsPath(sourcePanel.CurrentPath);
             var (baseDirectory, baseFs) = TypedTargetBase();
             var target = await ResolveTransferTargetAsync(
                 result.TargetPath, offered, selected.Count, baseDirectory, baseFs, TargetVfs);
@@ -246,12 +255,12 @@ public sealed partial class FileCommands : ObservableObject
 
             // Same, not ReferenceEquals: in a hit's folder opened from the search results a typed name
             // resolves on the disk (TypedTargetBase), while the panel lists that folder through the view.
-            landsInActive = FileSystem.FileSystemIdentity.Same(target.Fs, SourceVfs)
-                            && target.Directory.Equals(new VfsPath(ActivePanel.CurrentPath));
+            landsInActive = FileSystem.FileSystemIdentity.Same(target.Fs, sourceVfs)
+                            && target.Directory.Equals(sourceFolder);
 
             var progress = _dialogs.ShowProgressDialog(LocalizationManager.Get("Op_Copying"));
             var strategy = BuildConflictStrategy(result.Options.ConflictMode);
-            var op = new CopyOperation(SourceVfs, target.Fs, selected, target.Directory,
+            var op = new CopyOperation(sourceVfs, target.Fs, selected, target.Directory,
                 strategy, result.Options, _copyLogger)
             {
                 Progress = progress,
@@ -268,8 +277,27 @@ public sealed partial class FileCommands : ObservableObject
 
         // A copy under another name, or into the folder it came from, can land in the active panel.
         if (landsInActive)
-            await ActivePanel.FileList.LoadAsync(ActivePanel.CurrentPath);
-        await OppositePanel.FileList.LoadAsync(OppositePanel.CurrentPath);
+        {
+            await ReloadAfterOperationAsync(sourcePanel);
+        }
+
+        await ReloadAfterOperationAsync(targetPanel);
+    }
+
+    /// <summary>
+    /// Reloads a panel remembered at the start of an F5/F6/F8, which may have run in the background
+    /// (ADR-0038). A name the user is editing there by now is not dropped by the reload (TRAP-76): the
+    /// reload waits for the edit to end. <paramref name="beforeLoad"/> places the cursor for the reload.
+    /// </summary>
+    private static async Task ReloadAfterOperationAsync(PanelViewModel panel, Action<FileListViewModel>? beforeLoad = null)
+    {
+        if (panel.FileList.PostponeReloadForNameEdit())
+        {
+            return;
+        }
+
+        beforeLoad?.Invoke(panel.FileList);
+        await panel.FileList.LoadAsync(panel.CurrentPath);
     }
 
     /// <summary>
@@ -364,12 +392,15 @@ public sealed partial class FileCommands : ObservableObject
             isMove, BuildConflictStrategy(options.ConflictMode), options.OnlyIfNewer);
     }
 
-    // F6 — Move
-    [RelayCommand]
+    // F6 — Move. Concurrent, as F5.
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task Move()
     {
         var selected = GetSelectedOrCurrent();
         if (selected.Count == 0) return;
+
+        var sourcePanel = ActivePanel;
+        var targetPanel = OppositePanel;
         if (await RejectIfReadOnlyAsync(ActivePanel, OppositePanel))
         {
             return;
@@ -395,6 +426,8 @@ public sealed partial class FileCommands : ObservableObject
         string? renamedTo = null;
         using (LeasePanelFileSystems())
         {
+            // Before the first await, as in F5: a move deletes what it took from this file system.
+            var sourceVfs = SourceVfs;
             var (baseDirectory, baseFs) = TypedTargetBase();
             var target = await ResolveTransferTargetAsync(
                 result.TargetPath, offered, selected.Count, baseDirectory, baseFs, TargetVfs);
@@ -406,7 +439,7 @@ public sealed partial class FileCommands : ObservableObject
 
             var progress = _dialogs.ShowProgressDialog(LocalizationManager.Get("Op_Moving"));
             var strategy = BuildConflictStrategy(result.Options.ConflictMode);
-            var op = new MoveOperation(SourceVfs, target.Fs, selected, target.Directory,
+            var op = new MoveOperation(sourceVfs, target.Fs, selected, target.Directory,
                 strategy, result.Options, _moveLogger)
             {
                 Progress = progress,
@@ -419,16 +452,24 @@ public sealed partial class FileCommands : ObservableObject
             await _operationQueue.EnqueueAsync(op);
             await FinishOperationAsync(op, progress, LocalizationManager.Get("Fc_MoveFailed"));
 
-            if (op.State == OperationState.Completed && FileSystem.FileSystemIdentity.Same(target.Fs, SourceVfs)
-                && target.Directory.Equals(new VfsPath(ActivePanel.CurrentPath)))
+            if (op.State == OperationState.Completed && FileSystem.FileSystemIdentity.Same(target.Fs, sourcePanel.FileList.ActiveVfs)
+                && target.Directory.Equals(new VfsPath(sourcePanel.CurrentPath)))
+            {
                 renamedTo = target.NewName;
+            }
         }
 
-        // F6 as rename in place: the cursor follows the new name, as it does after F2.
-        if (renamedTo is not null) ActivePanel.FileList.SetPendingSelectName(renamedTo);
-        ActivePanel.FileList.PrepareForRefresh();   // preserve approx. scroll after files removed
-        await ActivePanel.FileList.LoadAsync(ActivePanel.CurrentPath);
-        await OppositePanel.FileList.LoadAsync(OppositePanel.CurrentPath);
+        await ReloadAfterOperationAsync(sourcePanel, list =>
+        {
+            // F6 as rename in place: the cursor follows the new name, as it does after F2.
+            if (renamedTo is not null)
+            {
+                list.SetPendingSelectName(renamedTo);
+            }
+
+            list.PrepareForRefresh();   // preserve approx. scroll after files removed
+        });
+        await ReloadAfterOperationAsync(targetPanel);
     }
 
     /// <summary>
@@ -515,18 +556,19 @@ public sealed partial class FileCommands : ObservableObject
         await ActivePanel.FileList.LoadAsync(ActivePanel.CurrentPath);
     }
 
-    // F8 — Delete
-    [RelayCommand]
+    // F8 — Delete. Concurrent, as F5.
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private Task Delete() => DeleteSelectedAsync(allowRecycleBin: true);
 
     // Shift+Delete — Delete permanently (bypass recycle bin)
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private Task DeletePermanent() => DeleteSelectedAsync(allowRecycleBin: false);
 
     private async Task DeleteSelectedAsync(bool allowRecycleBin, IReadOnlyList<IFileEntry>? entries = null)
     {
         var selected = entries ?? GetSelectedOrCurrent();
         if (selected.Count == 0) return;
+        var panel = ActivePanel;
         if (await RejectIfReadOnlyAsync(ActivePanel))
         {
             return;
@@ -565,13 +607,16 @@ public sealed partial class FileCommands : ObservableObject
             await FinishOperationAsync(op, progress, LocalizationManager.Get("Fc_DeleteFailed"));
         }
 
-        ActivePanel.FileList.PrepareForRefresh();   // keep the cursor near where the files were
-        await ActivePanel.FileList.LoadAsync(ActivePanel.CurrentPath);
+        // Keep the cursor near where the files were.
+        await ReloadAfterOperationAsync(panel, list => list.PrepareForRefresh());
     }
 
     private async Task DeleteFromArchiveAsync(IReadOnlyList<IFileEntry> entries)
     {
         if (ActiveArchive is not { } archiveVfs) return;
+
+        // F8 runs concurrently (TRAP-92): by the time the rewrite ends another panel may be active.
+        var panel = ActivePanel;
 
         if (!archiveVfs.Engine.CanWrite)
         {
@@ -600,7 +645,7 @@ public sealed partial class FileCommands : ObservableObject
             await _dialogs.ShowErrorAsync(LocalizationManager.Get("Fc_DeleteFailed"), op.FailureException.Message);
 
         archiveVfs.Invalidate();
-        await ActivePanel.FileList.LoadAsync(ActivePanel.FileList.CurrentPath);
+        await panel.FileList.LoadAsync(panel.FileList.CurrentPath);
     }
 
     // F2 — Rename

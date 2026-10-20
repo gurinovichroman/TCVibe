@@ -518,6 +518,7 @@ public partial class MainWindow : Window
             case "RunAgentPicker":   _viewModel.Services.RunAgentPickerCommand.Execute(null); return true;
             case "AddBookmark":      _viewModel.Services.AddBookmarkCommand.Execute(null); return true;
             case "OperationLog":     _viewModel.Services.OpenOperationLogCommand.Execute(null); return true;
+            case "BackgroundOperations": _viewModel.Services.ShowBackgroundOperationsCommand.Execute(null); return true;
             case "Properties":       _viewModel.Files.ShowWindowsPropertiesCommand.Execute(null); return true;
             case "CommandPalette":   OpenCommandPalette(); return true;
             case "Help":             OpenHelp(); return true;

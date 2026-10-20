@@ -107,6 +107,8 @@ public sealed class DialogService : IDialogService
         ).Task.ContinueWith(_ => { });
     }
 
+    public BackgroundProgress BackgroundProgress { get; } = new();
+
     public ProgressDialogViewModel ShowProgressDialog(string title)
     {
         var vm = new ProgressDialogViewModel(title);
@@ -115,6 +117,25 @@ public sealed class DialogService : IDialogService
             var dlg = new ProgressDialog(vm) { Owner = OwnerWindow };
             _activeProgressDialog = dlg;
             vm.CloseRequested += (_, _) => _activeProgressDialog = null;
+
+            // The window hides and shows itself; what is hidden is counted here for the status bar.
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != nameof(ProgressDialogViewModel.IsInBackground))
+                {
+                    return;
+                }
+
+                if (vm.IsInBackground)
+                {
+                    BackgroundProgress.Add(vm);
+                }
+                else
+                {
+                    BackgroundProgress.Remove(vm);
+                }
+            };
+            dlg.Closed += (_, _) => BackgroundProgress.Remove(vm);
             dlg.Show();
         });
         return vm;

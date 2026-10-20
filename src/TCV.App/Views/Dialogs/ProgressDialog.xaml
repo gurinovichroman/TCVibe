@@ -98,6 +98,10 @@
                     </TextBlock>
                 </Button.Content>
             </Button>
+            <!-- Hides the window; the work goes on and the status bar shows it (ADR-0038). -->
+            <Button Content="{DynamicResource Dlg_Progress_Background}" MinWidth="90" Padding="10,0" Margin="0,0,8,0"
+                    Command="{Binding SendToBackgroundCommand}"
+                    Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVis}, ConverterParameter=inverse}" />
             <Button Content="{DynamicResource Dlg_Progress_Cancel}" Width="90" Margin="0,0,8,0"
                     Command="{Binding CancelCommand}"
                     IsCancel="True"

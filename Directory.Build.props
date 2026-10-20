@@ -14,7 +14,7 @@
     <Copyright>Copyright © 2026</Copyright>
     <!-- The one version number. AssemblyVersion and FileVersion follow it, so a release built with
          -p:Version from its tag reports that version (release.yml checks the tag matches this). -->
-    <Version>0.10.0</Version>
+    <Version>0.11.0</Version>
 
     <!-- Suppress XML-doc missing warning -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>

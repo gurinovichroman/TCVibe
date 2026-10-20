@@ -220,6 +220,8 @@ public sealed class HotkeyManager
         Register("RunAgentPicker",   Key.A, ModifierKeys.Control | ModifierKeys.Alt);    // choose agent
         Register("AddBookmark",      Key.D, ModifierKeys.Control);
         Register("OperationLog",     Key.L, ModifierKeys.Control | ModifierKeys.Alt);
+        // BackgroundOperations has no default gesture: the status bar shows what runs in the background
+        // and brings it back with a click; the palette and the Commands menu do the same.
         Register("CommandPalette",   Key.F1);   // fuzzy command palette (Ctrl+Shift+P is taken by CopyNames)
         Register("Help",             Key.F1, ModifierKeys.Shift);   // what every function does
         Register("FindFiles",        Key.P, ModifierKeys.Control);   // fuzzy file picker over the project

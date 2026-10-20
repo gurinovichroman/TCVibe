@@ -33,6 +33,7 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
     private readonly McpServerHost _mcp;
     private readonly LlmClient _llm;
     private readonly Func<int> _runningOperations;
+    private readonly BackgroundProgress _background;
     private readonly DispatcherTimer _debounce;
     private readonly DispatcherTimer _pulse;
 
@@ -47,7 +48,8 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
         AgentSessionStore sessions,
         McpServerHost mcp,
         LlmClient llm,
-        Func<int> runningOperations)
+        Func<int> runningOperations,
+        BackgroundProgress background)
     {
         _git = git;
         _operationLog = operationLog;
@@ -55,6 +57,7 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
         _mcp = mcp;
         _llm = llm;
         _runningOperations = runningOperations;
+        _background = background;
 
         _debounce = new DispatcherTimer { Interval = Debounce };
         _debounce.Tick += (_, _) =>
@@ -70,6 +73,7 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
         _pulse.Start();
 
         _operationLog.Changed += (_, _) => Post(Request);
+        _background.Changed += (_, _) => UpdateBackground();
         _mcp.StateChanged += (_, _) => Post(UpdateServices);
         LocalizationManager.LanguageChanged += (_, _) => UpdateTexts();
         UpdateServices();
@@ -116,6 +120,12 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
 
     [ObservableProperty] private bool _operationsRunning;
     [ObservableProperty] private string _operationsText = string.Empty;
+
+    /// <summary>Some operation runs with its progress window hidden; the status bar offers to show it.</summary>
+    [ObservableProperty] private bool _hasBackground;
+
+    /// <summary>«In background: 2 · 45%».</summary>
+    [ObservableProperty] private string _backgroundText = string.Empty;
     [ObservableProperty] private string _aiText = string.Empty;
     [ObservableProperty] private string _mcpText = string.Empty;
 
@@ -228,6 +238,7 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
                 : LocalizationManager.Get("Shell_OperationsIdle");
         }
 
+        UpdateBackground();
         UpdateServices();
         if (DateTime.UtcNow >= _nextAgentPoll)
         {
@@ -242,6 +253,14 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
         }
     }
 
+    private void UpdateBackground()
+    {
+        HasBackground = _background.Count > 0;
+        BackgroundText = HasBackground
+            ? LocalizationManager.Format("Shell_Background", _background.Count, _background.Percent)
+            : string.Empty;
+    }
+
     private void UpdateServices()
     {
         AiText = LocalizationManager.Get(_llm.IsConfigured ? "Shell_AiOn" : "Shell_AiOff");
@@ -254,6 +273,7 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
         OperationsText = OperationsRunning
             ? LocalizationManager.Format("Shell_OperationsRunning", _runningOperations())
             : LocalizationManager.Get("Shell_OperationsIdle");
+        UpdateBackground();
         UpdateServices();
 
         if (_run is not { } run)

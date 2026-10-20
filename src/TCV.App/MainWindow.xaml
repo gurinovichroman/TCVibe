@@ -156,6 +156,7 @@
                         <MenuItem Header="{DynamicResource Menu_MultiRename}"   Command="{Binding Files.OpenMultiRenameCommand}" ctrl:MenuGestures.CommandId="MultiRename" />
                         <MenuItem Header="{DynamicResource Menu_Checksums}"     Command="{Binding Services.OpenChecksumCommand}" ctrl:MenuGestures.CommandId="Checksums" />
                         <MenuItem Header="{DynamicResource Menu_OperationLog}"  Command="{Binding Services.OpenOperationLogCommand}" ctrl:MenuGestures.CommandId="OperationLog" />
+                        <MenuItem Header="{DynamicResource Menu_BackgroundOperations}" Command="{Binding Services.ShowBackgroundOperationsCommand}" ctrl:MenuGestures.CommandId="BackgroundOperations" />
                         <MenuItem Header="{DynamicResource Menu_CompareDirs}"   Command="{Binding CompareDirectoriesCommand}"   ctrl:MenuGestures.CommandId="CompareDirectories" />
                         <MenuItem Header="{DynamicResource Menu_SavedOps}"      Command="{Binding OpenSavedOperationsCommand}"  ctrl:MenuGestures.CommandId="SavedOperations" />
                         <MenuItem Header="{DynamicResource Menu_SavedOpsManage}" Command="{Binding ManageSavedOperationsCommand}" ctrl:MenuGestures.CommandId="SavedOperationsManager" />
@@ -914,6 +915,17 @@
                 Visibility="{DynamicResource ChromeAppStatusBarVisibility}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Operations whose progress window was sent to the background; a click brings the windows back (ADR-0038). -->
+                    <Button Style="{StaticResource ToolButton}" Width="Auto" Height="20" Padding="6,0" Margin="0,0,9,0"
+                            Command="{Binding Services.ShowBackgroundOperationsCommand}"
+                            ToolTip="{DynamicResource Shell_BackgroundHint}"
+                            AutomationProperties.Name="{Binding Status.BackgroundText}"
+                            Visibility="{Binding Status.HasBackground, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ctrl:Icon Data="{StaticResource IconLayers}" Width="10" Height="10" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding Status.BackgroundText}" FontSize="9" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                     <ctrl:Icon Data="{StaticResource IconCheck}" Width="10" Height="10" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding Status.OperationsText}" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Status.AiText}" Margin="15,0,0,0" VerticalAlignment="Center" />
