@@ -50,6 +50,8 @@
     <sys:String x:Key="Dlg_Progress_Cancel">Отмена</sys:String>
     <sys:String x:Key="Dlg_Progress_Background">В фоне</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Продолжить</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingServer">В очереди: операции с сервером идут по одной, эта начнётся после предыдущей.</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingLocal">В очереди: операции на диске идут по одной, эта начнётся после предыдущей.</sys:String>
 
     <!-- Поиск -->
     <sys:String x:Key="Search_Title">Поиск файлов</sys:String>
@@ -1917,7 +1919,7 @@
     <sys:String x:Key="Help_Cmd_Search">Окно поиска файлов: по маске имени или регулярному выражению, по содержимому, размеру и атрибутам, в том числе внутри архивов и с учётом .gitignore; условия можно сохранить как пресет. «Показать в панели» выводит найденное списком в активную панель, где с ним работают обычные команды. Ищет на локальных дисках.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Пакетное переименование по шаблону ([N] имя, [E] расширение, [C] счётчик, [D] и [T] дата и время, [P] папка) с заменой по регулярному выражению, вставкой и удалением символов и сменой регистра. Предпросмотр сразу показывает конфликты; после «Переименовать» можно нажать «Отменить», пока окно открыто. Внутри ZIP весь пакет — одна перезапись архива, всё или ничего; другие форматы архивов только для чтения.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">История файловых операций — ваших и агентов: копирование, перемещение, удаление, переименование, создание, упаковка и распаковка, скачивание с сервера и отправка на него (очередь передачи и сохранения файла, открытого с сервера), с результатом и ошибками. Строку можно сохранить как повторяемую операцию. Отменить журнал умеет только пакет ИИ-переименования («Отменить переименование»); для остального путь назад — Корзина.</sys:String>
-    <sys:String x:Key="Help_Cmd_BackgroundOperations">Снова показывает окна прогресса, скрытые кнопкой «В фоне». Копирование, перенос или удаление со скрытым окном продолжаются; строка состояния показывает, сколько операций идёт в фоне и насколько они продвинулись, а щелчок по ней делает то же, что эта команда. Операции с сервером идут рядом с операциями на диске, поэтому долгое скачивание не задерживает локальное копирование.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Снова показывает окна прогресса, скрытые кнопкой «В фоне». Копирование, перенос или удаление со скрытым окном продолжаются; строка состояния показывает, сколько операций идёт в фоне и насколько они продвинулись, а щелчок по ней открывает их список: у каждой прогресс или пометка «в очереди», окно можно показать, а операцию — отменить. Операции с сервером идут рядом с операциями на диске, поэтому долгое скачивание не задерживает локальное копирование.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Добавляет текущую папку активной панели в закладки под выбранным именем. Закладки — в меню «Закладки».</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Редактор закладок: имя, путь, порядок и группа (группы становятся подменю в меню «Закладки»), импорт и экспорт в JSON. Изменения применяются по OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Открывает терминал в папке активной панели: Windows Terminal, если он установлен, иначе PowerShell или cmd. Только для папок на диске.</sys:String>
@@ -2093,8 +2095,15 @@
     <sys:String x:Key="Shell_OperationsIdle">Все операции завершены</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Выполняется: {0}</sys:String>
     <sys:String x:Key="Shell_Background">В фоне: {0} · {1} %</sys:String>
-    <sys:String x:Key="Shell_BackgroundHint">Показать окна прогресса операций, идущих в фоне</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Что идёт в фоне: прогресс, показать окно, отменить</sys:String>
     <sys:String x:Key="Shell_NoBackground">В фоне ничего не выполняется</sys:String>
+    <sys:String x:Key="Shell_BackgroundNotice">{0} продолжается в фоне — прогресс в строке состояния</sys:String>
+    <sys:String x:Key="Shell_BackgroundNoticeNoBar">{0} продолжается в фоне — команда «Фоновые операции» покажет окно снова</sys:String>
+    <sys:String x:Key="Shell_BackgroundDone">{0}: готово</sys:String>
+    <sys:String x:Key="Shell_BackgroundWaiting">в очереди</sys:String>
+    <sys:String x:Key="Shell_BackgroundShow">Показать окно</sys:String>
+    <sys:String x:Key="Shell_BackgroundCancel">Отменить операцию</sys:String>
+    <sys:String x:Key="Shell_BackgroundShowAll">Показать все окна</sys:String>
     <sys:String x:Key="Shell_AiOn">ИИ: вкл.</sys:String>
     <sys:String x:Key="Shell_AiOff">ИИ: выкл.</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: вкл.</sys:String>

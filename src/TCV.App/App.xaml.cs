@@ -224,6 +224,14 @@ public partial class App : Application
     {
         DispatcherUnhandledException += (_, args) =>
         {
+            if (CancelledWork.IsCancellation(args.Exception))
+            {
+                // Cancelled work nobody awaited (TRAP-93): the user asked for the stop, there is nothing to report.
+                Log.Warning(args.Exception, "Cancellation reached the UI thread unobserved");
+                args.Handled = true;
+                return;
+            }
+
             Log.Error(args.Exception, "Unhandled exception on the UI thread");
             ReportCrash(args.Exception, fatal: false);
 

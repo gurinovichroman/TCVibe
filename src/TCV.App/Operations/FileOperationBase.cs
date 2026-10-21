@@ -9,9 +9,32 @@ namespace TCV.App.Operations;
 public abstract class FileOperationBase : IFileOperation
 {
     public Guid Id { get; } = Guid.NewGuid();
+
+    private OperationState _state = OperationState.Pending;
+
     // protected internal: OperationQueue records the final outcome so callers of
     // EnqueueAsync can tell a completed operation from a failed or cancelled one.
-    public OperationState State { get; protected internal set; } = OperationState.Pending;
+    public OperationState State
+    {
+        get => _state;
+        protected internal set
+        {
+            if (_state == value)
+            {
+                return;
+            }
+
+            _state = value;
+            StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// <see cref="State"/> moved on: the operation left the queue and started, or ended. Raised on the
+    /// thread that runs it (the queue's worker, TRAP-47), so the UI marshals.
+    /// </summary>
+    public event EventHandler? StateChanged;
+
     public Exception? FailureException { get; protected internal set; }
     public CancellationTokenSource Cts { get; } = new();
     public PauseHandle? PauseHandle { get; set; }

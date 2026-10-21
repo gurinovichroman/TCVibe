@@ -94,7 +94,7 @@ public sealed partial class FileCommands
                 request, sources, _archivePlugin, sevenZipAvailable,
                 new Progress<double>(p => progress.Percentage = p * 100), ct,
                 name => self.ReportSkipped(string.Format(LocalizationManager.Get("Fc_LinkNotArchived"), name))));
-        op.LinkCancellation(progress.Cts.Token);
+        progress.Attach(op);
 
         await _operationQueue.EnqueueAsync(op);
         switch (op.State)
@@ -292,7 +292,7 @@ public sealed partial class FileCommands
                     await Task.Run(() => engine.ExtractAll(winPath, destination, progressReport, ct), ct);
                 }
             });
-        op.LinkCancellation(progress.Cts.Token);
+        progress.Attach(op);
 
         await _operationQueue.EnqueueAsync(op);
         switch (op.State)

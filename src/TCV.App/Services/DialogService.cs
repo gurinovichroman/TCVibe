@@ -135,7 +135,7 @@ public sealed class DialogService : IDialogService
                     BackgroundProgress.Remove(vm);
                 }
             };
-            dlg.Closed += (_, _) => BackgroundProgress.Remove(vm);
+            dlg.Closed += (_, _) => BackgroundProgress.End(vm);
             dlg.Show();
         });
         return vm;

@@ -511,6 +511,9 @@ public sealed class TransferQueue : IDisposable
 
     private async Task ExecuteFtpTransferAsync(TransferItem item, CancellationToken ct)
     {
+        // A name FluentFTP would send as another one is refused before anything is opened (TRAP-94).
+        FtpFileSystem.ToSendablePath(item.Direction == TransferDirection.Download ? item.SourcePath : item.DestinationPath);
+
         using var client = FtpFileSystem.CreateClient(item.Connection, _trust);
         try
         {
@@ -894,6 +897,8 @@ public sealed class TransferQueue : IDisposable
 
                     break;
                 case NetworkProtocol.Ftp or NetworkProtocol.Ftps or NetworkProtocol.FtpsImplicit:
+                    // Never a delete of another file than the one this queue wrote (TRAP-94).
+                    FtpFileSystem.ToSendablePath(item.DestinationPath);
                     using (var ftp = FtpFileSystem.CreateClient(item.Connection, _trust))
                     {
                         await ftp.Connect();

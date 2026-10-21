@@ -44,7 +44,15 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     /// </summary>
     public static AsyncFtpClient CreateClient(ConnectionInfo conn, HostTrustPolicy? trust = null)
     {
-        var client = new AsyncFtpClient(conn.Host, conn.Username, conn.Password ?? string.Empty, conn.Port);
+        // An empty login is an anonymous one (RFC 1635), as in every FTP client; FluentFTP refuses an
+        // empty user name outright (TRAP-94).
+        var anonymous = string.IsNullOrEmpty(conn.Username);
+        var client = new AsyncFtpClient(
+            conn.Host,
+            anonymous ? "anonymous" : conn.Username,
+            anonymous && string.IsNullOrEmpty(conn.Password) ? "anonymous@" : conn.Password ?? string.Empty,
+            conn.Port);
+        AllowEveryName(client.Config);
 
         if (!conn.IsFtps)
         {
@@ -57,6 +65,23 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         var policy = trust ?? NetworkSecurity.Default;
         client.ValidateCertificate += (_, e) => e.Accept = AcceptCertificate(policy, conn, e);
         return client;
+    }
+
+    /// <summary>
+    /// FluentFTP checks every path it sends (54+), and by default refuses ordinary names: «Song | Live.mp3»,
+    /// «a;b.txt», «50% off.jpg», «v1..2.zip», a name with a right-to-left mark. A file manager has to reach
+    /// every name the server lists, so only the check that guards the control connection stays on: a line
+    /// break, which would smuggle a second command in. A refused path throws. What the library still does
+    /// silently, whatever the mode, is left to <see cref="ToSendablePath"/> (TRAP-94).
+    /// </summary>
+    private static void AllowEveryName(FtpConfig config)
+    {
+        config.SanitizeMode = FtpSanitize.Throw;
+        config.SanitizeControlChars = false;
+        config.SanitizeUrlEncoding = false;
+        config.SanitizeTraversal = false;
+        config.SanitizeUnicodeSpoofing = false;
+        config.SanitizeMultiline = true;
     }
 
     private static bool AcceptCertificate(HostTrustPolicy? policy, ConnectionInfo conn, FtpSslValidationEventArgs e)
@@ -408,7 +433,7 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         GuardedAsync(() =>
         {
             var oldPath = ToRemotePath(path);
-            var newPath = $"{oldPath[..oldPath.LastIndexOf('/')]}/{newName}";
+            var newPath = ToSendablePath($"{oldPath[..oldPath.LastIndexOf('/')]}/{newName}");
             return _client.MoveFile(oldPath, newPath, token: ct);
         }, ct);
 
@@ -458,7 +483,26 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         });
 
     private static string ToRemotePath(VfsPath path) =>
-        path.Value.Replace('\\', '/');
+        ToSendablePath(path.Value.Replace('\\', '/'));
+
+    /// <summary>
+    /// <paramref name="remotePath"/> as it may go to FluentFTP, or a refusal. The library trims every path
+    /// it sends, in every sanitize mode, and cuts a raw command (RMD, MFMT) at its first line break without
+    /// a word: «notes » reached the server as «notes» — a delete, an overwrite or a download of another
+    /// file. A NUL is in no server's file name and ends the name for a server written in C. Such a name is
+    /// refused rather than sent as another one (TRAP-94); not an <see cref="IOException"/>, which would
+    /// read as a dropped line and reconnect the panel (TRAP-81).
+    /// </summary>
+    internal static string ToSendablePath(string remotePath)
+    {
+        if (remotePath.Length != remotePath.Trim().Length || remotePath.AsSpan().IndexOfAny('\r', '\n', '\0') >= 0)
+        {
+            throw new NotSupportedException(
+                $"The FTP path \"{remotePath}\" ends in white space or holds a line break or a NUL: the server would get another name for it.");
+        }
+
+        return remotePath;
+    }
 }
 
 /// <summary>Helpers for picking the meaningful failure out of nested library exceptions.</summary>

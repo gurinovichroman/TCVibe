@@ -50,6 +50,8 @@
     <sys:String x:Key="Dlg_Progress_Cancel">Скасувати</sys:String>
     <sys:String x:Key="Dlg_Progress_Background">У фоні</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Продовжити</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingServer">У черзі: операції із сервером ідуть по одній, ця почнеться після попередньої.</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingLocal">У черзі: операції на диску ідуть по одній, ця почнеться після попередньої.</sys:String>
 
     <!-- Search -->
     <sys:String x:Key="Search_Title">Пошук файлів</sys:String>
@@ -1917,7 +1919,7 @@
     <sys:String x:Key="Help_Cmd_Search">Пошук файлів: за маскою назви чи регулярним виразом, за вмістом, розміром і атрибутами, зокрема всередині архівів і з урахуванням .gitignore; критерії можна зберігати як набори. «Показати в панелі» виводить знахідки в активній панелі, де на них діють звичайні команди. Шукає на локальних дисках.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Пакетне перейменування за шаблоном ([N] назва, [E] розширення, [C] лічильник, [D] і [T] дата й час, [P] папка), заміна регулярним виразом, вставлення й видалення символів та зміна регістру. Попередній перегляд одразу показує конфлікти; після «Перейменувати» можна натиснути «Скасувати», поки вікно відкрите. Усередині архіву ZIP увесь пакет — це один перезапис архіву, усе або нічого; інші формати архівів доступні лише для читання.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Історія файлових операцій, ваших і агентів: копіювання, переміщення, видалення, перейменування, створення, пакування й розпакування, завантаження й вивантаження (черга передавання та збереження файлу, відкритого із сервера), з результатом і помилками. Рядок можна зберегти як операцію для повторного використання. Журнал може скасувати лише одне: пакет перейменувань або AI-перейменування («Скасувати перейменування»); для решти шлях назад — Кошик.</sys:String>
-    <sys:String x:Key="Help_Cmd_BackgroundOperations">Знову показує вікна поступу, сховані кнопкою «У фоні». Копіювання, перенесення чи видалення зі схованим вікном триває далі; рядок стану показує, скільки операцій іде у фоні і наскільки вони просунулися, а клацання по ньому робить те саме, що ця команда. Операції із сервером ідуть поруч з операціями на диску, тож довге завантаження не затримує локальне копіювання.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Знову показує вікна поступу, сховані кнопкою «У фоні». Копіювання, перенесення чи видалення зі схованим вікном триває далі; рядок стану показує, скільки операцій іде у фоні і наскільки вони просунулися, а клацання по ньому відкриває їх список: у кожної поступ або позначка «у черзі», вікно можна показати, а операцію — скасувати. Операції із сервером ідуть поруч з операціями на диску, тож довге завантаження не затримує локальне копіювання.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Додає поточну папку активної панелі до закладок під вибраною вами назвою. Закладки — у меню «Закладки».</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Редактор закладок: назва, шлях, порядок і група (групи стають підменю меню «Закладки»), імпорт і експорт у JSON. Зміни застосовуються після OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Відкриває термінал у папці активної панелі: Windows Terminal, якщо встановлено, інакше PowerShell або cmd. Лише папки диска.</sys:String>
@@ -2093,8 +2095,15 @@
     <sys:String x:Key="Shell_OperationsIdle">Усі операції завершено</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Виконується: {0}</sys:String>
     <sys:String x:Key="Shell_Background">У фоні: {0} · {1} %</sys:String>
-    <sys:String x:Key="Shell_BackgroundHint">Показати вікна поступу операцій, що йдуть у фоні</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Що йде у фоні: поступ, показати вікно, скасувати</sys:String>
     <sys:String x:Key="Shell_NoBackground">У фоні нічого не виконується</sys:String>
+    <sys:String x:Key="Shell_BackgroundNotice">{0} триває у фоні — поступ у рядку стану</sys:String>
+    <sys:String x:Key="Shell_BackgroundNoticeNoBar">{0} триває у фоні — команда «Фонові операції» покаже вікно знову</sys:String>
+    <sys:String x:Key="Shell_BackgroundDone">{0}: готово</sys:String>
+    <sys:String x:Key="Shell_BackgroundWaiting">у черзі</sys:String>
+    <sys:String x:Key="Shell_BackgroundShow">Показати вікно</sys:String>
+    <sys:String x:Key="Shell_BackgroundCancel">Скасувати операцію</sys:String>
+    <sys:String x:Key="Shell_BackgroundShowAll">Показати всі вікна</sys:String>
     <sys:String x:Key="Shell_AiOn">ШІ: увімк.</sys:String>
     <sys:String x:Key="Shell_AiOff">ШІ: вимк.</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: увімк.</sys:String>

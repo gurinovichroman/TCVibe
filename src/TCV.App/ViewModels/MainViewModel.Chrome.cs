@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using TCV.App.Localization;
 using TCV.App.Settings;
+using TCV.App.ViewModels.Dialogs;
 
 namespace TCV.App.ViewModels;
 
@@ -105,6 +106,20 @@ public partial class MainViewModel
             _agents.Llm,
             () => _operationQueue.Running.Count + _operationQueue.Pending.Count + (Mounts.HasActiveTransfers ? 1 : 0),
             _dialogs.BackgroundProgress);
+
+        // A hidden progress window says where its progress went, and its end is heard although nothing
+        // shows it. The window's title is «Copying...»: the notice goes on after it, without the dots.
+        static string Named(ProgressDialogViewModel progress) => progress.Title.TrimEnd('.', '…', ' ');
+        _dialogs.BackgroundProgress.Hidden += (_, progress) => ShowNotice(
+            LocalizationManager.Format(_settings.Layout.ShowAppStatusBar ? "Shell_BackgroundNotice" : "Shell_BackgroundNoticeNoBar", Named(progress)),
+            TimeSpan.FromSeconds(4));
+        _dialogs.BackgroundProgress.Ended += (_, progress) =>
+        {
+            if (progress.IsCompleted)
+            {
+                ShowNotice(LocalizationManager.Format("Shell_BackgroundDone", Named(progress)), TimeSpan.FromSeconds(4));
+            }
+        };
 
         Status.OriginsChanged += (_, _) => PushOrigins();
         Status.PropertyChanged += (_, e) =>

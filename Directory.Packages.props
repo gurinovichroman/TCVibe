@@ -28,7 +28,7 @@
 
   <!-- Network plugins (Этап 2) -->
   <ItemGroup>
-    <PackageVersion Include="FluentFTP" Version="50.0.1" />
+    <PackageVersion Include="FluentFTP" Version="55.1.0" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>

@@ -124,7 +124,7 @@ public sealed partial class FileCommands : ObservableObject
     /// </summary>
     private void Wire(FileOperationBase op, ProgressDialogViewModel progress)
     {
-        op.LinkCancellation(progress.Cts.Token);
+        progress.Attach(op);
         op.ErrorHandler = _shell.BuildErrorHandler();
     }
 

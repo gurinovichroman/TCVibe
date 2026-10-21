@@ -50,6 +50,8 @@
     <sys:String x:Key="Dlg_Progress_Cancel">Abbrechen</sys:String>
     <sys:String x:Key="Dlg_Progress_Background">Im Hintergrund</sys:String>
     <sys:String x:Key="Dlg_Progress_Resume">Fortsetzen</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingServer">In der Warteschlange: Vorgänge mit einem Server laufen nacheinander, dieser beginnt nach dem vorherigen.</sys:String>
+    <sys:String x:Key="Dlg_Progress_WaitingLocal">In der Warteschlange: Vorgänge auf dem Datenträger laufen nacheinander, dieser beginnt nach dem vorherigen.</sys:String>
 
     <!-- Search -->
     <sys:String x:Key="Search_Title">Dateien suchen</sys:String>
@@ -1917,7 +1919,7 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Cmd_Search">Dateisuche: nach Namensmaske oder regulärem Ausdruck, nach Inhalt, Größe und Attributen, auch in Archiven und unter Beachtung von .gitignore; Kriterien können als Vorgaben gespeichert werden. „Im Panel anzeigen“ listet die Treffer im aktiven Panel auf, wo die üblichen Befehle auf sie wirken. Durchsucht lokale Datenträger.</sys:String>
     <sys:String x:Key="Help_Cmd_MultiRename">Stapelumbenennung mit einer Vorlage ([N] Name, [E] Erweiterung, [C] Zähler, [D] und [T] Datum und Uhrzeit, [P] Ordner), Ersetzen mit regulären Ausdrücken, Einfügen und Löschen von Zeichen sowie Groß-/Kleinschreibung. Die Vorschau zeigt Konflikte sofort; nach „Umbenennen“ können Sie bei geöffnetem Fenster auf „Rückgängig“ klicken. In einem ZIP-Archiv ist der ganze Stapel ein einziges Neuschreiben des Archivs, ganz oder gar nicht; andere Archivformate sind schreibgeschützt.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">Verlauf der Dateivorgänge, Ihrer und der von Agenten: Kopieren, Verschieben, Löschen, Umbenennen, Erstellen, Packen und Entpacken, Downloads und Uploads (die Übertragungswarteschlange und das Speichern einer von einem Server geöffneten Datei), mit Ergebnis und Fehlern. Eine Zeile kann als wiederverwendbare Operation gespeichert werden. Das Einzige, was das Protokoll rückgängig machen kann, ist ein Umbenennungsstapel der KI-Umbenennung (Umbenennung rückgängig); für alles andere ist der Weg zurück der Papierkorb.</sys:String>
-    <sys:String x:Key="Help_Cmd_BackgroundOperations">Zeigt die mit „Im Hintergrund“ ausgeblendeten Fortschrittsfenster wieder an. Kopieren, Verschieben oder Löschen läuft bei ausgeblendetem Fenster weiter; die Statusleiste zeigt, wie viele Vorgänge im Hintergrund laufen und wie weit sie sind, und ein Klick darauf wirkt wie dieser Befehl. Vorgänge mit einem Server auf einer Seite laufen neben denen auf dem Datenträger, sodass ein langer Download kein lokales Kopieren aufhält.</sys:String>
+    <sys:String x:Key="Help_Cmd_BackgroundOperations">Zeigt die mit „Im Hintergrund“ ausgeblendeten Fortschrittsfenster wieder an. Kopieren, Verschieben oder Löschen läuft bei ausgeblendetem Fenster weiter; die Statusleiste zeigt, wie viele Vorgänge im Hintergrund laufen und wie weit sie sind, und ein Klick darauf listet sie auf, jeden mit seinem Fortschritt oder „wartet“, um sein Fenster anzuzeigen oder ihn abzubrechen. Vorgänge mit einem Server auf einer Seite laufen neben denen auf dem Datenträger, sodass ein langer Download kein lokales Kopieren aufhält.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Fügt den aktuellen Ordner des aktiven Panels unter einem von Ihnen gewählten Namen zu den Lesezeichen hinzu. Die Lesezeichen stehen im Menü „Lesezeichen“.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Lesezeichen-Editor: Name, Pfad, Reihenfolge und Gruppe (Gruppen werden zu Untermenüs des Menüs „Lesezeichen“), Import und Export als JSON. Änderungen gelten nach OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Öffnet ein Terminal im Ordner des aktiven Panels: Windows Terminal, wenn installiert, sonst PowerShell oder cmd. Nur Ordner auf dem Datenträger.</sys:String>
@@ -2093,8 +2095,15 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Shell_OperationsIdle">Alle Vorgänge abgeschlossen</sys:String>
     <sys:String x:Key="Shell_OperationsRunning">Läuft: {0}</sys:String>
     <sys:String x:Key="Shell_Background">Im Hintergrund: {0} · {1} %</sys:String>
-    <sys:String x:Key="Shell_BackgroundHint">Fortschrittsfenster der Vorgänge im Hintergrund anzeigen</sys:String>
+    <sys:String x:Key="Shell_BackgroundHint">Was im Hintergrund läuft: Fortschritt, Fenster anzeigen, abbrechen</sys:String>
     <sys:String x:Key="Shell_NoBackground">Im Hintergrund läuft kein Vorgang</sys:String>
+    <sys:String x:Key="Shell_BackgroundNotice">{0} läuft im Hintergrund weiter – Fortschritt in der Statusleiste</sys:String>
+    <sys:String x:Key="Shell_BackgroundNoticeNoBar">{0} läuft im Hintergrund weiter – der Befehl „Vorgänge im Hintergrund“ zeigt das Fenster wieder</sys:String>
+    <sys:String x:Key="Shell_BackgroundDone">{0}: fertig</sys:String>
+    <sys:String x:Key="Shell_BackgroundWaiting">wartet</sys:String>
+    <sys:String x:Key="Shell_BackgroundShow">Fenster anzeigen</sys:String>
+    <sys:String x:Key="Shell_BackgroundCancel">Vorgang abbrechen</sys:String>
+    <sys:String x:Key="Shell_BackgroundShowAll">Alle Fenster anzeigen</sys:String>
     <sys:String x:Key="Shell_AiOn">KI: an</sys:String>
     <sys:String x:Key="Shell_AiOff">KI: aus</sys:String>
     <sys:String x:Key="Shell_McpOn">MCP: an</sys:String>

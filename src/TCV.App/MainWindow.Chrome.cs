@@ -17,6 +17,10 @@ public partial class MainWindow
         SourceInitialized += (_, _) => ApplyWindowState();
         // Agents edit files while this window is in the background: look at the project again on return.
         Activated += (_, _) => _viewModel.RefreshProjectStatus();
+        // The list of background operations hangs from the indicator's right edge: the indicator sits at
+        // the right of the status line, and a list running off to the right would leave the window.
+        BackgroundButton.SizeChanged += (_, _) =>
+            BackgroundList.HorizontalOffset = BackgroundButton.ActualWidth - BackgroundListCard.Width;
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);

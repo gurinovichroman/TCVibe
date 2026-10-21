@@ -337,7 +337,7 @@ public partial class MainViewModel
                 PauseHandle = progress.PauseHandle,
             };
         }
-        op.LinkCancellation(progress.Cts.Token);
+        progress.Attach(op);
         op.ErrorHandler = BuildErrorHandler();
 
         using (LeasePanelFileSystems())
@@ -361,7 +361,7 @@ public partial class MainViewModel
             Progress = progress,
             PauseHandle = progress.PauseHandle,
         };
-        op.LinkCancellation(progress.Cts.Token);
+        progress.Attach(op);
         op.ErrorHandler = BuildErrorHandler();
 
         using (LeasePanelFileSystems())

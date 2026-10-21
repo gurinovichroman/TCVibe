@@ -915,17 +915,116 @@
                 Visibility="{DynamicResource ChromeAppStatusBarVisibility}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Operations whose progress window was sent to the background; a click brings the windows back (ADR-0038). -->
-                    <Button Style="{StaticResource ToolButton}" Width="Auto" Height="20" Padding="6,0" Margin="0,0,9,0"
-                            Command="{Binding Services.ShowBackgroundOperationsCommand}"
-                            ToolTip="{DynamicResource Shell_BackgroundHint}"
-                            AutomationProperties.Name="{Binding Status.BackgroundText}"
-                            Visibility="{Binding Status.HasBackground, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
-                        <StackPanel Orientation="Horizontal">
-                            <ctrl:Icon Data="{StaticResource IconLayers}" Width="10" Height="10" Margin="0,0,6,0" />
-                            <TextBlock Text="{Binding Status.BackgroundText}" FontSize="9" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+                    <!-- Operations whose progress window was sent to the background (ADR-0038). In the accent and with
+                         a bar: in the status line's dim 9 px it went unseen. A click drops up their list, each one
+                         to be shown or cancelled. The toggle is not hit-testable while the list is open, so the
+                         click that closes the list does not open it again. -->
+                    <Grid Margin="0,0,9,0"
+                          Visibility="{Binding Status.HasBackground, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <ToggleButton x:Name="BackgroundButton" Style="{StaticResource ToolToggle}" Width="Auto" Height="20" Padding="6,0"
+                                      Foreground="{DynamicResource AccentBrush}"
+                                      IsChecked="{Binding Status.IsBackgroundListOpen, Mode=TwoWay}"
+                                      IsHitTestVisible="{Binding IsOpen, ElementName=BackgroundList, Converter={x:Static conv:InverseBoolConverter.Instance}}"
+                                      ToolTip="{DynamicResource Shell_BackgroundHint}"
+                                      AutomationProperties.Name="{Binding Status.BackgroundText}">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:Icon Data="{StaticResource IconLayers}" Width="10" Height="10" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding Status.BackgroundText}" FontSize="9" VerticalAlignment="Center" />
+                                <ProgressBar Width="48" Height="3" Margin="8,0,0,0" VerticalAlignment="Center" Maximum="100"
+                                             Value="{Binding Status.BackgroundPercent, Mode=OneWay}"
+                                             Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource BorderBrush}"
+                                             IsHitTestVisible="False" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <!-- Right edges aligned: MainWindow.Chrome shifts it left by the card's width less the indicator's.
+                             Placed above by its child's size without the shadow margin, so -4 leaves a 4 px gap. -->
+                        <Popup x:Name="BackgroundList" PlacementTarget="{Binding ElementName=BackgroundButton}"
+                               Placement="Top" VerticalOffset="-4"
+                               StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" Focusable="False"
+                               IsOpen="{Binding Status.IsBackgroundListOpen, Mode=TwoWay}">
+                            <!-- The outer margin is room for the shadow: the popup window is transparent. -->
+                            <Grid Margin="0,0,14,14"
+                                  TextElement.FontSize="11" TextElement.Foreground="{DynamicResource ForegroundBrush}">
+                                <Border x:Name="BackgroundListCard" Width="380" Padding="4" Background="{DynamicResource CardBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        CornerRadius="{DynamicResource RadiusLg}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.45" />
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" Focusable="False">
+                                            <ItemsControl ItemsSource="{Binding Status.BackgroundItems}" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="8,6,4,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto" />
+                                                                <RowDefinition Height="Auto" />
+                                                                <RowDefinition Height="Auto" />
+                                                            </Grid.RowDefinitions>
+                                                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                                            <!-- How far it has got, or that it waits behind another operation of its lane. -->
+                                                            <TextBlock Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right"
+                                                                       FontFamily="{DynamicResource MonoFontFamily}" FontSize="10">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="{Binding Percentage, StringFormat={}{0:F0}%}" />
+                                                                        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsWaiting}" Value="True">
+                                                                                <Setter Property="Text" Value="{DynamicResource Shell_BackgroundWaiting}" />
+                                                                                <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="3" Margin="0,5" Maximum="100"
+                                                                         Value="{Binding Percentage, Mode=OneWay}"
+                                                                         Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource BorderBrush}"
+                                                                         IsHitTestVisible="False" />
+                                                            <!-- Empty while it waits: collapsed, so a waiting row is no taller than its bar. -->
+                                                            <TextBlock Grid.Row="2" Text="{Binding CurrentFile}" FontSize="10"
+                                                                       Foreground="{DynamicResource ForegroundDimBrush}" TextTrimming="CharacterEllipsis"
+                                                                       Visibility="{Binding CurrentFile, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Right"
+                                                                       Text="{Binding SpeedText}" FontSize="10" Foreground="{DynamicResource ForegroundDimBrush}"
+                                                                       Visibility="{Binding SpeedText, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                                            <Button Grid.Column="2" Grid.RowSpan="3" Style="{StaticResource ToolButton}"
+                                                                    Width="24" Height="24" Margin="10,0,0,0"
+                                                                    Command="{Binding BringBackCommand}"
+                                                                    ToolTip="{DynamicResource Shell_BackgroundShow}"
+                                                                    AutomationProperties.Name="{DynamicResource Shell_BackgroundShow}">
+                                                                <ctrl:Icon Data="{StaticResource IconAppWindow}" Width="12" Height="12" />
+                                                            </Button>
+                                                            <Button Grid.Column="3" Grid.RowSpan="3" Style="{StaticResource ToolButton}"
+                                                                    Width="24" Height="24" Margin="2,0,0,0"
+                                                                    Command="{Binding CancelCommand}"
+                                                                    ToolTip="{DynamicResource Shell_BackgroundCancel}"
+                                                                    AutomationProperties.Name="{DynamicResource Shell_BackgroundCancel}">
+                                                                <ctrl:Icon Data="{StaticResource IconX}" Width="12" Height="12" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                        <Border Height="1" Margin="4" Background="{DynamicResource BorderBrush}" />
+                                        <Button Style="{StaticResource ToolButton}" Width="Auto" Height="26" Padding="8,0"
+                                                HorizontalAlignment="Stretch"
+                                                Command="{Binding Services.ShowBackgroundOperationsCommand}"
+                                                Content="{DynamicResource Shell_BackgroundShowAll}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Popup>
+                    </Grid>
                     <ctrl:Icon Data="{StaticResource IconCheck}" Width="10" Height="10" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding Status.OperationsText}" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Status.AiText}" Margin="15,0,0,0" VerticalAlignment="Center" />

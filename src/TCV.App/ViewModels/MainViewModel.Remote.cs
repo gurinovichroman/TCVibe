@@ -110,7 +110,7 @@ public partial class MainViewModel
         var progress = _dialogs.ShowProgressDialog(title);
         copy.Progress = progress;
         copy.PauseHandle = progress.PauseHandle;
-        copy.LinkCancellation(progress.Cts.Token);
+        progress.Attach(copy);
 
         await _operationQueue.EnqueueAsync(copy);
         await FinishOperationAsync(copy, progress, title);

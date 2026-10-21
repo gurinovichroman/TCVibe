@@ -1,18 +1,65 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TCV.App.Localization;
 using TCV.App.Operations;
 using TCV.Core.Domain;
+using TCV.Core.Interfaces;
 
 namespace TCV.App.ViewModels.Dialogs;
 
 public partial class ProgressDialogViewModel : ObservableObject, IProgress<FileProgress>, IProgress<ItemProgress>
 {
+    private IFileOperation? _operation;
+
     public ProgressDialogViewModel(string title)
     {
         Title = title;
     }
 
     public string Title { get; }
+
+    /// <summary>
+    /// Ties the window to the operation it reports on: Cancel stops it, and the window and the list of
+    /// background operations follow whether it still waits in the queue (<see cref="IsWaiting"/>).
+    /// </summary>
+    public void Attach(FileOperationBase operation)
+    {
+        _operation = operation;
+        operation.LinkCancellation(Cts.Token);
+        WaitingText = LocalizationManager.Get(operation.Lane == OperationLane.Network
+            ? "Dlg_Progress_WaitingServer"
+            : "Dlg_Progress_WaitingLocal");
+        operation.StateChanged += (_, _) => OnUiThread(RefreshWaiting);
+        RefreshWaiting();
+    }
+
+    /// <summary>
+    /// Its operation has not started yet: another one runs ahead of it in the same lane (ADR-0038). The
+    /// window says why nothing moves (<see cref="WaitingText"/>), the list of background operations
+    /// says «queued»; a bare «0%» looked like a hang.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isWaiting;
+
+    /// <summary>What it waits for: the server lane or the disk lane, each one operation at a time.</summary>
+    [ObservableProperty]
+    private string _waitingText = string.Empty;
+
+    private void RefreshWaiting() => IsWaiting = _operation is { State: OperationState.Pending };
+
+    /// <summary>Runs inline without a dispatcher (tests) or when already on it.</summary>
+    private static void OnUiThread(Action action)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            action();
+        }
+        else
+        {
+            dispatcher.InvokeAsync(action);
+        }
+    }
 
     /// <summary>Shared pause handle — assign to the operation before starting it.</summary>
     public PauseHandle PauseHandle { get; } = new();
@@ -74,7 +121,8 @@ public partial class ProgressDialogViewModel : ObservableObject, IProgress<FileP
     [RelayCommand]
     private void SendToBackground() => IsInBackground = true;
 
-    /// <summary>Shows the window again (the status bar, the BackgroundOperations command).</summary>
+    /// <summary>Shows the window again (the status bar's list, the BackgroundOperations command).</summary>
+    [RelayCommand]
     public void BringBack() => IsInBackground = false;
 
     public CancellationTokenSource Cts { get; } = new();

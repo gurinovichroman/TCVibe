@@ -27,11 +27,23 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Current file -->
-        <TextBlock Grid.Row="0"
-                   Text="{Binding CurrentFile}"
-                   TextTrimming="CharacterEllipsis"
-                   Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" />
+        <!-- Current file; while the operation waits for the one ahead of it in its lane, why nothing moves (ADR-0038). -->
+        <TextBlock Grid.Row="0" FontSize="11">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="{Binding CurrentFile}" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsWaiting}" Value="True">
+                            <Setter Property="Text" Value="{Binding WaitingText}" />
+                            <Setter Property="TextWrapping" Value="Wrap" />
+                            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
 
         <!-- Progress bar -->
         <ProgressBar Grid.Row="2"
@@ -52,7 +64,8 @@
         <Grid Grid.Row="6">
             <TextBlock Text="{Binding SpeedText}" HorizontalAlignment="Left"
                        Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" />
-            <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11">
+            <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11"
+                       Visibility="{Binding ElapsedText, Converter={StaticResource BoolToVis}}">
                 <Run Text="{DynamicResource Progress_Elapsed}" />
                 <Run Text=" " />
                 <Run Text="{Binding ElapsedText, Mode=OneWay}" />

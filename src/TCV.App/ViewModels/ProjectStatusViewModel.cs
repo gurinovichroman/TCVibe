@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TCV.Ai.Agents;
@@ -5,6 +6,7 @@ using TCV.Ai.Llm;
 using TCV.App.Agents;
 using TCV.App.Localization;
 using TCV.App.Services;
+using TCV.App.ViewModels.Dialogs;
 using TCV.Git;
 
 namespace TCV.App.ViewModels;
@@ -126,6 +128,16 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
 
     /// <summary>«In background: 2 · 45%».</summary>
     [ObservableProperty] private string _backgroundText = string.Empty;
+
+    /// <summary>The same percentage for the bar beside the text.</summary>
+    [ObservableProperty] private int _backgroundPercent;
+
+    /// <summary>The list of background operations is dropped up from the status bar; it closes when the last one leaves.</summary>
+    [ObservableProperty] private bool _isBackgroundListOpen;
+
+    /// <summary>The operations whose window is hidden, for the status bar's list.</summary>
+    public ReadOnlyObservableCollection<ProgressDialogViewModel> BackgroundItems => _background.Items;
+
     [ObservableProperty] private string _aiText = string.Empty;
     [ObservableProperty] private string _mcpText = string.Empty;
 
@@ -256,9 +268,14 @@ public sealed partial class ProjectStatusViewModel : ObservableObject
     private void UpdateBackground()
     {
         HasBackground = _background.Count > 0;
+        BackgroundPercent = _background.Percent;
         BackgroundText = HasBackground
-            ? LocalizationManager.Format("Shell_Background", _background.Count, _background.Percent)
+            ? LocalizationManager.Format("Shell_Background", _background.Count, BackgroundPercent)
             : string.Empty;
+        if (!HasBackground)
+        {
+            IsBackgroundListOpen = false;
+        }
     }
 
     private void UpdateServices()
