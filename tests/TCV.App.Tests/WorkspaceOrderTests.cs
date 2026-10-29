@@ -63,6 +63,28 @@ public sealed class WorkspaceOrderTests : IDisposable
         Names(arranged).Should().Equal("placed", "recent", "older");
     }
 
+    // ── ShortcutNumber ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void ShortcutNumber_CountsDownTheArrangedList_FromOne()
+    {
+        var arranged = WorkspaceOrder.Arrange([Ws("b", order: 2), Ws("loose", pinned: false), Ws("a", order: 1)]);
+
+        WorkspaceOrder.ShortcutNumber(arranged, "a").Should().Be(1);
+        WorkspaceOrder.ShortcutNumber(arranged, "B").Should().Be(2);
+        WorkspaceOrder.ShortcutNumber(arranged, "loose").Should().Be(3);
+        WorkspaceOrder.ShortcutNumber(arranged, "missing").Should().BeNull();
+    }
+
+    [Fact]
+    public void ShortcutNumber_PastTheNinth_IsNull()
+    {
+        var arranged = Enumerable.Range(1, 10).Select(i => Ws($"w{i}", order: i)).ToList();
+
+        WorkspaceOrder.ShortcutNumber(arranged, "w9").Should().Be(9);
+        WorkspaceOrder.ShortcutNumber(arranged, "w10").Should().BeNull();
+    }
+
     [Fact]
     public void Arrange_NotYetPlaced_KeepTheirPlacesOnScreen()
     {

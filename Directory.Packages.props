@@ -26,6 +26,11 @@
     <PackageVersion Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
+  <!-- SVG pictures of workspaces: a logo or favicon found in the project is drawn once into a PNG (ADR-0039) -->
+  <ItemGroup>
+    <PackageVersion Include="SharpVectors.Wpf" Version="1.8.6" />
+  </ItemGroup>
+
   <!-- Network plugins (Этап 2) -->
   <ItemGroup>
     <PackageVersion Include="FluentFTP" Version="55.1.0" />

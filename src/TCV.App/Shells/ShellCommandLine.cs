@@ -64,6 +64,51 @@ public static class ShellCommandLine
         return new ShellLaunch(program, arguments, IsCmd(program));
     }
 
+    /// <summary>
+    /// The process that opens the shell itself in <paramref name="folder"/>, with no command: Enter on an
+    /// empty command line. The template is written for a command, so the argument that holds <c>%C</c>
+    /// goes, and with it the option right before it that hands the shell a command (<c>/k</c>,
+    /// <c>-Command</c>, <c>-c</c>). Without <c>%C</c> the command would come last, so a last option goes
+    /// (<c>nu -e</c>). The rest stays: <c>--login -i</c>, <c>-NoExit</c>, <c>-d Ubuntu</c>, <c>%P</c>.
+    /// </summary>
+    /// <param name="program">The shell's program, environment variables already expanded.</param>
+    public static ShellLaunch BuildInteractive(string program, string template, string folder)
+    {
+        var arguments = SplitArguments(template ?? string.Empty).ToList();
+        var commandAt = arguments.FindIndex(HoldsCommand);
+        if (commandAt >= 0)
+        {
+            arguments.RemoveAt(commandAt);
+        }
+        else
+        {
+            commandAt = arguments.Count;
+        }
+
+        // A cmd switch is one letter (/k, /c); a longer "/…" is a Unix path (/bin/zsh) and stays.
+        if (commandAt > 0 && arguments[commandAt - 1] is ['-', ..] or ['/', _])
+        {
+            arguments.RemoveAt(commandAt - 1);
+        }
+
+        var expanded = arguments
+            .Select(argument => MacroTemplate.Expand(argument, m => m == FolderMacro ? [folder] : null, raw: true))
+            .ToList();
+        return new ShellLaunch(program, expanded, IsCmd(program));
+    }
+
+    // Read as Build reads it: "%Cx" and "%%C"-like text that is not the macro do not count.
+    private static bool HoldsCommand(string argument)
+    {
+        var found = false;
+        MacroTemplate.Expand(argument, m =>
+        {
+            found |= m == CommandMacro;
+            return m == CommandMacro ? [] : null;
+        }, raw: true);
+        return found;
+    }
+
     /// <summary>The arguments as the shell reads them when it is started directly.</summary>
     public static string Arguments(ShellLaunch launch) =>
         string.Join(' ', launch.Arguments.Select(a => launch.ReadsRawLine ? RawJoined(a) : ShellQuoting.QuoteIfNeeded(a)));
@@ -82,9 +127,9 @@ public static class ShellCommandLine
     /// and only then is it quoted for wt itself. After the program, wt takes everything as the command,
     /// even arguments that look like its own options (<c>-NoExit</c>, <c>--login</c>).
     /// </remarks>
-    public static string ForWindowsTerminal(ShellLaunch launch, string folder)
+    public static string ForWindowsTerminal(ShellLaunch launch, string folder, string? profile = null)
     {
-        var sb = new StringBuilder("-d ").Append(ShellQuoting.QuoteArgument(folder));
+        var sb = new StringBuilder(ForWindowsTerminalProfile(profile, folder));
         foreach (var value in launch.Arguments.Prepend(launch.Program))
         {
             var joined = launch.ReadsRawLine
@@ -94,6 +139,23 @@ public static class ShellCommandLine
         }
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The arguments of <c>wt.exe</c> that open <paramref name="profile"/> (a guid or a name; null — the
+    /// default profile) in <paramref name="folder"/> as the profile itself starts. Followed by a command
+    /// line, the tab runs that instead, in the profile's looks (<see cref="ForWindowsTerminal"/>).
+    /// </summary>
+    public static string ForWindowsTerminalProfile(string? profile, string folder)
+    {
+        // A ';' in a name or a folder would cut the line into two tabs (TRAP-88).
+        var sb = new StringBuilder();
+        if (!string.IsNullOrEmpty(profile))
+        {
+            sb.Append("-p ").Append(ShellQuoting.QuoteArgument(profile.Replace(";", "\\;"))).Append(' ');
+        }
+
+        return sb.Append("-d ").Append(ShellQuoting.QuoteArgument(folder.Replace(";", "\\;"))).ToString();
     }
 
     /// <summary>

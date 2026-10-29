@@ -40,13 +40,14 @@ public static class ShellCatalog
 
     /// <summary>
     /// The distribution as a shell: it starts in the Linux view of the working directory, runs the
-    /// command in bash and stays in bash.
+    /// command in bash and stays in bash. <c>-c</c> stands apart from <c>-li</c>, so that opening the shell
+    /// without a command drops only it (<see cref="ShellCommandLine.BuildInteractive"/>).
     /// </summary>
     public static ShellProfile ForWslDistribution(string program, string distribution) => new()
     {
         Name = distribution + " (WSL)",
         Command = program,
-        Arguments = $"-d {ShellQuoting.QuoteIfNeeded(distribution)} -e bash -lic \"%C; exec bash -li\"",
+        Arguments = $"-d {ShellQuoting.QuoteIfNeeded(distribution)} -e bash -li -c \"%C; exec bash -li\"",
     };
 
     /// <summary>

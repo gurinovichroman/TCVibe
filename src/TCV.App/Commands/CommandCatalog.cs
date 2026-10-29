@@ -200,6 +200,7 @@ public static class CommandCatalog
         new("WorkspaceTerminal","Run workspace terminal", "Терминал воркспейса",     "Workspaces", "Воркспейсы"),
         new("WorkspaceNewWindow","Open workspace in a new window","Открыть воркспейс в новом окне","Workspaces","Воркспейсы"),
         new("WorkspaceSidebar","Show/hide workspace sidebar","Показать/скрыть панель воркспейсов","Workspaces","Воркспейсы"),
+        new("WorkspaceRailExpand","Expand/collapse workspace sidebar","Развернуть/свернуть панель воркспейсов","Workspaces","Воркспейсы"),
         new("WorkspaceOpenDefinition","Open project file (.tcvproj)…","Открыть файл проекта (.tcvproj)…","Workspaces","Воркспейсы"),
         new("WorkspaceExportDefinition","Save project file (.tcvproj)…","Сохранить файл проекта (.tcvproj)…","Workspaces","Воркспейсы"),
         new("Workspace1", "Switch to workspace 1", "Перейти к воркспейсу 1", "Workspaces", "Воркспейсы"),

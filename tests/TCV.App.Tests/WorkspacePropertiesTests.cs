@@ -123,7 +123,27 @@ public class WorkspacePropertiesDialogViewModelTests
         vm.ConfirmCommand.Execute(null);
 
         vm.DialogResult.Should().BeTrue();
-        vm.Result.Should().Be(new TCV.App.Services.WorkspacePropertiesResult("api-v2", "🔧", "#FF0000", "OSS", false));
+        // An emoji typed is a choice: the project is no longer searched for a picture.
+        vm.Result.Should().Be(new TCV.App.Services.WorkspacePropertiesResult(
+            "api-v2", "🔧", "#FF0000", "OSS", false, IconImage: "", AutoIconImage: false));
+    }
+
+    [Fact]
+    public void Confirm_HandsBackTheTerminalSetup_Trimmed()
+    {
+        var vm = Create(new Workspace
+        {
+            Name = "api", TerminalCommand = "npm run dev", TerminalDirectory = @"D:\api",
+        });
+        vm.TerminalCommand.Should().Be("npm run dev");
+        vm.TerminalDirectory.Should().Be(@"D:\api");
+
+        vm.TerminalCommand = "  devagent list ";
+        vm.TerminalDirectory = "   ";
+        vm.ConfirmCommand.Execute(null);
+
+        vm.Result!.TerminalCommand.Should().Be("devagent list");
+        vm.Result.TerminalDirectory.Should().BeEmpty();
     }
 
     [Fact]

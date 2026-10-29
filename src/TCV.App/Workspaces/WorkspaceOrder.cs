@@ -57,6 +57,26 @@ public static class WorkspaceOrder
         return pinned.Concat(rest).ToList();
     }
 
+    /// <summary>The highest workspace number with a shortcut of its own (Workspace1..Workspace9).</summary>
+    public const int ShortcutCount = 9;
+
+    /// <summary>
+    /// The number of <paramref name="name"/>'s shortcut (1 for Workspace1) in the <see cref="Arrange"/>d
+    /// list, or null past the ninth or not in it — the rail's tooltip names the gesture by it.
+    /// </summary>
+    public static int? ShortcutNumber(IReadOnlyList<Workspace> arranged, string name)
+    {
+        for (var i = 0; i < Math.Min(arranged.Count, ShortcutCount); i++)
+        {
+            if (string.Equals(arranged[i].Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return i + 1;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// True when the pinned workspaces of an <see cref="Arrange"/>d list do not carry rising numbers
     /// yet — a file from before 6.79, a workspace just pinned or regrouped. Until they do, their order

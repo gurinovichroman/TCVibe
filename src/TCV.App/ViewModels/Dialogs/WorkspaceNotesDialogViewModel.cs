@@ -1,45 +1,35 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TCV.App.Localization;
-using TCV.App.Services;
 
 namespace TCV.App.ViewModels.Dialogs;
 
 /// <summary>
-/// Per-workspace scratchpad: free-form markdown notes plus the command and working directory this
-/// project is normally driven with. Both halves answer the same question after a week away — what
-/// was I doing here, and what do I type to get going again.
+/// Per-workspace scratchpad: free-form markdown notes that answer "what was I doing here?" after a
+/// week away. The command the project is started with used to sit under them; it is in the
+/// properties window now, next to a hint that names the command that runs it.
 /// </summary>
 public partial class WorkspaceNotesDialogViewModel : ObservableObject
 {
-    public WorkspaceNotesDialogViewModel(
-        string workspaceName,
-        string notes,
-        string terminalCommand,
-        string terminalDirectory,
-        string notesPath)
+    public WorkspaceNotesDialogViewModel(string workspaceName, string notes, string notesPath)
     {
         WorkspaceName = workspaceName;
         NotesPath = notesPath;
         Notes = notes;
-        TerminalCommand = terminalCommand;
-        TerminalDirectory = terminalDirectory;
 
         WindowTitle = string.Format(LocalizationManager.Get("Ws_NotesWindowTitle"), workspaceName);
 
-        _initial = (Notes, TerminalCommand, TerminalDirectory);
+        _initial = Notes;
     }
 
-    private readonly (string Notes, string Command, string Directory) _initial;
+    private readonly string _initial;
 
     /// <summary>
-    /// True when anything was edited since the dialog opened. Esc in a text editor is an easy key to
-    /// hit by accident, so the view asks before a dismissal throws the edits away.
+    /// True when the notes were edited since the dialog opened. Esc in a text editor is an easy key
+    /// to hit by accident, so the view asks before a dismissal throws the edits away.
     /// </summary>
     public bool IsDirty =>
-        !string.Equals(Notes ?? string.Empty, _initial.Notes ?? string.Empty, StringComparison.Ordinal)
-        || !string.Equals(TerminalCommand ?? string.Empty, _initial.Command ?? string.Empty, StringComparison.Ordinal)
-        || !string.Equals(TerminalDirectory ?? string.Empty, _initial.Directory ?? string.Empty, StringComparison.Ordinal);
+        !string.Equals(Notes ?? string.Empty, _initial ?? string.Empty, StringComparison.Ordinal);
 
     public string WorkspaceName { get; }
     public string WindowTitle { get; }
@@ -50,13 +40,8 @@ public partial class WorkspaceNotesDialogViewModel : ObservableObject
     [ObservableProperty]
     private string _notes = string.Empty;
 
-    [ObservableProperty]
-    private string _terminalCommand = string.Empty;
-
-    [ObservableProperty]
-    private string _terminalDirectory = string.Empty;
-
-    public WorkspaceNotesResult? Result { get; private set; }
+    /// <summary>The notes, trimmed; null until confirmed.</summary>
+    public string? Result { get; private set; }
 
     public bool DialogResult { get; private set; }
     public event EventHandler? CloseRequested;
@@ -64,10 +49,7 @@ public partial class WorkspaceNotesDialogViewModel : ObservableObject
     [RelayCommand]
     private void Confirm()
     {
-        Result = new WorkspaceNotesResult(
-            Notes?.Trim() ?? string.Empty,
-            TerminalCommand?.Trim() ?? string.Empty,
-            TerminalDirectory?.Trim() ?? string.Empty);
+        Result = Notes?.Trim() ?? string.Empty;
         DialogResult = true;
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }

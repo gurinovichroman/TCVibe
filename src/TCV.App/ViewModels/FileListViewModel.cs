@@ -104,8 +104,14 @@ public partial class FileListViewModel : ObservableObject
     /// folder came in describes the old rows. Disk paths compare as Windows does, ignoring case.
     /// </summary>
     private bool PendingViewStateDescribes(IVirtualFileSystem vfs, string path) =>
-        ReferenceEquals(_pendingViewStateListing.Vfs, vfs)
-        && string.Equals(_pendingViewStateListing.Path, path,
+        SameListing(_pendingViewStateListing, vfs, path);
+
+    /// <summary>Whether the rows on screen are the listing of <paramref name="path"/> on <paramref name="vfs"/>.</summary>
+    private bool IsListed(IVirtualFileSystem vfs, string path) => SameListing((_listedVfs, _listedPath), vfs, path);
+
+    private bool SameListing((IVirtualFileSystem? Vfs, string? Path) listing, IVirtualFileSystem vfs, string path) =>
+        ReferenceEquals(listing.Vfs, vfs)
+        && string.Equals(listing.Path, path,
             ReferenceEquals(vfs, _vfs) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
     /// <summary>
@@ -115,6 +121,33 @@ public partial class FileListViewModel : ObservableObject
     /// second drops the cursor on the first row. Loads start and land on the UI thread.
     /// </summary>
     public bool HasNewerLoadInFlight => _loadsStarted != _loadsApplied;
+
+    // The watcher saw the folder change while a load was on its way. That load may have read the folder
+    // before the change, so the folder is read again once it lands. Cancelling it instead meant that in
+    // a folder that keeps changing each reload cancelled the one before, and none of them landed.
+    private bool _reloadAfterLoad;
+
+    /// <summary>
+    /// The watcher saw the listed folder change: it is read again, keeping the cursor and the marks. A
+    /// load already on its way is not cancelled for it (TRAP-95), and a name being edited holds it off
+    /// (TRAP-76). On the UI thread.
+    /// </summary>
+    public void ReloadForFolderChange()
+    {
+        if (PostponeReloadForNameEdit())
+        {
+            return;
+        }
+
+        if (HasNewerLoadInFlight)
+        {
+            _reloadAfterLoad = true;
+            return;
+        }
+
+        PrepareForRefresh();
+        _ = LoadAsync(CurrentPath);
+    }
 
     /// <summary>Returns and clears the pending view state, or null if none was saved.</summary>
     public ViewState? ConsumePendingViewState()
@@ -290,6 +323,15 @@ public partial class FileListViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isLoading;
+
+    /// <summary>
+    /// A load is reading a folder other than the one listed: its rows are hidden under "Loading…". A
+    /// refresh of the listed folder (the watcher, Ctrl+R, the reload after F5 or F8) leaves them usable:
+    /// a folder that never stops changing (%TEMP%) dimmed itself every few seconds and swallowed the clicks
+    /// (TRAP-95).
+    /// </summary>
+    [ObservableProperty]
+    private bool _isOpeningFolder;
 
     [ObservableProperty]
     private bool _isEditingPath;
@@ -641,6 +683,9 @@ public partial class FileListViewModel : ObservableObject
         BeforeDirectoryLoad?.Invoke(this, EventArgs.Empty);
         var generation = ++_loadsStarted;
 
+        // This load reads the folder after the change the watcher saw.
+        _reloadAfterLoad = false;
+
         // Sizes still being measured for another folder or mount are for rows this listing will not show;
         // a refresh of the same folder keeps its rows, and the walk goes on.
         if (_folderSizeJob is { } sizes && !IsFolderSizeJobCurrent(sizes, path))
@@ -653,6 +698,7 @@ public partial class FileListViewModel : ObservableObject
         var ct = _loadCts.Token;
 
         IsLoading = true;
+        IsOpeningFolder = !IsListed(_activeVfs, path);
         var onDisk = !IsMounted;
         var listedVfs = _activeVfs;
         try
@@ -765,7 +811,42 @@ public partial class FileListViewModel : ObservableObject
         finally
         {
             if (!ct.IsCancellationRequested)
+            {
                 IsLoading = false;
+                IsOpeningFolder = false;
+                if (_reloadAfterLoad)
+                {
+                    _reloadAfterLoad = false;
+                    ReloadAfterRestore();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Runs the reload the watcher asked for during the load that just landed, once the view has put the
+    /// cursor and the scroll back (at Loaded): a load started before that makes the restore wait for it.
+    /// A load started meanwhile makes it needless: it read this folder after the change, or opened
+    /// another one (a server, an archive) that the change says nothing about.
+    /// </summary>
+    private void ReloadAfterRestore()
+    {
+        var started = _loadsStarted;
+        void Reload()
+        {
+            if (_loadsStarted == started)
+            {
+                ReloadForFolderChange();
+            }
+        }
+
+        if (System.Windows.Application.Current?.Dispatcher is { } dispatcher)
+        {
+            dispatcher.InvokeAsync(Reload, System.Windows.Threading.DispatcherPriority.Background);
+        }
+        else
+        {
+            Reload();
         }
     }
 
@@ -818,7 +899,7 @@ public partial class FileListViewModel : ObservableObject
     /// </summary>
     public bool IsConnectionFailed => HasLoadError && ActiveConnection is not null && !IsReconnecting;
 
-    partial void OnIsLoadingChanged(bool value) => UpdateEmptyState();
+    partial void OnIsOpeningFolderChanged(bool value) => UpdateEmptyState();
 
     private void UpdateEmptyState()
     {
@@ -836,7 +917,8 @@ public partial class FileListViewModel : ObservableObject
         }
 
         var hasRows = Files.Any(f => !f.IsParentEntry);
-        EmptyStateText = hasRows || IsLoading
+        // An empty folder read again stays "empty" meanwhile, rather than blinking with every reload.
+        EmptyStateText = hasRows || IsOpeningFolder
             ? string.Empty
             : Localization.LocalizationManager.Get(
                 string.IsNullOrWhiteSpace(QuickSearchText) ? "Files_Empty" : "Files_NoMatches");

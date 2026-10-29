@@ -18,7 +18,8 @@
         Foreground="{DynamicResource ForegroundBrush}"
         FontFamily="{DynamicResource UiFontFamily}"
         Closing="OnClosing"
-        PreviewKeyDown="OnPreviewKeyDown">
+        PreviewKeyDown="OnPreviewKeyDown"
+        PreviewMouseDown="OnRailLightDismiss">
 
     <!-- The design's own frame (ADR-0030): the title bar is drawn by the window, WindowChrome keeps what
          Windows gives a caption — dragging, double-click to maximise, Aero Snap, the system menu on a
@@ -303,7 +304,7 @@
                         <!-- Dynamic bookmark items injected in code-behind -->
                     </MenuItem>
 
-                    <MenuItem Header="{DynamicResource Menu_Workspaces}" x:Name="WorkspacesMenu" SubmenuOpened="OnWorkspacesMenuOpened">
+                    <MenuItem Header="{DynamicResource Menu_Workspaces}" x:Name="WorkspacesMenu" SubmenuOpened="OnWorkspacesMenuOpened" SubmenuClosed="OnWorkspacesMenuClosed">
                         <MenuItem Header="{DynamicResource Menu_Ws_New}"
                                   Command="{Binding Workspaces.NewWorkspaceCommand}"
                                   ctrl:MenuGestures.CommandId="NewWorkspace"/>
@@ -316,17 +317,31 @@
                         <MenuItem Header="{DynamicResource Menu_Ws_Notes}"
                                   Command="{Binding Workspaces.OpenWorkspaceNotesCommand}"
                                   ctrl:MenuGestures.CommandId="WorkspaceNotes"/>
-                        <MenuItem Header="{DynamicResource Menu_Ws_Terminal}"
+                        <!-- The header gets the active workspace's command when the menu opens. -->
+                        <MenuItem x:Name="WorkspaceTerminalMenuItem"
+                                  Header="{DynamicResource Menu_Ws_Terminal}"
                                   Command="{Binding Workspaces.RunWorkspaceTerminalCommand}"
                                   ctrl:MenuGestures.CommandId="WorkspaceTerminal"/>
                         <MenuItem Header="{DynamicResource Menu_Ws_NewWindow}"
                                   Command="{Binding Workspaces.OpenWorkspaceInNewWindowCommand}"
                                   ctrl:MenuGestures.CommandId="WorkspaceNewWindow"/>
+                        <!-- Last of the active workspace's actions, as Properties is in Windows menus. Before it
+                             was only in each workspace's submenu: the menu bar did not show its shortcut, and the
+                             help could not say where to find it. -->
+                        <MenuItem Header="{DynamicResource Menu_Ws_Properties}"
+                                  Command="{Binding Workspaces.EditWorkspacePropertiesCommand}"
+                                  ctrl:MenuGestures.CommandId="WorkspaceProperties"/>
+                        <Separator/>
                         <MenuItem Header="{DynamicResource Menu_Ws_Sidebar}"
                                   Command="{Binding Workspaces.ToggleWorkspaceSidebarCommand}"
                                   IsChecked="{Binding Workspaces.ShowWorkspaceSidebar, Mode=OneWay}"
                                   IsCheckable="False"
                                   ctrl:MenuGestures.CommandId="WorkspaceSidebar"/>
+                        <MenuItem Header="{DynamicResource Menu_Ws_RailExpand}"
+                                  Command="{Binding Workspaces.ToggleRailExpandedCommand}"
+                                  IsChecked="{Binding Workspaces.IsRailExpanded, Mode=OneWay}"
+                                  IsCheckable="False"
+                                  ctrl:MenuGestures.CommandId="WorkspaceRailExpand"/>
                         <Separator/>
                         <MenuItem Header="{DynamicResource Menu_Ws_OpenDefinition}"
                                   Command="{Binding Workspaces.OpenWorkspaceDefinitionCommand}"
@@ -511,172 +526,9 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- ── Workspace rail (.workspace-rail, 64px): the switcher, the pinned workspaces by their icon or
-                 two letters under their group's heading, the active one if it is not pinned, «new workspace»;
-                 the terminal line and help at the foot. A pinned workspace is dragged to another place in
-                 its group; a folder dropped here becomes a workspace (MainWindow.Rail, 6.79). ── -->
-            <Border x:Name="WorkspaceRail" Grid.Column="0" Width="64" Padding="8,15"
-                    Background="{DynamicResource CardBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
-                    AllowDrop="True" DragEnter="OnRailDragOver" DragOver="OnRailDragOver"
-                    DragLeave="OnRailDragLeave" Drop="OnRailDrop"
-                    Visibility="{Binding Workspaces.IsWorkspaceSidebarVisible, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
-                <Border.Resources>
-                    <!-- One workspace: its icon, else its two letters, in a 39×38 button, a dot in its colour; the
-                         one the panels are on is framed and filled in its colour with a bar at the rail's edge.
-                         Shared by the pinned ones and the unpinned active one. WPF draws the emoji in one colour,
-                         so the icon takes the letters' colours, as the tool strip's icons do. -->
-                    <ControlTemplate x:Key="RailWorkspaceTemplate" TargetType="Button">
-                        <Grid Width="39" Height="38">
-                            <Border x:Name="Bar" Width="3" Height="22" Margin="-13.5,0,0,0"
-                                    HorizontalAlignment="Left" CornerRadius="0,3,3,0"
-                                    Background="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Visibility="Hidden" />
-                            <Border x:Name="Bd" CornerRadius="4" BorderThickness="1"
-                                    BorderBrush="Transparent" Background="Transparent" />
-                            <Border x:Name="Tint" CornerRadius="4" Opacity="0"
-                                    Background="{DynamicResource HoverBrush}" />
-                            <TextBlock x:Name="TagText" Text="{Binding Name, Converter={x:Static conv:WorkspaceTagConverter.Instance}}"
-                                       FontFamily="{DynamicResource MonoFontFamily}" FontSize="11"
-                                       Foreground="{DynamicResource ForegroundDimBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
-                            <TextBlock x:Name="IconText" Text="{Binding Icon}" FontSize="16"
-                                       Foreground="{DynamicResource ForegroundDimBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
-                            <Ellipse Width="5" Height="5" Margin="0,0,5,5"
-                                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                     Fill="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Tint" Property="Opacity" Value="1" />
-                                <Setter TargetName="TagText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-                                <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-                            </Trigger>
-                            <DataTrigger Value="True">
-                                <DataTrigger.Binding>
-                                    <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
-                                        <Binding Path="Name" />
-                                        <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
-                                                 RelativeSource="{RelativeSource AncestorType=Window}" />
-                                    </MultiBinding>
-                                </DataTrigger.Binding>
-                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
-                                <Setter TargetName="TagText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
-                                <Setter TargetName="IconText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
-                            </DataTrigger>
-                            <!-- No colour of its own (the dot is not drawn): the frame, the bar and the
-                                 letters would all be null on the slab, so the current accent stands in.
-                                 After the trigger above, so it wins. -->
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Value="True">
-                                        <Condition.Binding>
-                                            <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
-                                                <Binding Path="Name" />
-                                                <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
-                                                         RelativeSource="{RelativeSource AncestorType=Window}" />
-                                            </MultiBinding>
-                                        </Condition.Binding>
-                                    </Condition>
-                                    <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static conv:NullToVisibilityConverter.Instance}}"
-                                               Value="{x:Static Visibility.Collapsed}" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="TagText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
-                            </MultiDataTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Border.Resources>
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Tag="Help" Click="OnRunCommandClick"
-                                ToolTip="{loc:Live Rail_HelpTip}" AutomationProperties.Name="{DynamicResource Rail_Help}">
-                            <ctrl:Icon Data="{StaticResource IconCircleHelp}" />
-                        </Button>
-                    </StackPanel>
-
-                    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                        <StackPanel HorizontalAlignment="Center">
-                            <Button Style="{StaticResource ToolButton}" Tag="WorkspaceSwitcher" Click="OnRunCommandClick"
-                                    ToolTip="{loc:Live Rail_SwitcherTip}" AutomationProperties.Name="{DynamicResource Rail_Switcher}">
-                                <ctrl:Icon Data="{StaticResource IconLayers}" />
-                            </Button>
-
-                            <ItemsControl x:Name="RailPinnedList" ItemsSource="{Binding Workspaces.PinnedGroups}" Focusable="False"
-                                          PreviewMouseLeftButtonDown="OnRailPinnedMouseDown" PreviewMouseMove="OnRailPinnedMouseMove"
-                                          PreviewMouseLeftButtonUp="OnRailPinnedMouseUp">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <!-- A group's heading, in the side bar's section-label style and cut to the rail;
-                                                 the whole name in its tooltip. The ungrouped block, first, has none. -->
-                                            <TextBlock Text="{Binding Label}" ToolTip="{Binding Header}"
-                                                       Visibility="{Binding HasHeader, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
-                                                       Margin="0,16,0,-4" MaxWidth="48" HorizontalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis" FontSize="9" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource ForegroundDimBrush}" />
-                                            <ItemsControl ItemsSource="{Binding Items}" Focusable="False">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <!-- A right-click opens its actions from the Workspaces menu. -->
-                                                        <Button x:Name="WorkspaceButton"
-                                                                Margin="0,13,0,0"
-                                                                Cursor="Hand" Focusable="False"
-                                                                ToolTip="{Binding Name}"
-                                                                AutomationProperties.Name="{Binding Name}"
-                                                                ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
-                                                                Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
-                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}"
-                                                                Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
-                                                                Template="{StaticResource RailWorkspaceTemplate}" />
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- The workspace the panels are on when it is not pinned: after a rule, as the taskbar shows a
-                                 running program that is not pinned. It leaves the rail when you switch away; a right-click
-                                 pins it. Not dimmed: half strength means "unavailable" (DESIGN). -->
-                            <StackPanel DataContext="{Binding Workspaces.UnpinnedActiveWorkspace}"
-                                        Visibility="{Binding Converter={x:Static conv:NullToVisibilityConverter.Instance}}">
-                                <Border Width="24" Height="1" Margin="0,13,0,0" Background="{DynamicResource BorderBrush}" />
-                                <Button Margin="0,13,0,0"
-                                        Cursor="Hand" Focusable="False"
-                                        AutomationProperties.Name="{Binding Name}"
-                                        ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
-                                        Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
-                                                  RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}"
-                                        Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
-                                        Template="{StaticResource RailWorkspaceTemplate}">
-                                    <Button.ToolTip>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" />
-                                            <TextBlock Text="{DynamicResource Rail_UnpinnedTip}" Foreground="{DynamicResource ForegroundDimBrush}" />
-                                        </StackPanel>
-                                    </Button.ToolTip>
-                                </Button>
-                            </StackPanel>
-
-                            <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Command="{Binding Workspaces.NewWorkspaceCommand}"
-                                    ToolTip="{loc:Live Rail_AddTip}" AutomationProperties.Name="{DynamicResource Rail_Add}">
-                                <ctrl:Icon Data="{StaticResource IconPlus}" />
-                            </Button>
-                        </StackPanel>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
+            <!-- The narrow workspace rail's place: the rail itself lies over this row (WorkspaceRail, after this grid). -->
+            <Border x:Name="RailSpace" Grid.Column="0" Width="64"
+                    Visibility="{Binding Workspaces.IsWorkspaceSidebarVisible, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
 
             <!-- ── Side bar «Explorer» (.folder-sidebar): the docked folder tree (6.21), the pinned folders
                  (bookmarks) and the active panel's disk. Unlike the Tree view *mode*, which replaces one
@@ -814,6 +666,334 @@
             </Grid>
         </Grid>
 
+        <!-- ── Workspace rail (.workspace-rail, 64px): «open wide» and the switcher on top; the pinned workspaces
+             by their icon or letters under their group's heading and the active one if it is not pinned, in
+             a list that scrolls and fades at an edge with more past it; «new workspace» and help at the foot.
+             Opened wide (Alt+Shift+B) it shows each workspace by its full name and lies over the side bar: it
+             is the row's second child, not a column of its grid, so it covers the panels instead of pushing
+             them (RailSpace keeps the narrow rail's 64 px there). A pinned workspace is dragged to another
+             place in its group; a folder dropped here becomes a workspace (MainWindow.Rail, 6.79). ── -->
+        <!-- The width opened wide is set from code (ApplyRailWidth): it reaches the side bar's edge. -->
+        <Border x:Name="WorkspaceRail" Grid.Row="3" Width="64" HorizontalAlignment="Left" Padding="0,15"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                AllowDrop="True" DragEnter="OnRailDragOver" DragOver="OnRailDragOver"
+                DragLeave="OnRailDragLeave" Drop="OnRailDrop" ButtonBase.Click="OnRailButtonClick"
+                Visibility="{Binding Workspaces.IsRailShown, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+            <Border.Resources>
+                <!-- One workspace: its picture, emoji or monogram plate in a 39×34 tile (a dot in its colour beside the first two), and
+                     its name under it, small, on up to two lines broken between words (WorkspaceBreakableName);
+                     the one the panels are on is framed and filled in its colour with a bar at the rail's edge.
+                     Shared by the pinned ones and the unpinned active one. WPF draws the emoji in one colour,
+                     so the icon takes the letters' colours, as the tool strip's icons do. Opened wide, the
+                     button is a 38 px row: the picture or emoji in the narrow column, then the name; its left edge, the bar and the dot stay put. -->
+                <ControlTemplate x:Key="RailWorkspaceTemplate" TargetType="Button">
+                    <StackPanel Background="Transparent">
+                        <Grid x:Name="Tile" Width="39" Height="34" HorizontalAlignment="Center">
+                            <Border x:Name="Bar" Width="3" Height="22" Margin="-12,0,0,0"
+                                    HorizontalAlignment="Left" CornerRadius="0,3,3,0"
+                                    Background="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Visibility="Hidden" />
+                            <Border x:Name="Bd" CornerRadius="4" BorderThickness="1"
+                                    BorderBrush="Transparent" Background="Transparent" />
+                            <Border x:Name="Tint" CornerRadius="4" Opacity="0"
+                                    Background="{DynamicResource HoverBrush}" />
+                            <!-- No picture, no emoji: a monogram plate — one letter on the workspace's colour, or on
+                                 one its name picks — so the tile is a picture beside the logos, not a second caption. -->
+                            <Border x:Name="Plate" Width="24" Height="24" CornerRadius="5"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Background="{Binding Converter={x:Static conv:WorkspacePlateConverter.Instance}}"
+                                    Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}">
+                                <TextBlock x:Name="PlateText" FontSize="12" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Text="{Binding Name, Converter={x:Static conv:WorkspaceMonogramConverter.Instance}}"
+                                           Foreground="{Binding Converter={x:Static conv:WorkspacePlateConverter.Instance}, ConverterParameter=fg}" />
+                            </Border>
+                            <TextBlock x:Name="IconText" Text="{Binding Icon}" FontSize="16"
+                                       Foreground="{DynamicResource ForegroundDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            <!-- The project's own picture, in its own colours (WorkspaceIconStore). -->
+                            <Image x:Name="PictureImage" Width="22" Height="22" Visibility="Collapsed"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Source="{Binding IconImage, Converter={x:Static conv:WorkspaceImageConverter.Instance}}" />
+                            <TextBlock x:Name="NameText" Text="{Binding Name}" Visibility="Collapsed"
+                                       Margin="12,0,22,0" VerticalAlignment="Center" FontSize="12"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource ForegroundDimBrush}" />
+                            <!-- Beside a picture or an emoji; the plate carries the colour itself. -->
+                            <Ellipse x:Name="Dot" Width="5" Height="5" Margin="0,0,5,5"
+                                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                     Fill="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                     Visibility="{Binding Icon, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                        </Grid>
+                        <TextBlock x:Name="Caption" Margin="0,3,0,0" FontSize="9" TextAlignment="Center"
+                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                   LineStackingStrategy="BlockLineHeight" LineHeight="11" MaxHeight="22"
+                                   Foreground="{DynamicResource ForegroundDimBrush}"
+                                   Text="{Binding Name, Converter={x:Static conv:WorkspaceBreakableNameConverter.Instance}}" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <!-- A picture stands before the emoji and the plate. -->
+                        <DataTrigger Binding="{Binding IconImage, Converter={x:Static conv:WorkspaceImageConverter.Instance}, ConverterParameter=has}"
+                                     Value="True">
+                            <Setter TargetName="PictureImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Plate" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="IconText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="Dot" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding DataContext.Workspaces.IsRailExpanded, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     Value="True">
+                            <!-- The picture, the emoji or the plate stays, at the left in the narrow rail's column,
+                                 the name after it. -->
+                            <Setter TargetName="Caption" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="Tile" Property="Height" Value="38" />
+                            <Setter TargetName="Tile" Property="Width" Value="NaN" />
+                            <Setter TargetName="Tile" Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter TargetName="Tile" Property="Margin" Value="4,0" />
+                            <Setter TargetName="Plate" Property="Width" Value="20" />
+                            <Setter TargetName="Plate" Property="Height" Value="20" />
+                            <Setter TargetName="Plate" Property="CornerRadius" Value="4" />
+                            <Setter TargetName="Plate" Property="HorizontalAlignment" Value="Left" />
+                            <Setter TargetName="Plate" Property="Margin" Value="10,0,0,0" />
+                            <Setter TargetName="PlateText" Property="FontSize" Value="11" />
+                            <Setter TargetName="PictureImage" Property="Width" Value="20" />
+                            <Setter TargetName="PictureImage" Property="Height" Value="20" />
+                            <Setter TargetName="PictureImage" Property="HorizontalAlignment" Value="Left" />
+                            <Setter TargetName="PictureImage" Property="Margin" Value="10,0,0,0" />
+                            <Setter TargetName="IconText" Property="HorizontalAlignment" Value="Left" />
+                            <Setter TargetName="IconText" Property="Margin" Value="11,0,0,0" />
+                            <Setter TargetName="NameText" Property="Margin" Value="40,0,22,0" />
+                            <Setter TargetName="NameText" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Dot" Property="Margin" Value="0,0,10,0" />
+                            <Setter TargetName="Dot" Property="VerticalAlignment" Value="Center" />
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Tint" Property="Opacity" Value="1" />
+                            <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                            <Setter TargetName="NameText" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                            <Setter TargetName="Caption" Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                        </Trigger>
+                        <DataTrigger Value="True">
+                            <DataTrigger.Binding>
+                                <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
+                                    <Binding Path="Name" />
+                                    <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
+                                             RelativeSource="{RelativeSource AncestorType=Window}" />
+                                </MultiBinding>
+                            </DataTrigger.Binding>
+                            <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Setter TargetName="IconText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Setter TargetName="NameText" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Setter TargetName="Caption" Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </DataTrigger>
+                        <!-- No colour of its own (the dot is not drawn): the frame, the bar and the
+                             letters would all be null on the slab, so the current accent stands in.
+                             After the trigger above, so it wins. -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Value="True">
+                                    <Condition.Binding>
+                                        <MultiBinding Converter="{x:Static conv:WorkspaceIsActiveConverter.Instance}">
+                                            <Binding Path="Name" />
+                                            <Binding Path="DataContext.Workspaces.ActiveWorkspaceName"
+                                                     RelativeSource="{RelativeSource AncestorType=Window}" />
+                                        </MultiBinding>
+                                    </Condition.Binding>
+                                </Condition>
+                                <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static conv:NullToVisibilityConverter.Instance}}"
+                                           Value="{x:Static Visibility.Collapsed}" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="IconText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="NameText" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Caption" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                        </MultiDataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+
+                <!-- A group's heading, in the side bar's section-label style and cut to the rail; the whole
+                     name in its tooltip. Opened wide, it lines up with the names under it. -->
+                <Style x:Key="RailGroupHeading" TargetType="TextBlock">
+                    <Setter Property="Margin" Value="0,16,0,-4" />
+                    <Setter Property="MaxWidth" Value="48" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="FontSize" Value="9" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.Workspaces.IsRailExpanded, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     Value="True">
+                            <Setter Property="Margin" Value="14,16,4,-4" />
+                            <Setter Property="MaxWidth" Value="Infinity" />
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <!-- The rule above the unpinned active workspace; opened wide, across the row. -->
+                <Style x:Key="RailRule" TargetType="Border">
+                    <Setter Property="Width" Value="24" />
+                    <Setter Property="Height" Value="1" />
+                    <Setter Property="Margin" Value="0,13,0,0" />
+                    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.Workspaces.IsRailExpanded, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     Value="True">
+                            <Setter Property="Width" Value="NaN" />
+                            <Setter Property="Margin" Value="4,13,4,0" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <!-- The list's scroll bar lies over the rail's right edge and shows only under the mouse: a
+                     bar beside a 39 px button would not fit, and the fades already say there is more. -->
+                <ControlTemplate x:Key="RailScrollTemplate" TargetType="ScrollViewer">
+                    <Grid Background="Transparent">
+                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                CanContentScroll="{TemplateBinding CanContentScroll}" />
+                        <ScrollBar x:Name="PART_VerticalScrollBar" Width="7" MinWidth="7" HorizontalAlignment="Right"
+                                   Opacity="0"
+                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PART_VerticalScrollBar" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Border.Resources>
+            <DockPanel>
+                <!-- The width of the rail opened wide: dragged by its edge, a double-click gives the automatic
+                     one back (MainWindow.Rail). Docked first, so it runs the rail's whole height, over the
+                     border line; on the narrow rail it is not there at all. -->
+                <Thumb DockPanel.Dock="Right" Width="6" Margin="0,-15,-3,-15" Cursor="SizeWE"
+                       Visibility="{Binding Workspaces.IsRailExpanded, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}"
+                       DragStarted="OnRailWidthDragStarted" DragDelta="OnRailWidthDragDelta"
+                       DragCompleted="OnRailWidthDragCompleted" MouseDoubleClick="OnRailWidthReset"
+                       ToolTip="{DynamicResource Rail_WidthTip}">
+                    <Thumb.Template>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border Background="Transparent">
+                                <Border x:Name="Line" Width="1" HorizontalAlignment="Center" Background="Transparent" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Line" Property="Background" Value="{DynamicResource ForegroundDimBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="Line" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Thumb.Template>
+                </Thumb>
+
+                <!-- The fixed buttons keep the narrow rail's column when it opens wide: nothing moves under the mouse.
+                     «Open wide» shows where it goes — chevrons, not the side bar's panel icon of the tool strip. -->
+                <StackPanel DockPanel.Dock="Top" Width="63" HorizontalAlignment="Left">
+                    <ToggleButton Style="{StaticResource ToolButton}" Focusable="False"
+                                  IsChecked="{Binding Workspaces.IsRailExpanded}"
+                                  ToolTip="{loc:Live Rail_ExpandTip}" AutomationProperties.Name="{DynamicResource Rail_Expand}">
+                        <Grid>
+                            <ctrl:Icon Data="{StaticResource IconChevronsRight}"
+                                       Visibility="{Binding Workspaces.IsRailExpanded, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                            <ctrl:Icon Data="{StaticResource IconChevronsLeft}"
+                                       Visibility="{Binding Workspaces.IsRailExpanded, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                        </Grid>
+                    </ToggleButton>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Tag="WorkspaceSwitcher" Click="OnRunCommandClick"
+                            ToolTip="{loc:Live Rail_SwitcherTip}" AutomationProperties.Name="{DynamicResource Rail_Switcher}">
+                        <ctrl:Icon Data="{StaticResource IconLayers}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Out of the list, so neither scrolls away. -->
+                <StackPanel DockPanel.Dock="Bottom" Width="63" HorizontalAlignment="Left">
+                    <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Command="{Binding Workspaces.NewWorkspaceCommand}"
+                            ToolTip="{loc:Live Rail_AddTip}" AutomationProperties.Name="{DynamicResource Rail_Add}">
+                        <ctrl:Icon Data="{StaticResource IconPlus}" />
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,13,0,0" Tag="Help" Click="OnRunCommandClick"
+                            ToolTip="{loc:Live Rail_HelpTip}" AutomationProperties.Name="{DynamicResource Rail_Help}">
+                        <ctrl:Icon Data="{StaticResource IconCircleHelp}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- The workspaces fade out at an edge that has more past it (OnRailScrollChanged). -->
+                <ScrollViewer x:Name="RailScroll" Template="{StaticResource RailScrollTemplate}"
+                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
+                              ScrollChanged="OnRailScrollChanged">
+                    <StackPanel Margin="8,0">
+                        <ItemsControl x:Name="RailPinnedList" ItemsSource="{Binding Workspaces.PinnedGroups}" Focusable="False"
+                                      PreviewMouseLeftButtonDown="OnRailPinnedMouseDown" PreviewMouseMove="OnRailPinnedMouseMove"
+                                      PreviewMouseLeftButtonUp="OnRailPinnedMouseUp">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <!-- The ungrouped block, first, has no heading. -->
+                                        <TextBlock Style="{StaticResource RailGroupHeading}" Text="{Binding Label}" ToolTip="{Binding Header}"
+                                                   Visibility="{Binding HasHeader, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                                        <ItemsControl ItemsSource="{Binding Items}" Focusable="False">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <!-- A right-click opens its actions from the Workspaces menu. The tooltip,
+                                                         «name · Alt+N», is put together as it opens (OnRailWorkspaceToolTipOpening). -->
+                                                    <Button x:Name="WorkspaceButton"
+                                                            Margin="0,8,0,0"
+                                                            Cursor="Hand" Focusable="False"
+                                                            ToolTip="{Binding Name}"
+                                                            ToolTipService.Placement="Right" ToolTipService.HorizontalOffset="12"
+                                                            ToolTipService.InitialShowDelay="150"
+                                                            ToolTipOpening="OnRailWorkspaceToolTipOpening"
+                                                            AutomationProperties.Name="{Binding Name}"
+                                                            ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
+                                                            Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
+                                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
+                                                            Template="{StaticResource RailWorkspaceTemplate}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- The workspace the panels are on when it is not pinned: after a rule, as the taskbar shows a
+                             running program that is not pinned. It leaves the rail when you switch away; a right-click
+                             pins it. Not dimmed: half strength means "unavailable" (DESIGN). -->
+                        <StackPanel DataContext="{Binding Workspaces.UnpinnedActiveWorkspace}"
+                                    Visibility="{Binding Converter={x:Static conv:NullToVisibilityConverter.Instance}}">
+                            <Border Style="{StaticResource RailRule}" />
+                            <Button Margin="0,8,0,0"
+                                    Cursor="Hand" Focusable="False"
+                                    ToolTip="{Binding Name}"
+                                    ToolTipService.Placement="Right" ToolTipService.HorizontalOffset="12"
+                                    ToolTipService.InitialShowDelay="150"
+                                    ToolTipOpening="OnRailWorkspaceToolTipOpening"
+                                    AutomationProperties.Name="{Binding Name}"
+                                    ContextMenuOpening="OnRailWorkspaceContextMenuOpening"
+                                    Command="{Binding DataContext.Workspaces.SwitchWorkspaceCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    Tag="{Binding Color, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}"
+                                    Template="{StaticResource RailWorkspaceTemplate}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
         <!-- ═══════════ The latest agent run (.agent-summary) ═══════════
              What the agent left to review in the active panel's repository: shown while there is something. -->
         <Border Grid.Row="4" MinHeight="64" Padding="16,13" Background="{DynamicResource CardBrush}"
@@ -867,7 +1047,7 @@
 
         <!-- ═══════════ Command line (.bottom-command, 36px) ═══════════
              `cd` moves the active panel; anything else runs in a terminal in its folder, in the shell named
-             in the box on the left (cmd, PowerShell, Git Bash, WSL …). The box drops the shells down; it
+             in the box on the left (cmd, PowerShell, Git Bash, WSL …); an empty line opens that shell itself. The box drops the shells down; it
              takes no focus, so a click leaves the keyboard where it was. -->
         <Border Grid.Row="5" Height="36" Padding="15,0" Background="{DynamicResource BackgroundAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"

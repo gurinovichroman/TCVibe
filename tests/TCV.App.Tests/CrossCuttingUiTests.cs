@@ -16,6 +16,39 @@ public class MenuHeaderTextTests
     [InlineData(null, "")]
     public void Literal_UserText_DoublesEveryUnderscore(string? input, string expected) =>
         MenuHeaderText.Literal(input).Should().Be(expected);
+
+    [Theory]
+    [InlineData("Workspace _terminal", "npm run dev", "Workspace _terminal — npm run dev")]
+    [InlineData("Workspace _terminal", "  npm run my_task ", "Workspace _terminal — npm run my__task")]
+    [InlineData("Workspace _terminal", "", "Workspace _terminal")]
+    [InlineData("Workspace _terminal", "   ", "Workspace _terminal")]
+    [InlineData("Workspace _terminal", null, "Workspace _terminal")]
+    public void WithDetail_KeepsTheAccessKeyAndShowsTheDetailAsTyped(string header, string? detail, string expected) =>
+        MenuHeaderText.WithDetail(header, detail).Should().Be(expected);
+
+    [Fact]
+    public void WithDetail_LongDetail_IsShortenedToTheLimit()
+    {
+        var header = MenuHeaderText.WithDetail("T", new string('x', 100));
+
+        var detail = header["T — ".Length..];
+        detail.Should().HaveLength(MenuHeaderText.MaxDetailLength).And.EndWith("…");
+    }
+
+    [Fact]
+    public void WithDetail_LineBreaks_KeepTheItemOnOneLine() =>
+        MenuHeaderText.WithDetail("T", "npm ci\r\nnpm run dev\n").Should().Be("T — npm ci  npm run dev");
+
+    [Fact]
+    public void WithDetail_CutAtAnEmoji_KeepsTheEmojiWhole()
+    {
+        // 🚀 is two chars; placed where the cut falls, half of it would be left.
+        var header = MenuHeaderText.WithDetail("T", new string('x', MenuHeaderText.MaxDetailLength - 2) + "🚀 and more");
+
+        var detail = header["T — ".Length..];
+        detail.Should().Be(new string('x', MenuHeaderText.MaxDetailLength - 2) + "…");
+        detail.Any(char.IsSurrogate).Should().BeFalse();
+    }
 }
 
 public class CommandCatalogGestureTests

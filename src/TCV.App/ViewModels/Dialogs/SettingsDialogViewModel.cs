@@ -344,6 +344,9 @@ public partial class SettingsDialogViewModel : ObservableObject
 
     public System.Collections.ObjectModel.ObservableCollection<ShellProfileViewModel> Shells { get; } = new();
 
+    /// <summary>F9 opens Windows Terminal's default profile instead of the command line's shell.</summary>
+    [ObservableProperty] private bool _terminalOpensDefaultProfile;
+
     /// <summary><see cref="InitialTab"/> value that opens the dialog on the Shells tab («Command-line shells…»).</summary>
     public const string ShellsTab = "Shells";
 
@@ -734,6 +737,7 @@ public partial class SettingsDialogViewModel : ObservableObject
         // A row without a program would be offered by the command line and then fail to start. The
         // picked shell stays as it is: one that is gone falls back to the first (ShellCatalog.Pick).
         target.Shells.Profiles = Shells.Where(s => s.IsUsable).Select(s => s.ToModel()).ToList();
+        target.Shells.TerminalOpensDefaultProfile = TerminalOpensDefaultProfile;
 
         target.Git.WorktreeRoot = WorktreeRoot.Trim();
         target.Git.WorktreeSetupCommand = WorktreeSetupCommand.Trim();
@@ -821,6 +825,8 @@ public partial class SettingsDialogViewModel : ObservableObject
         {
             Shells.Add(ShellProfileViewModel.From(shell));
         }
+
+        TerminalOpensDefaultProfile = _settings.Shells.TerminalOpensDefaultProfile;
 
         WorktreeRoot = _settings.Git.WorktreeRoot;
         WorktreeSetupCommand = _settings.Git.WorktreeSetupCommand;

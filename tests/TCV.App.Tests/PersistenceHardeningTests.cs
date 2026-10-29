@@ -374,11 +374,21 @@ public sealed class PersistenceHardeningTests : IDisposable
     [Fact]
     public void NotesDialog_IsDirty_OnlyAfterAnEdit()
     {
-        var vm = new WorkspaceNotesDialogViewModel("ws", "notes", "npm run dev", string.Empty, "p.md");
+        var vm = new WorkspaceNotesDialogViewModel("ws", "notes", "p.md");
         vm.IsDirty.Should().BeFalse();
 
-        vm.TerminalCommand = "npm test";
+        vm.Notes = "notes and more";
 
         vm.IsDirty.Should().BeTrue();
+    }
+
+    [Fact]
+    public void NotesDialog_Confirm_HandsBackTheTrimmedNotes()
+    {
+        var vm = new WorkspaceNotesDialogViewModel("ws", string.Empty, "p.md") { Notes = "  todo: ship  " };
+
+        vm.ConfirmCommand.Execute(null);
+
+        vm.Result.Should().Be("todo: ship");
     }
 }

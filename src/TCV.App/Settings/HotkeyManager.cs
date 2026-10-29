@@ -262,6 +262,7 @@ public sealed class HotkeyManager
         Register("WorkspaceTerminal", Key.T, ModifierKeys.Alt);   // replay the saved command
         Register("WorkspaceNewWindow", Key.W, ModifierKeys.Control | ModifierKeys.Shift);
         Register("WorkspaceSidebar",   Key.B, ModifierKeys.Alt);   // pinned rail, editor convention
+        Register("WorkspaceRailExpand", Key.B, ModifierKeys.Alt | ModifierKeys.Shift); // the rail wide, by name
         // Committable definition layer (*.tcvproj), ADR-0011
         Register("WorkspaceOpenDefinition",   Key.O, ModifierKeys.Control | ModifierKeys.Alt);
         Register("WorkspaceExportDefinition", Key.E, ModifierKeys.Control | ModifierKeys.Alt);

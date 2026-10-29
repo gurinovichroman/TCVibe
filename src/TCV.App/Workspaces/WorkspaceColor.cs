@@ -86,4 +86,43 @@ public static class WorkspaceColor
         b = byte.Parse(text.AsSpan(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         return true;
     }
+
+    /// <summary>
+    /// The colour of a workspace's monogram plate: its own colour, else one of the presets picked by
+    /// its name — the same on every start and in every window (a stable hash, not
+    /// <c>string.GetHashCode</c>, which changes per process), so a project keeps its plate.
+    /// </summary>
+    public static string PlateFor(string? color, string? name)
+    {
+        if (TryNormalize(color, out var own) && own.Length > 0)
+        {
+            return own;
+        }
+
+        var hash = 2166136261u;   // FNV-1a over the name as the user sees it, case aside
+        foreach (var c in (name ?? string.Empty).ToUpperInvariant())
+        {
+            hash = (hash ^ c) * 16777619u;
+        }
+
+        // Grey, the last preset, is left out: a plate in it reads as "disabled".
+        return Presets[(int)(hash % (uint)(Presets.Count - 1))];
+    }
+
+    /// <summary>True when text on this colour should be dark: white on amber or a pale custom colour
+    /// does not read. By relative luminance (WCAG), but past the point of equal contrast (0.179): there
+    /// the presets' green, blue and pink would all take dark letters, and a plate reads as a badge with
+    /// white ones.</summary>
+    public static bool WantsDarkText(byte r, byte g, byte b)
+    {
+        static double Linear(byte channel)
+        {
+            var c = channel / 255.0;
+            return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+
+        var luminance = 0.2126 * Linear(r) + 0.7152 * Linear(g) + 0.0722 * Linear(b);
+
+        return luminance > 0.35;
+    }
 }

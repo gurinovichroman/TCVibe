@@ -19,18 +19,92 @@ public class ShellChromeTests
     // ── Workspace tags ───────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("TotalCommanderVibe", "TC")]
+    [InlineData("TotalCommanderVibe", "TCV")]
+    [InlineData("my-cool-web-app", "MCW")]
     [InlineData("agent-toolkit", "AT")]
     [InlineData("personal-site", "PS")]
     [InlineData("design system", "DS")]
-    [InlineData("api", "AP")]
+    [InlineData("api-v2", "AV2")]
+    [InlineData("Project2", "P2")]
+    [InlineData("HTTPServer", "HS")]
+    [InlineData("api", "API")]
+    [InlineData("payments", "PAY")]
     [InlineData("x", "X")]
-    [InlineData("TCV", "TC")]
+    [InlineData("TCV", "TCV")]
     [InlineData("  ", "?")]
     [InlineData(null, "?")]
-    public void WorkspaceTag_For_TakesTheInitialsOfTheFirstTwoWords(string? name, string expected)
+    public void WorkspaceTag_For_TakesTheInitialsOfTheFirstThreeWords(string? name, string expected)
     {
         WorkspaceTag.For(name).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("TotalCommanderVibe", "Total|Commander|Vibe")]
+    [InlineData("HTTPServer", "HTTP|Server")]
+    [InlineData("my_cool.app", "my_|cool.|app")]
+    [InlineData("agent-toolkit", "agent-toolkit")]   // WPF breaks after a hyphen itself
+    [InlineData("api v2", "api v2")]
+    [InlineData("TCV", "TCV")]
+    [InlineData("", "")]
+    public void WorkspaceTag_WithBreaks_BreaksBetweenWords_NotInsideThem(string name, string expected)
+    {
+        WorkspaceTag.WithBreaks(name).Should().Be(expected.Replace('|', WorkspaceTag.BreakHere));
+    }
+
+    [Theory]
+    [InlineData("TotalCommanderVibe", "T")]
+    [InlineData("jackpot", "J")]
+    [InlineData("  ", "?")]
+    public void WorkspaceTag_Monogram_IsOneLetter(string name, string expected)
+    {
+        WorkspaceTag.Monogram(name).Should().Be(expected);
+    }
+
+    [Fact]
+    public void WorkspaceColor_PlateFor_IsTheWorkspacesOwnColour()
+    {
+        WorkspaceColor.PlateFor("#4f9cf9", "api").Should().Be("#4F9CF9");
+    }
+
+    [Fact]
+    public void WorkspaceColor_PlateFor_WithoutAColour_IsAPresetTheNameKeeps()
+    {
+        var plate = WorkspaceColor.PlateFor("", "Jackpot");
+
+        WorkspaceColor.Presets.Should().Contain(plate);
+        plate.Should().NotBe(WorkspaceColor.Presets[^1], "a grey plate reads as disabled");
+        WorkspaceColor.PlateFor(null, "JACKPOT").Should().Be(plate, "the same name, the same plate");
+        new[] { "Picling", "RepeatMe", "Parsers", "DocPilot", "Issuecraft", "Jackpot" }
+            .Select(n => WorkspaceColor.PlateFor("", n)).Distinct().Count()
+            .Should().BeGreaterThan(1, "names spread over the presets");
+    }
+
+    [Theory]
+    [InlineData("#F5B000", true)]    // amber: white would not read
+    [InlineData("#FFFFFF", true)]
+    [InlineData("#3E63DD", false)]   // indigo: white reads
+    [InlineData("#E5484D", false)]
+    [InlineData("#46A758", false)]   // the presets' green and blue keep white letters
+    [InlineData("#0090FF", false)]
+    public void WorkspaceColor_WantsDarkText_OnLightPlates(string hex, bool dark)
+    {
+        WorkspaceColor.TryParseRgb(hex, out var r, out var g, out var b).Should().BeTrue();
+        WorkspaceColor.WantsDarkText(r, g, b).Should().Be(dark);
+    }
+
+    // ── Rail scroll fades ────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData(0, 300, 300, 0, 0)]       // everything fits: no fade
+    [InlineData(0, 300, 600, 0, 1)]       // at the top: only the bottom says "more"
+    [InlineData(300, 300, 600, 1, 0)]     // at the bottom: only the top
+    [InlineData(150, 300, 600, 1, 1)]     // in the middle: both
+    [InlineData(6, 300, 600, 0.25, 1)]    // the top fade grows with what has scrolled away
+    [InlineData(0, 0, 600, 0, 0)]         // not laid out yet
+    public void ScrollFade_Edges_FadeAsMuchAsIsHidden_FullPastTheLength(
+        double offset, double viewport, double extent, double top, double bottom)
+    {
+        Controls.ScrollFade.Edges(offset, viewport, extent, 24).Should().Be((top, bottom));
     }
 
     // ── File icons ───────────────────────────────────────────────────────────

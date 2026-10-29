@@ -25,6 +25,7 @@
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Serilog.Sinks.Debug" />
+    <PackageReference Include="SharpVectors.Wpf" />
     <PackageReference Include="System.Text.Encoding.CodePages" />
     <PackageReference Include="Velopack" />
   </ItemGroup>

@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         InitializePlacement();
         InitializeChrome();
         InitializeSnapLayouts();
+        InitializeRail();
         Loaded += (_, _) =>
         {
             ApplySplitOrientation(_viewModel.SplitVertical);
@@ -318,6 +319,14 @@ public partial class MainWindow : Window
             return;
         }
 
+        // The rail opened wide lies over the window: Esc closes it before it means anything else.
+        if (key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None && _viewModel.Workspaces.IsRailExpanded)
+        {
+            _viewModel.Workspaces.IsRailExpanded = false;
+            e.Handled = true;
+            return;
+        }
+
         // ── First stroke of a chord ───────────────────────────────────────────
         // Not while the caret is in a text box: opening a chord swallows the next keystroke too,
         // so a stray Ctrl+K in a rename or breadcrumb field would eat the character after it.
@@ -581,6 +590,7 @@ public partial class MainWindow : Window
             case "WorkspaceTerminal":_viewModel.Workspaces.RunWorkspaceTerminalCommand.Execute(null); return true;
             case "WorkspaceNewWindow":_viewModel.Workspaces.OpenWorkspaceInNewWindowCommand.Execute(null); return true;
             case "WorkspaceSidebar": _viewModel.Workspaces.ToggleWorkspaceSidebarCommand.Execute(null); return true;
+            case "WorkspaceRailExpand": _viewModel.Workspaces.ToggleRailExpandedCommand.Execute(null); return true;
             case "WorkspaceOpenDefinition":   _viewModel.Workspaces.OpenWorkspaceDefinitionCommand.Execute(null); return true;
             case "WorkspaceExportDefinition": _viewModel.Workspaces.ExportWorkspaceDefinitionCommand.Execute(null); return true;
             case "Workspace1":       _viewModel.Workspaces.SwitchToWorkspaceIndex(0); return true;
@@ -776,9 +786,10 @@ public partial class MainWindow : Window
         return string.Join(" · ", parts);
     }
 
-    /// <summary>Fixed entries at the top of the Workspaces menu (new / save / switch / notes / terminal +
-    /// separator). Everything past them is rebuilt per workspace, so this has to track the XAML.</summary>
-    private const int StaticWorkspaceMenuItems = 11;
+    /// <summary>Fixed entries at the top of the Workspaces menu (the active workspace's actions, the
+    /// sidebar, the project file, with their separators). Everything past them is rebuilt per workspace,
+    /// so this has to track the XAML (TRAP-23).</summary>
+    private const int StaticWorkspaceMenuItems = 14;
 
     // Rebuild the dynamic workspace items each time the menu opens (mirrors the bookmarks menu).
     // Each workspace is a submenu so its management actions (pin, icon, delete) have a home; the
@@ -789,6 +800,13 @@ public partial class MainWindow : Window
         // rebuilding then destroys the very MenuItem whose popup is being shown — the pin/icon/
         // colour/notes/delete actions would be unreachable.
         if (!ReferenceEquals(e.OriginalSource, WorkspacesMenu)) return;
+
+        // A local value replaces the XAML's DynamicResource while the menu is open; closing it puts
+        // the resource back (OnWorkspacesMenuClosed).
+        var active = _viewModel.Workspaces.ActiveWorkspace;
+        WorkspaceTerminalMenuItem.Header = MenuHeaderText.WithDetail(
+            LocalizationManager.Get("Menu_Ws_Terminal"), active?.TerminalCommand);
+        WorkspaceTerminalMenuItem.ToolTip = active is null ? null : TerminalToolTip(active);
 
         while (WorkspacesMenu.Items.Count > StaticWorkspaceMenuItems)
             WorkspacesMenu.Items.RemoveAt(StaticWorkspaceMenuItems);
@@ -808,14 +826,30 @@ public partial class MainWindow : Window
         }
     }
 
+    // The terminal item names the active workspace's command only while the menu is open. Closed, it
+    // goes back to the resource: a language switch reaches it again, and the help, which reads the
+    // menu's headers (MenuLocations), names the item rather than somebody's command line.
+    private void OnWorkspacesMenuClosed(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, WorkspacesMenu))
+        {
+            return;   // bubbles from the per-workspace submenus, as SubmenuOpened does (TRAP-23)
+        }
+
+        WorkspaceTerminalMenuItem.SetResourceReference(HeaderedItemsControl.HeaderProperty, "Menu_Ws_Terminal");
+        WorkspaceTerminalMenuItem.ClearValue(ToolTipProperty);
+    }
+
     /// <summary>
-    /// One workspace's actions — switch, pin, properties, notes, new window, project file, delete. The
-    /// Workspaces menu nests them under the workspace; the rail opens them on a right-click, so both
-    /// places offer the same list.
+    /// One workspace's actions — switch, pin, properties, notes, terminal, new window, project file,
+    /// delete. The Workspaces menu nests them under the workspace; the rail opens them on a right-click,
+    /// so both places offer the same list.
     /// </summary>
     private void AddWorkspaceActions(ItemCollection items, Workspaces.Workspace ws)
     {
         var commands = _viewModel.Workspaces;
+        // The shortcuts act on the active workspace, so only its items show them.
+        var isActive = ws.Name.Equals(commands.ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase);
 
         items.Add(new MenuItem
         {
@@ -835,9 +869,8 @@ public partial class MainWindow : Window
         // Name, icon, colour and group: one window instead of a prompt each.
         items.Add(new MenuItem
         {
-            Header           = LocalizationManager.Get("Menu_Ws_Properties"),
-            InputGestureText = ws.Name.Equals(commands.ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase)
-                               ? GestureFor("WorkspaceProperties") : string.Empty,
+            Header           = LocalizationManager.Get("Menu_Ws_PropertiesItem"),
+            InputGestureText = isActive ? GestureFor("WorkspaceProperties") : string.Empty,
             Command          = commands.EditWorkspacePropertiesCommand,
             CommandParameter = ws,
         });
@@ -848,6 +881,15 @@ public partial class MainWindow : Window
             Header           = LocalizationManager.Get("Menu_Ws_NotesItem")
                                + (commands.HasNotes(ws) ? "  •" : string.Empty),
             Command          = commands.OpenWorkspaceNotesCommand,
+            CommandParameter = ws,
+        });
+        // The command itself in the header: what the item runs is visible before it runs.
+        items.Add(new MenuItem
+        {
+            Header           = MenuHeaderText.WithDetail(LocalizationManager.Get("Menu_Ws_TerminalItem"), ws.TerminalCommand),
+            ToolTip          = TerminalToolTip(ws),
+            InputGestureText = isActive ? GestureFor("WorkspaceTerminal") : string.Empty,
+            Command          = commands.RunWorkspaceTerminalCommand,
             CommandParameter = ws,
         });
         items.Add(new MenuItem
@@ -870,6 +912,12 @@ public partial class MainWindow : Window
             CommandParameter = ws,
         });
     }
+
+    /// <summary>The whole command when there is one (the header shortens it), else where to set it.</summary>
+    private static string TerminalToolTip(Workspaces.Workspace ws) =>
+        string.IsNullOrWhiteSpace(ws.TerminalCommand)
+            ? LocalizationManager.Get("Menu_Ws_TerminalNoCommand")
+            : ws.TerminalCommand.Trim();
 
     /// <summary>The live shortcut of the n-th workspace (Workspace1..9), empty past the ninth or when unbound.</summary>
     private string WorkspaceGesture(int index) =>

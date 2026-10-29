@@ -376,7 +376,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="{DynamicResource Settings_ShellsHint}"
+                    <TextBlock Grid.Row="0" Text="{loc:Live Settings_ShellsHint}"
                                TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,6"/>
 
                     <DataGrid Grid.Row="1"
@@ -402,9 +402,13 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
-                        <Button Content="{DynamicResource Settings_ShellAdd}" Command="{Binding AddShellCommand}" Margin="0,0,8,0"/>
-                        <Button Content="{DynamicResource Settings_ShellDetect}" Command="{Binding DetectShellsCommand}"/>
+                    <StackPanel Grid.Row="2" Margin="0,6,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="{DynamicResource Settings_ShellAdd}" Command="{Binding AddShellCommand}" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource Settings_ShellDetect}" Command="{Binding DetectShellsCommand}"/>
+                        </StackPanel>
+                        <CheckBox Content="{loc:Live Settings_TerminalOpensDefaultProfile}" Margin="0,10,0,0"
+                                  IsChecked="{Binding TerminalOpensDefaultProfile}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

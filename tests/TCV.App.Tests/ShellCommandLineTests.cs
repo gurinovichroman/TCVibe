@@ -111,6 +111,63 @@ public class ShellCommandLineTests
             .Arguments[^1].Should().Be("ls; echo $HOME %USERPROFILE%");
     }
 
+    // ── Opening the shell itself ──────────────────────────────────────────────
+
+    [Fact]
+    public void BuildInteractive_EveryCatalogShell_LosesTheCommandAndTheOptionThatTakesIt()
+    {
+        string[][] expected =
+        [
+            ["/s"],
+            ["-NoLogo", "-NoExit"],
+            ["-NoLogo", "-NoExit"],
+            ["--login", "-i"],
+        ];
+
+        ShellCatalog.All.Select(s => ShellCommandLine.BuildInteractive("x.exe", s.Arguments, Folder).Arguments)
+            .Should().BeEquivalentTo(expected, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void BuildInteractive_Wsl_StaysALoginBashInTheDistribution()
+    {
+        var shell = ShellCatalog.ForWslDistribution(ShellCatalog.WslProgram, "My Distro");
+
+        ShellCommandLine.BuildInteractive("wsl.exe", shell.Arguments, Folder).Arguments
+            .Should().Equal("-d", "My Distro", "-e", "bash", "-li");
+    }
+
+    [Theory]
+    [InlineData("-e", new string[0])]
+    [InlineData("--cd %P -e", new[] { "--cd", Folder })]
+    [InlineData("", new string[0])]
+    [InlineData("%C", new string[0])]
+    [InlineData("-NoExit -Command \"& {%C}\" -NoLogo", new[] { "-NoExit", "-NoLogo" })]
+    [InlineData("-i -c %C", new[] { "-i" })]
+    [InlineData("script.py %C", new[] { "script.py" })]
+    [InlineData("--cd %P", new[] { "--cd", Folder })]
+    [InlineData("-e /bin/zsh %C", new[] { "-e", "/bin/zsh" })]
+    public void BuildInteractive_DropsOnlyWhatCarriesTheCommand(string template, string[] expected)
+    {
+        ShellCommandLine.BuildInteractive("sh.exe", template, Folder).Arguments.Should().Equal(expected);
+    }
+
+    [Fact]
+    public void BuildInteractive_EnvironmentVariablesAndOtherPercents_AreNotTheCommand()
+    {
+        ShellCommandLine.BuildInteractive("cmd.exe", "/s /k %Cx %USERPROFILE%", Folder).Arguments
+            .Should().Equal("/s", "/k", "%Cx", "%USERPROFILE%");
+    }
+
+    [Fact]
+    public void BuildInteractive_Cmd_StillReadsItsLineRaw()
+    {
+        var launch = ShellCommandLine.BuildInteractive(@"C:\Windows\System32\cmd.exe", "/s /k %C", Folder);
+
+        launch.ReadsRawLine.Should().BeTrue();
+        ShellCommandLine.Arguments(launch).Should().Be("/s");
+    }
+
     [Theory]
     [InlineData("cmd", true)]
     [InlineData("cmd.exe", true)]

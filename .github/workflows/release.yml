@@ -1,6 +1,6 @@
 name: Release
 
-# Runs in the public repository only (ADR-0036): the dev repository's publish-public.yml pushes each
+# Runs in the public repository only (ADR-0036): the dev repository's tools/release.ps1 pushes each
 # released version there as one commit with its tag, and this builds the binaries from that public
 # code. The dev repository and forks skip the job.
 on:
@@ -41,7 +41,7 @@ jobs:
             exit 1
           }
 
-          # The change list is the body of the release commit, written by publish-public.yml from the
+          # The change list is the body of the release commit, written by tools/release.ps1 from the
           # dev history. The update prompt shows the first five lines as plain text, so it comes first.
           # git writes UTF-8, and PowerShell decodes a native command's output with the console code
           # page: without this an em dash in a commit subject reaches the release as mojibake.

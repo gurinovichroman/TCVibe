@@ -96,12 +96,13 @@ public partial class FileListViewModel
         edit.TrySetResult(typed);
 
         // A new name is renamed and reloaded by the command; a dropped or unchanged one (Enter on the
-        // name as it was) makes the command stop without a reload, so the folder catches up here.
+        // name as it was) makes the command stop without a reload, so the folder catches up here. As the
+        // watcher's reload it is: a load on its way is read again after it lands, not cancelled (TRAP-95)
+        // — nor started inside the listing that is landing and dropped the edit.
         if (_reloadAfterNameEdit && (typed is null || typed == item.Name))
         {
             _reloadAfterNameEdit = false;
-            PrepareForRefresh();
-            _ = LoadAsync(CurrentPath);
+            ReloadForFolderChange();
         }
 
         return true;
@@ -136,7 +137,8 @@ public partial class FileListViewModel
     /// A load's listing has arrived and is about to replace the rows. An edit opened while it was being
     /// read (F2 a moment after a reload began) is dropped here: otherwise its box would vanish with the
     /// old row, and the box reads losing the keys as "taken" — renaming the file to a half-typed name.
-    /// A reload put off meanwhile still runs (the listing may predate the change it waited for).
+    /// A reload put off meanwhile still runs once this listing has landed (it may predate the change it
+    /// waited for).
     /// </summary>
     private void DropNameEditBeforeRowsChange()
     {

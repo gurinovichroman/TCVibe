@@ -22,6 +22,9 @@ public sealed class AppSettings : System.Text.Json.Serialization.IJsonOnDeserial
     /// <summary>Whether the workspace rail is shown. On by default, as the design has it: it also holds
     /// the switcher and «save as workspace», so it is useful before anything is pinned.</summary>
     public bool ShowWorkspaceSidebar { get; set; } = true;
+    /// <summary>The width of the workspace rail opened wide, as its edge was dragged; 0 — automatic,
+    /// reaching the side bar's edge (<see cref="Controls.RailWidth"/>).</summary>
+    public double WorkspaceRailWidth { get; set; }
 
     /// <summary>Whether the «Explorer» side bar (the docked folder tree, pinned folders, the disk) is shown.</summary>
     public bool ShowFolderTree { get; set; } = true;
@@ -366,6 +369,12 @@ public sealed class ShellSettings
 
     /// <summary>Name of the shell the command line uses. Empty, or a shell no longer offered, = the first one.</summary>
     public string Selected { get; set; } = string.Empty;
+
+    /// <summary>
+    /// «Terminal» (F9, a workspace's terminal) opens Windows Terminal's default profile instead of the
+    /// command line's shell. Off: one shell for both, the one named left of the command line.
+    /// </summary>
+    public bool TerminalOpensDefaultProfile { get; set; }
 }
 
 /// <summary>One shell of the command line.</summary>

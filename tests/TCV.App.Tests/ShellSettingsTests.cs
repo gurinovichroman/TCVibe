@@ -78,7 +78,7 @@ public class ShellSettingsTests
         shell.Name.Should().Be("Ubuntu-24.04 (WSL)");
         shell.Command.Should().Be(ShellCatalog.WslProgram);
         ShellCommandLine.Build(@"C:\Program Files\WSL\wsl.exe", shell.Arguments, "ls -la | head", @"C:\x")
-            .Arguments.Should().Equal("-d", "Ubuntu-24.04", "-e", "bash", "-lic", "ls -la | head; exec bash -li");
+            .Arguments.Should().Equal("-d", "Ubuntu-24.04", "-e", "bash", "-li", "-c", "ls -la | head; exec bash -li");
     }
 
     [Fact]
@@ -132,6 +132,7 @@ public class ShellSettingsTests
 
         settings.Shells.Profiles.Should().BeEmpty();
         settings.Shells.Selected.Should().BeEmpty();
+        settings.Shells.TerminalOpensDefaultProfile.Should().BeFalse("F9 opens the command line's shell");
     }
 
     [Fact]
@@ -194,10 +195,10 @@ public class ShellSettingsTests
     [Fact]
     public async Task Service_AShellWithoutAProgram_IsNotStarted()
     {
-        await WithService((_, service, _) =>
+        await WithService(async (_, service, _) =>
         {
-            service.Run(Profile("broken", "  "), Path.GetTempPath(), "dir").Should().BeFalse();
-            return Task.CompletedTask;
+            (await service.RunAsync(Profile("broken", "  "), Path.GetTempPath(), "dir")).Should().BeFalse();
+            (await service.OpenAsync(Profile("broken", "  "), Path.GetTempPath())).Should().BeFalse();
         });
     }
 
@@ -254,6 +255,22 @@ public class ShellSettingsTests
         saved.Name.Should().Be("Cygwin");
         saved.Command.Should().Be(@"C:\cygwin64\bin\bash.exe");
         saved.Arguments.Should().Be("--login -i -c %C");
+    }
+
+    [Fact]
+    public void Tab_TerminalOpensDefaultProfile_IsReadAndSaved()
+    {
+        var settings = new AppSettings();
+        settings.Shells.TerminalOpensDefaultProfile = true;
+
+        WithDialog(settings, vm =>
+        {
+            vm.TerminalOpensDefaultProfile.Should().BeTrue();
+            vm.TerminalOpensDefaultProfile = false;
+            vm.SaveCommand.Execute(null);
+        });
+
+        settings.Shells.TerminalOpensDefaultProfile.Should().BeFalse();
     }
 
     [Fact]

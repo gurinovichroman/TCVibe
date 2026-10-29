@@ -44,13 +44,81 @@ public sealed class WorkspaceIsActiveConverter : IMultiValueConverter
         throw new NotSupportedException();
 }
 
-/// <summary>Workspace name → the two letters of its rail button (<see cref="WorkspaceTag"/>).</summary>
-public sealed class WorkspaceTagConverter : IValueConverter
+/// <summary>Workspace name → the letter on its plate on the rail (<see cref="WorkspaceTag.Monogram"/>).</summary>
+public sealed class WorkspaceMonogramConverter : IValueConverter
 {
-    public static readonly WorkspaceTagConverter Instance = new();
+    public static readonly WorkspaceMonogramConverter Instance = new();
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        WorkspaceTag.For(value as string);
+        WorkspaceTag.Monogram(value as string);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// A workspace → the brush of its monogram plate (<see cref="WorkspaceColor.PlateFor"/>); with
+/// <c>ConverterParameter=fg</c> → the letter's brush, dark or white for contrast on that plate.
+/// </summary>
+public sealed class WorkspacePlateConverter : IValueConverter
+{
+    public static readonly WorkspacePlateConverter Instance = new();
+
+    private static readonly Brush DarkText = Frozen(Color.FromRgb(0x1B, 0x1B, 0x1F));
+
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not Workspace workspace
+            || !WorkspaceColor.TryParseRgb(WorkspaceColor.PlateFor(workspace.Color, workspace.Name), out var r, out var g, out var b))
+        {
+            return null;
+        }
+
+        if (parameter as string == "fg")
+        {
+            return WorkspaceColor.WantsDarkText(r, g, b) ? DarkText : Brushes.White;
+        }
+
+        return Frozen(Color.FromRgb(r, g, b));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+
+    private static SolidColorBrush Frozen(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+}
+
+/// <summary>Workspace name → the caption under its rail tile, with breaks between words (<see cref="WorkspaceTag.WithBreaks"/>).</summary>
+public sealed class WorkspaceBreakableNameConverter : IValueConverter
+{
+    public static readonly WorkspaceBreakableNameConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        WorkspaceTag.WithBreaks(value as string);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// A workspace's picture (<see cref="Workspace.IconImage"/>) → the stored image, or null when there is
+/// none or the file is gone. With <c>ConverterParameter=has</c> → whether there is one, for the triggers
+/// that put the picture in place of the emoji and the letters.
+/// </summary>
+public sealed class WorkspaceImageConverter : IValueConverter
+{
+    public static readonly WorkspaceImageConverter Instance = new();
+
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var image = WorkspaceIconStore.Default.Load(value as string);
+        return parameter as string == "has" ? image is not null : image;
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();

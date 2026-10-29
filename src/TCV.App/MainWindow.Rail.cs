@@ -1,28 +1,196 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using TCV.App.Controls;
+using TCV.App.Localization;
 using TCV.App.Workspaces;
 
 namespace TCV.App;
 
 /// <summary>
-/// The workspace rail's drag and drop (6.79): a pinned workspace dragged to another place in its group,
-/// a folder dropped on the rail to become a workspace in it. Where things land is decided by
-/// <see cref="WorkspaceOrder"/> and <see cref="WorkspaceFolderDrop"/>; this part of the window only
-/// measures the buttons and draws the marks (<see cref="RailDropAdorner"/>).
+/// The workspace rail: its drag and drop (6.79) — a pinned workspace dragged to another place in its
+/// group, a folder dropped on the rail to become a workspace in it — and how it reads with many
+/// workspaces: fades at an edge with more past it, «name · Alt+N» as the mouse rests on one, and the
+/// rail opened wide with the names, which closes as soon as it has been used. Where things land is
+/// decided by <see cref="WorkspaceOrder"/> and <see cref="WorkspaceFolderDrop"/>; this part of the
+/// window only measures the buttons and draws the marks (<see cref="RailDropAdorner"/>).
 /// </summary>
 public partial class MainWindow
 {
+    /// <summary>How far the rail's list fades out at an edge with more past it.</summary>
+    private const double RailFadeLength = 24;
+
+    private const double RailNarrowWidth = 64;
+
+    /// <summary>Panels keep at least this much beside the rail opened wide.</summary>
+    private const double RailPanelRoom = 240;
+
+    private void InitializeRail()
+    {
+        _viewModel.Workspaces.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModels.WorkspaceCommands.IsRailExpanded))
+            {
+                ApplyRailWidth();
+            }
+        };
+
+        // The pictures of the projects are looked for once the window stands (not in a guest window).
+        Loaded += (_, _) => Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+            () => _viewModel.Workspaces.StartPictureSearch());
+    }
+
+    /// <summary>Where the side bar ends, from the rail's left: the automatic width of the rail opened wide.</summary>
+    private double RailSideBarEdge => RailSpace.ActualWidth + FolderTreeColumn.ActualWidth;
+
+    /// <summary>The most the rail opened wide may take, leaving the panels their room.</summary>
+    private double RailRoom => (WorkspaceRail.Parent as FrameworkElement)?.ActualWidth - RailPanelRoom ?? RailWidth.Max;
+
+    /// <summary>
+    /// Opened wide, the rail is as wide as its edge was dragged, or else reaches the side bar it lies
+    /// over: an edge of its own a few pixels short of the bar's left a sliver of tree beside it.
+    /// </summary>
+    private void ApplyRailWidth() =>
+        WorkspaceRail.Width = _viewModel.Workspaces.IsRailExpanded
+            ? RailWidth.Expanded(_settings.WorkspaceRailWidth, RailSideBarEdge, RailRoom)
+            : RailNarrowWidth;
+
+    private double _railDragStartX;
+    private double _railDragStartWidth;
+
+    // From the mouse, not the thumb's own deltas: the thumb moves with the edge, and a width that sticks
+    // to the side bar would otherwise leave the edge and the mouse apart.
+    private void OnRailWidthDragStarted(object sender, DragStartedEventArgs e)
+    {
+        _railDragStartX = Mouse.GetPosition(this).X;
+        _railDragStartWidth = WorkspaceRail.ActualWidth;
+    }
+
+    private void OnRailWidthDragDelta(object sender, DragDeltaEventArgs e) =>
+        WorkspaceRail.Width = RailWidth.Dragged(
+            _railDragStartWidth + Mouse.GetPosition(this).X - _railDragStartX, RailSideBarEdge, RailRoom).Width;
+
+    private void OnRailWidthDragCompleted(object sender, DragCompletedEventArgs e) =>
+        _settings.WorkspaceRailWidth = RailWidth.Dragged(WorkspaceRail.Width, RailSideBarEdge, RailRoom).Stored;
+
+    /// <summary>A double-click on the edge gives the automatic width back.</summary>
+    private void OnRailWidthReset(object sender, MouseButtonEventArgs e)
+    {
+        _settings.WorkspaceRailWidth = 0;
+        ApplyRailWidth();
+        e.Handled = true;
+    }
+
+    private void OnRailScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        var scroll = (ScrollViewer)sender;
+        var (top, bottom) = ScrollFade.Edges(scroll.VerticalOffset, scroll.ViewportHeight, scroll.ExtentHeight, RailFadeLength);
+        scroll.OpacityMask = top > 0 || bottom > 0
+            ? RailFadeMask(top, bottom, Math.Min(RailFadeLength, scroll.ViewportHeight / 2) / scroll.ViewportHeight)
+            : null;
+    }
+
+    /// <summary>Opaque in the middle, thinning to <c>1 - strength</c> over <paramref name="ramp"/> (a fraction
+    /// of the height) at each edge.</summary>
+    private static Brush RailFadeMask(double top, double bottom, double ramp)
+    {
+        static Color Alpha(double strength) => Color.FromArgb((byte)Math.Round(255 * (1 - strength)), 0, 0, 0);
+
+        var mask = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+        mask.GradientStops.Add(new GradientStop(Alpha(top), 0));
+        mask.GradientStops.Add(new GradientStop(Colors.Black, ramp));
+        mask.GradientStops.Add(new GradientStop(Colors.Black, 1 - ramp));
+        mask.GradientStops.Add(new GradientStop(Alpha(bottom), 1));
+        mask.Freeze();
+        return mask;
+    }
+
+    /// <summary>
+    /// «Name · Alt+3» beside the narrow rail, and «not pinned» under it for the unpinned one; the live
+    /// gesture, so a rebound shortcut shows as rebound. Opened wide, the row says the name itself.
+    /// </summary>
+    private void OnRailWorkspaceToolTipOpening(object sender, ToolTipEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: Workspace workspace } button)
+        {
+            return;
+        }
+
+        if (_viewModel.Workspaces.IsRailExpanded)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        var text = new TextBlock();
+        text.Inlines.Add(new Run(workspace.Name) { FontWeight = FontWeights.Medium });
+        if (WorkspaceOrder.ShortcutNumber(_viewModel.Workspaces.Items, workspace.Name) is { } number
+            && GestureFor($"Workspace{number}") is { Length: > 0 } gesture)
+        {
+            text.Inlines.Add(new Run(" · " + gesture) { Foreground = RailBrush("ForegroundDimBrush") });
+        }
+
+        if (!workspace.Pinned)
+        {
+            text.Inlines.Add(new LineBreak());
+            text.Inlines.Add(new Run(LocalizationManager.Get("Rail_UnpinnedTip")) { Foreground = RailBrush("ForegroundDimBrush") });
+        }
+
+        button.ToolTip = text;
+    }
+
+    /// <summary>
+    /// A button on the rail opened wide has been used — a workspace, the switcher, «new», help — so the
+    /// rail closes, as an overlay does (its own toggle aside). After the click: the command runs first.
+    /// </summary>
+    private void OnRailButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Workspaces.IsRailExpanded && e.OriginalSource is not ToggleButton)
+        {
+            Dispatcher.BeginInvoke(() => _viewModel.Workspaces.IsRailExpanded = false);
+        }
+    }
+
+    /// <summary>
+    /// A press anywhere in the window outside the rail opened wide closes it, and still does what it
+    /// does. Not a press in a popup (a menu, the rail's context menu): those are not this window's tree,
+    /// and the Workspaces menu's own «expand» item would otherwise reopen what the press closed.
+    /// </summary>
+    private void OnRailLightDismiss(object sender, MouseButtonEventArgs e)
+    {
+        if (!_viewModel.Workspaces.IsRailExpanded || VisualOf(e.OriginalSource as DependencyObject) is not { } pressed)
+        {
+            return;
+        }
+
+        if (IsAncestorOf(pressed) && !WorkspaceRail.IsAncestorOf(pressed))
+        {
+            _viewModel.Workspaces.IsRailExpanded = false;
+        }
+    }
+
+    /// <summary>The element itself, or the nearest visual holding a text run.</summary>
+    private static Visual? VisualOf(DependencyObject? source)
+    {
+        while (source is not null and not Visual)
+        {
+            source = LogicalTreeHelper.GetParent(source);
+        }
+
+        return source as Visual;
+    }
+
     /// <summary>Drag data of a rail workspace — its name. A format of its own, so no other target takes it.</summary>
     private const string RailWorkspaceFormat = "TCV.RailWorkspace";
 
     /// <summary>The gap between two rail buttons (their top margin). A drag that far outside a group is
     /// still in it; the mark is drawn in the middle of it.</summary>
-    private const double RailGap = 13;
+    private const double RailGap = 8;
 
     private Point _railPressPoint;
     private Workspace? _railPressed;
@@ -255,8 +423,8 @@ public partial class MainWindow
     private static DragDropEffects RailFolderEffect(DragDropEffects allowed) =>
         allowed.HasFlag(DragDropEffects.Link) ? DragDropEffects.Link : allowed & DragDropEffects.Copy;
 
-    /// <summary>The line in the gap above or below a rail button, as wide as the button's tile (its
-    /// template's root: the button itself stretches across the rail).</summary>
+    /// <summary>The line in the gap above or below a rail button, as wide as the button's tile (the
+    /// button itself stretches across the rail, and its name runs under the tile).</summary>
     private RailDropAdorner RailMarkLine(FrameworkElement button, bool below)
     {
         if (_railMark?.Shows(button, below) == true)
@@ -264,7 +432,7 @@ public partial class MainWindow
             return _railMark;
         }
 
-        var tile = VisualTreeHelper.GetChildrenCount(button) > 0 ? VisualTreeHelper.GetChild(button, 0) as FrameworkElement : null;
+        var tile = (button as Control)?.Template?.FindName("Tile", button) as FrameworkElement;
         return RailDropAdorner.Line(button, below, RailGap, tile?.ActualWidth ?? button.ActualWidth, RailBrush("AccentBrush"));
     }
 

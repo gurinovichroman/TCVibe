@@ -184,7 +184,13 @@ public partial class MainWindow
     {
         if (e.Key == Key.Return && Keyboard.Modifiers == ModifierKeys.None)
         {
-            _viewModel.RunCommandLineCommand.Execute(null);
+            // While the last line is still starting, the box is already empty: a second Enter would
+            // open the shell itself on top of it.
+            if (_viewModel.RunCommandLineCommand.CanExecute(null))
+            {
+                _viewModel.RunCommandLineCommand.Execute(null);
+            }
+
             e.Handled = true;
         }
         else if (e.Key == Key.Escape)
@@ -237,6 +243,11 @@ public partial class MainWindow
         }
 
         menu.Items.Add(new System.Windows.Controls.Separator());
+        menu.Items.Add(new System.Windows.Controls.MenuItem
+        {
+            Header  = Controls.MenuHeaderText.Literal(Localization.LocalizationManager.Format("Shell_OpenShell", current.Name)),
+            Command = _viewModel.OpenShellCommand,
+        });
         menu.Items.Add(new System.Windows.Controls.MenuItem
         {
             Header           = Localization.LocalizationManager.Get("Shell_ShellsManage"),

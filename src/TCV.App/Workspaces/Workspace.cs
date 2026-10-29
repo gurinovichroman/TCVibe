@@ -53,6 +53,20 @@ public sealed class Workspace
     public string Color { get; set; } = string.Empty;
     /// <summary>Optional emoji/character shown before the name.</summary>
     public string Icon { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional picture of the project on the rail, in place of the emoji or the letters: the file name
+    /// of a 64 px PNG in <see cref="WorkspaceIconStore"/> (a copy, so moving the repository or editing
+    /// its logo does not change it). Empty — no picture.
+    /// </summary>
+    public string IconImage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The picture may be looked for in the project's repository (<see cref="ProjectIconFinder"/>) while
+    /// the workspace has neither a picture nor an emoji. Cleared once the user chooses — a picture, an
+    /// emoji or none — so a removed logo does not come back on the next start.
+    /// </summary>
+    public bool AutoIconImage { get; set; } = true;
     public WorkspacePanelState Left { get; set; } = new();
     public WorkspacePanelState Right { get; set; } = new();
     /// <summary>Which panel had focus (true = left).</summary>
@@ -79,14 +93,15 @@ public sealed class Workspace
 
     /// <summary>
     /// Command line this project is normally driven with (<c>npm run dev</c>, <c>dotnet watch</c>,
-    /// an agent CLI…), replayed by the "run workspace terminal" command. Empty means "just open a
-    /// shell" — the saved command is a convenience, not a requirement.
+    /// an agent CLI…), replayed by the "run workspace terminal" command and set in the properties
+    /// window. Empty means "just open a shell" — the saved command is a convenience, not a requirement.
     /// </summary>
     public string TerminalCommand { get; set; } = string.Empty;
 
     /// <summary>
-    /// Working directory for <see cref="TerminalCommand"/>. Empty falls back to the active panel's
-    /// directory, so a workspace stays useful before its cwd has ever been pinned down.
+    /// Working directory for <see cref="TerminalCommand"/>. Empty falls back to the folder of the
+    /// workspace's active panel (the live one while it is open, the saved one otherwise), so a
+    /// workspace stays useful before its cwd has ever been pinned down.
     /// </summary>
     public string TerminalDirectory { get; set; } = string.Empty;
 
@@ -104,6 +119,23 @@ public sealed class Workspace
         && !string.Equals(TerminalCommand.Trim(), TrustedTerminalCommand?.Trim(), StringComparison.Ordinal);
 
     /// <summary>
+    /// Takes the terminal setup as edited in the properties window. Only a command the user changed
+    /// there counts as typed by them: pressing OK on a command that came from a project file must not
+    /// be enough to run it unseen. The window hands its text back trimmed, and a project file's need not
+    /// be, so the two are compared trimmed: a trailing space or line break is not an edit.
+    /// </summary>
+    public void EditTerminal(string command, string directory)
+    {
+        if (!string.Equals(command.Trim(), TerminalCommand?.Trim(), StringComparison.Ordinal))
+        {
+            TrustedTerminalCommand = command;
+        }
+
+        TerminalCommand = command;
+        TerminalDirectory = directory;
+    }
+
+    /// <summary>
     /// Copies everything that belongs to the workspace itself rather than to a captured layout:
     /// appearance, how it is filed, and the terminal setup. Re-saving the panels under an existing
     /// name goes through here, so a field added to the workspace survives the overwrite by being
@@ -118,6 +150,8 @@ public sealed class Workspace
 
         Color = source.Color;
         Icon = source.Icon;
+        IconImage = source.IconImage;
+        AutoIconImage = source.AutoIconImage;
         Group = source.Group;
         Pinned = source.Pinned;
         Order = source.Order;

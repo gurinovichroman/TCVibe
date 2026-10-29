@@ -27,6 +27,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly ILogger _logger;
     private readonly TerminalService _terminalService;
+    private readonly ShellService _shells;
     private readonly WorkspaceStore _workspaceStore = new();
     private readonly WorkspaceNotesStore _workspaceNotes = new();
 
@@ -42,13 +43,15 @@ public sealed partial class WorkspaceCommands : ObservableObject
         AppSettings settings,
         IDialogService dialogs,
         ILogger logger,
-        TerminalService terminalService)
+        TerminalService terminalService,
+        ShellService shells)
     {
         _shell = shell;
         _settings = settings;
         _dialogs = dialogs;
         _logger = logger;
         _terminalService = terminalService;
+        _shells = shells;
         Refresh();
     }
 
@@ -99,6 +102,119 @@ public sealed partial class WorkspaceCommands : ObservableObject
 
         RebuildPinnedGroups();
         ReportDamagedStoreOnce();
+        _ = SearchPicturesAsync();
+    }
+
+    // ── Pictures found in the projects ───────────────────────────────────────
+
+    private readonly HashSet<string> _pictureSearched = new(StringComparer.OrdinalIgnoreCase);
+    private bool _pictureSearchStarted;
+    private bool _pictureSearchRunning;
+
+    /// <summary>
+    /// Once the window stands: looks in each workspace's repository for its logo or favicon, for the
+    /// workspaces that have no picture and no emoji (<see cref="WorkspacePicture.WantsSearch"/>), and
+    /// clears away stored pictures nobody uses. Not in a guest window (TRAP-22): the window that owns
+    /// the session does it, once.
+    /// </summary>
+    public void StartPictureSearch()
+    {
+        if (_shell.IsSecondaryWindow || _pictureSearchStarted)
+        {
+            return;
+        }
+
+        _pictureSearchStarted = true;
+
+        // What is in use comes from the file, not from the list on screen: a store that was locked at
+        // start leaves the list empty, and a damaged one is read from its backup — sweeping by either
+        // would delete pictures the real file still names.
+        if (_workspaceStore.TryLoad(out var stored) && _workspaceStore.CorruptCopyPath is null)
+        {
+            var used = stored.Select(w => w.IconImage).ToList();
+            _ = Task.Run(() => WorkspaceIconStore.Default.Sweep(used, TimeSpan.FromDays(1)));
+        }
+
+        _ = SearchPicturesAsync();
+    }
+
+    /// <summary>
+    /// One workspace after another, each once a session; a workspace added later (a reload) is picked
+    /// up by the next pass. The picture goes in as a point edit that yields to a choice made meanwhile
+    /// (<see cref="WorkspaceStore.SetFoundPicture"/>).
+    /// </summary>
+    private async Task SearchPicturesAsync()
+    {
+        if (!_pictureSearchStarted || _pictureSearchRunning)
+        {
+            return;
+        }
+
+        _pictureSearchRunning = true;
+        try
+        {
+            while (Items.FirstOrDefault(w => WorkspacePicture.WantsSearch(w) && _pictureSearched.Add(w.Name)) is { } ws)
+            {
+                if (WorkspacePicture.ProjectFolder(ws) is not { } folder
+                    || await FindPictureAsync(folder) is not { } picture)
+                {
+                    continue;
+                }
+
+                if (_workspaceStore.SetFoundPicture(ws.Name, picture))
+                {
+                    _logger.LogInformation("Workspace {Workspace} took the picture found in its project", ws.Name);
+                    // The pass goes on over the reloaded list; Refresh's own call sees it running and
+                    // returns, so there is never a second pass beside this one.
+                    Refresh();
+                }
+            }
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            _logger.LogWarning(e, "Looking for the workspaces' pictures failed");
+        }
+        finally
+        {
+            _pictureSearchRunning = false;
+        }
+    }
+
+    /// <summary>
+    /// Where a workspace's project lives, for its properties window: for the one on screen the active
+    /// panel's folder (INV-07) when it is in a repository, else the saved tabs. Off this thread: finding
+    /// the repository walks up the disk, which may be a share (INV-06).
+    /// </summary>
+    private async Task<string?> ProjectFolderOfAsync(Workspace ws)
+    {
+        var saved = WorkspacePicture.ProjectFolder(ws);
+        if (!string.Equals(ws.Name, ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase)
+            || ActivePanel.FileList.WorkingFolder is not { } live)
+        {
+            return saved;
+        }
+
+        return await Task.Run(() => ProjectIconFinder.FindRepositoryRoot(live) is not null ? live : saved);
+    }
+
+    /// <summary>
+    /// The best near-square picture of the repository <paramref name="folder"/> is in, stored; null when
+    /// there is none. A wide wordmark is left for the user to take in the properties window.
+    /// </summary>
+    private static async Task<string?> FindPictureAsync(string folder)
+    {
+        var candidates = await Task.Run(() => ProjectIconFinder.FindRepositoryRoot(folder) is { } root
+            ? ProjectIconFinder.Find(root)
+            : []);
+        foreach (var path in candidates)
+        {
+            if (await WorkspaceIconStore.RenderAsync(path) is { IsSquarish: true } drawn)
+            {
+                return await WorkspaceIconStore.Default.SaveAsync(drawn.Bitmap);
+            }
+        }
+
+        return null;
     }
 
     private void ShowArranged(IReadOnlyList<Workspace> arranged)
@@ -244,7 +360,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
 
     /// <summary>User's preference for the sidebar; persisted in settings.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsWorkspaceSidebarVisible))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceSidebarVisible), nameof(IsRailShown))]
     private bool _showWorkspaceSidebar;
 
     /// <summary>
@@ -253,13 +369,33 @@ public sealed partial class WorkspaceCommands : ObservableObject
     /// </summary>
     public bool IsWorkspaceSidebarVisible => ShowWorkspaceSidebar;
 
+    /// <summary>
+    /// The rail opened wide over the side bar, each workspace by its full name instead of its letters.
+    /// It lies over the window rather than pushing the panels aside, so it is a glance, not a mode:
+    /// not remembered, and closed by a switch, Esc or a click outside it (the window decides those).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRailShown))]
+    private bool _isRailExpanded;
+
+    /// <summary>The rail is on screen: wanted, or opened wide by its command while it is hidden.</summary>
+    public bool IsRailShown => ShowWorkspaceSidebar || IsRailExpanded;
+
     /// <summary>Shows/hides the workspace rail and remembers the choice.</summary>
     [RelayCommand]
     private void ToggleWorkspaceSidebar()
     {
+        IsRailExpanded = false;
         ShowWorkspaceSidebar = !ShowWorkspaceSidebar;
         _settings.ShowWorkspaceSidebar = ShowWorkspaceSidebar;
     }
+
+    /// <summary>Opens the rail wide with the workspaces' names, or closes it back to letters.</summary>
+    [RelayCommand]
+    private void ToggleRailExpanded() => IsRailExpanded = !IsRailExpanded;
+
+    /// <summary>Wherever the switch came from (the rail, Alt+N, the switcher), the names have done their job.</summary>
+    partial void OnActiveWorkspaceNameChanged(string? value) => IsRailExpanded = false;
 
     private async Task<Workspace?> ResolveAsync(Workspace? ws, string titleKey)
     {
@@ -519,7 +655,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
         };
 
         var result = await _dialogs.ShowWorkspacePropertiesAsync(
-            draft, names, Items.Select(w => w.Group).ToList(), isNew: true);
+            draft, names, Items.Select(w => w.Group).ToList(), isNew: true, projectFolder: folder);
         if (result is null)
         {
             return;   // cancelled
@@ -538,6 +674,8 @@ public sealed partial class WorkspaceCommands : ObservableObject
         {
             Name = result.Name,
             Icon = result.Icon,
+            IconImage = result.IconImage,
+            AutoIconImage = result.AutoIconImage,
             Color = result.Color,
             Group = result.Group,
             Pinned = result.Pinned,
@@ -547,6 +685,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
             SplitVertical = _shell.SplitVertical,
             LastUsedUtc = DateTime.UtcNow,
         };
+        ws.EditTerminal(result.TerminalCommand, result.TerminalDirectory);
 
         // Into the list first, then switch to it. Switching is leaving, so the workspace we were on
         // keeps its latest layout (unlike «save as», TRAP-51).
@@ -657,7 +796,8 @@ public sealed partial class WorkspaceCommands : ObservableObject
         var result = await _dialogs.ShowWorkspacePropertiesAsync(
             ws,
             Items.Select(w => w.Name).ToList(),
-            Items.Select(w => w.Group).ToList());
+            Items.Select(w => w.Group).ToList(),
+            projectFolder: await ProjectFolderOfAsync(ws));
         if (result is null)
         {
             return;   // cancelled
@@ -681,10 +821,20 @@ public sealed partial class WorkspaceCommands : ObservableObject
             ws.Order = 0;   // pinned or filed under another heading: the end of that group on the rail
         }
 
+        // The user left the picture undecided, and the search may have found one while the window was
+        // open (it reloads the list): keep that rather than write back the empty one the window began with.
+        var pictureUndecided = result.AutoIconImage && result.IconImage.Length == 0;
+        var found = pictureUndecided
+            ? Items.FirstOrDefault(w => string.Equals(w.Name, ws.Name, StringComparison.OrdinalIgnoreCase))?.IconImage
+            : null;
+
         ws.Icon = result.Icon;
+        ws.IconImage = found is { Length: > 0 } && string.IsNullOrWhiteSpace(result.Icon) ? found : result.IconImage;
+        ws.AutoIconImage = result.AutoIconImage;
         ws.Color = result.Color;
         ws.Group = result.Group;
         ws.Pinned = result.Pinned;
+        ws.EditTerminal(result.TerminalCommand, result.TerminalDirectory);
         Persist(ws);
         ApplyAppearance();   // colour and icon show in the chrome and the window title
 
@@ -967,8 +1117,8 @@ public sealed partial class WorkspaceCommands : ObservableObject
     public bool HasNotes(Workspace ws) => _workspaceNotes.HasNotes(ws.Name);
 
     /// <summary>
-    /// Alt+N — opens the per-workspace scratchpad: markdown notes plus the command and cwd this
-    /// project is driven with. Without an argument it edits the active workspace.
+    /// Alt+N — opens the per-workspace scratchpad: markdown notes, kept as a file of their own.
+    /// Without an argument it edits the active workspace.
     /// </summary>
     [RelayCommand]
     private async Task OpenWorkspaceNotes(Workspace? ws)
@@ -979,47 +1129,48 @@ public sealed partial class WorkspaceCommands : ObservableObject
             return;
         }
 
-        var result = await _dialogs.ShowWorkspaceNotesAsync(
-            ws.Name,
-            _workspaceNotes.Read(ws.Name),
-            ws.TerminalCommand,
-            ws.TerminalDirectory,
-            _workspaceNotes.PathFor(ws.Name));
-        if (result is null)
+        var notes = await _dialogs.ShowWorkspaceNotesAsync(
+            ws.Name, _workspaceNotes.Read(ws.Name), _workspaceNotes.PathFor(ws.Name));
+        if (notes is null)
         {
             return;   // cancelled
         }
 
-        _workspaceNotes.Write(ws.Name, result.Notes);
-
-        // Only a command the user actually changed here counts as typed by them; pressing OK on a
-        // command that came from a project file must not be enough to run it unseen.
-        if (!string.Equals(result.TerminalCommand, ws.TerminalCommand, StringComparison.Ordinal))
-        {
-            ws.TrustedTerminalCommand = result.TerminalCommand;
-        }
-
-        ws.TerminalCommand = result.TerminalCommand;
-        ws.TerminalDirectory = result.TerminalDirectory;
-        Persist(ws);
+        _workspaceNotes.Write(ws.Name, notes);
     }
 
     /// <summary>
-    /// Alt+T — replays the workspace's saved command in its saved directory. With no command saved
-    /// this is still useful: it opens a plain shell there, which is what a project cwd is for.
-    /// A command the user has not typed or approved on this machine (it arrived in a
-    /// <c>*.tcvproj</c> from a clone) is shown first: a project file is somebody else's text.
+    /// Alt+T — replays the workspace's saved command in its saved directory; both are set in the
+    /// properties window. With no command saved this is still useful: it opens a plain shell there,
+    /// which is what a project cwd is for. A command the user has not typed or approved on this
+    /// machine (it arrived in a <c>*.tcvproj</c> from a clone) is shown first: a project file is
+    /// somebody else's text. Without an argument it runs the active workspace's; the workspace menus
+    /// pass their own, which need not be the one the panels show.
     /// </summary>
     [RelayCommand]
-    private async Task RunWorkspaceTerminal()
+    private async Task RunWorkspaceTerminal(Workspace? ws)
     {
-        var ws = await ResolveAsync(null, "WsTerminal_Title");
+        ws = await ResolveAsync(ws, "WsTerminal_Title");
         if (ws is null)
         {
             return;
         }
 
         var directory = ws.TerminalDirectory;
+        if (string.IsNullOrWhiteSpace(directory)
+            && !string.Equals(ws.Name, ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase))
+        {
+            // The panels show another project: the folder its own active panel was left in.
+            if (WorkspacePicture.ActivePanelFolder(ws) is not { } saved)
+            {
+                await _dialogs.ShowErrorAsync(
+                    L("WsTerminal_Title"), string.Format(L("WsTerminal_NoFolder"), ws.Name));
+                return;
+            }
+
+            directory = saved;
+        }
+
         if (string.IsNullOrWhiteSpace(directory))
         {
             // Falling back to the panel means handing a real path to a process — an archive or a
@@ -1042,7 +1193,11 @@ public sealed partial class WorkspaceCommands : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ws.TerminalCommand))
         {
-            _terminalService.OpenIn(directory);
+            if (!await _shells.OpenTerminalAsync(directory))
+            {
+                _shell.ShowNotice(LocalizationManager.Format("Shell_OpenFailed", (await _shells.CurrentAsync()).Name), TimeSpan.FromSeconds(4));
+            }
+
             return;
         }
 

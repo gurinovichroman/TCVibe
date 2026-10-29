@@ -841,9 +841,9 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Loading overlay -->
+        <!-- Loading overlay: only over another folder's rows; a refresh of this one keeps them usable -->
         <Grid
-              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+              Visibility="{Binding IsOpeningFolder, Converter={StaticResource BoolToVis}}">
             <Border Background="{DynamicResource BackgroundBrush}" Opacity="0.6" />
             <TextBlock Text="{DynamicResource Files_Loading}" Foreground="{DynamicResource ForegroundBrush}" FontSize="16"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />

@@ -224,6 +224,29 @@ public sealed class WorkspaceStore
     }
 
     /// <summary>
+    /// Gives a workspace the picture found in its project, as a point edit — and only while the stored
+    /// entry still has no picture, no emoji and has not been decided by the user: a choice made in the
+    /// meantime (in this window's dialog or a guest window's) wins over the search. False when nothing
+    /// was written.
+    /// </summary>
+    public bool SetFoundPicture(string name, string iconImage)
+    {
+        if (!TryLoadAll(out var list))
+        {
+            return false;
+        }
+
+        var stored = list.FirstOrDefault(w => string.Equals(w.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (stored is null || !WorkspacePicture.WantsSearch(stored))
+        {
+            return false;
+        }
+
+        stored.IconImage = iconImage;
+        return Write(list);
+    }
+
+    /// <summary>
     /// Writes a captured layout (both panels, focus, split) into the stored entry and leaves the
     /// rest of it — colour, icon, group, pin, terminal, MRU — as it is on disk. A layout autosave
     /// must not carry this window's copy of those fields: a second window (<c>--workspace</c>) may

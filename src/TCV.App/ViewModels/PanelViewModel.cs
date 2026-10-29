@@ -71,16 +71,7 @@ public partial class PanelViewModel : ObservableObject
         // An agent writing into the folder must not keep throwing the cursor back to "..", nor close
         // a name being typed in the list: that reload waits for the edit to end.
         _fileWatcher.Changed += (_, _) =>
-            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                if (FileList.PostponeReloadForNameEdit())
-                {
-                    return;
-                }
-
-                FileList.PrepareForRefresh();
-                _ = FileList.LoadAsync(CurrentPath);
-            });
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(FileList.ReloadForFolderChange);
 
         DriveBar.DriveSelected += (_, drive) => OnDriveChosen(drive);
         // A drive that came or went is a root that comes or goes in the Tree view as well.

@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-test:
     name: Build & Test
+    # The public repository only: Actions minutes in the private dev repository are paid, and
+    # tools/release.ps1 builds and tests the release commit locally instead (ADR-0036).
+    if: github.repository == 'gurinovichroman/TCVibe'
     runs-on: windows-latest
 
     steps:

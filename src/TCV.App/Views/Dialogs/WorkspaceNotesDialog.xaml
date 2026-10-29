@@ -12,7 +12,6 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
@@ -49,38 +48,7 @@
                        TextTrimming="CharacterEllipsis" />
         </Grid>
 
-        <Grid Grid.Row="3" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="6" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <TextBlock Grid.Row="0" Grid.Column="0"
-                       Text="{DynamicResource WsNotes_Command}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,0" />
-            <TextBox Grid.Row="0" Grid.Column="1"
-                     Text="{Binding TerminalCommand, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="{DynamicResource WsNotes_Command}"
-                     FontFamily="Consolas" />
-
-            <TextBlock Grid.Row="2" Grid.Column="0"
-                       Text="{DynamicResource WsNotes_Directory}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,0" />
-            <TextBox Grid.Row="2" Grid.Column="1"
-                     Text="{Binding TerminalDirectory, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="{DynamicResource WsNotes_Directory}"
-                     ToolTip="{DynamicResource WsNotes_DirectoryHint}"
-                     FontFamily="Consolas" />
-        </Grid>
-
-        <StackPanel Grid.Row="4" Orientation="Horizontal"
+        <StackPanel Grid.Row="3" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="{DynamicResource OK}" Width="90" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"

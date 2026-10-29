@@ -5,12 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace TCV.App.Services;
 
 /// <summary>
-/// Opens a terminal window in the given directory.
-/// Priority order:
-///   1. Windows Terminal (wt.exe)     — modern, tabbed
-///   2. PowerShell 7 (pwsh.exe)       — cross-platform PowerShell
-///   3. PowerShell 5 (powershell.exe) — built-in on Windows 10/11
-///   4. cmd.exe                       — fallback
+/// Starts terminal windows: a shell in a Windows Terminal tab when it is installed, else in a console
+/// window of its own. Which shell, and how, is <see cref="ShellService"/>'s.
 /// </summary>
 public sealed class TerminalService
 {
@@ -21,19 +17,19 @@ public sealed class TerminalService
         _logger = logger;
     }
 
-    /// <summary>Open a terminal in <paramref name="directory"/>.</summary>
-    public void OpenIn(string directory)
+    /// <summary>
+    /// Opens Windows Terminal's default profile in <paramref name="directory"/>. False when Windows
+    /// Terminal is not installed.
+    /// </summary>
+    public bool OpenWindowsTerminal(string directory)
     {
         if (!Directory.Exists(directory))
         {
             _logger.LogWarning("Terminal: directory does not exist: {Dir}", directory);
-            return;
+            return false;
         }
 
-        if (TryLaunch("wt.exe", $"-d {QuoteArgument(directory)}", directory)) return;
-        if (TryLaunch("pwsh.exe", null, directory)) return;
-        if (TryLaunch("powershell.exe", null, directory)) return;
-        TryLaunch("cmd.exe", null, directory);
+        return TryLaunch("wt.exe", Shells.ShellCommandLine.ForWindowsTerminalProfile(null, directory), directory);
     }
 
     /// <summary>
@@ -68,11 +64,11 @@ public sealed class TerminalService
     }
 
     /// <summary>
-    /// Starts a shell with the command typed into the command line (<see cref="Shells.ShellCommandLine"/>)
-    /// in <paramref name="directory"/>: in a Windows Terminal tab when it is installed, else in a console
-    /// window of its own. The shell's own arguments keep the window open after the command.
+    /// Starts a shell in <paramref name="directory"/>: Windows Terminal with
+    /// <paramref name="windowsTerminalArguments"/> when it is installed, else <paramref name="direct"/> in
+    /// a console window of its own (<see cref="Shells.ShellCommandLine"/> builds both).
     /// </summary>
-    public bool OpenShell(Shells.ShellLaunch launch, string directory)
+    public bool OpenShell(string windowsTerminalArguments, Shells.ShellLaunch direct, string directory)
     {
         if (!Directory.Exists(directory))
         {
@@ -80,8 +76,8 @@ public sealed class TerminalService
             return false;
         }
 
-        return TryLaunch("wt.exe", Shells.ShellCommandLine.ForWindowsTerminal(launch, directory), directory)
-            || TryLaunch(launch.Program, Shells.ShellCommandLine.Arguments(launch), directory);
+        return TryLaunch("wt.exe", windowsTerminalArguments, directory)
+            || TryLaunch(direct.Program, Shells.ShellCommandLine.Arguments(direct), directory);
     }
 
     /// <summary>Escapes <c>;</c> so Windows Terminal passes it through instead of treating it as a

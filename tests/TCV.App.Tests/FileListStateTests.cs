@@ -390,6 +390,91 @@ public class FileListStateTests
     }
 
     [Fact]
+    public async Task LoadAsync_TheListedFolderReadAgain_LeavesItsRowsUsable_AnotherFolderHidesThem()
+    {
+        // %TEMP% never stops changing: every reload of the watcher dimmed the list and swallowed the clicks.
+        var server = new InMemoryFileSystem("ftp");
+        server.AddFile("/work/a.txt", [1]);
+        server.AddFile("/other/x.txt", [1]);
+        var gated = new HeldListingFileSystem(server);
+        var list = new FileListViewModel(new InMemoryFileSystem("file"), NullLogger<FileListViewModel>.Instance);
+
+        var release = gated.HoldNextListing();
+        list.Mount(gated, "/work");   // reads the folder
+        list.IsOpeningFolder.Should().BeTrue("nothing is listed yet");
+        release.SetResult();
+        list.HasNewerLoadInFlight.Should().BeFalse();
+
+        release = gated.HoldNextListing();
+        var refresh = list.LoadAsync("/work");
+        list.IsLoading.Should().BeTrue();
+        list.IsOpeningFolder.Should().BeFalse();
+        release.SetResult();
+        await refresh;
+
+        release = gated.HoldNextListing();
+        var opening = list.LoadAsync("/other");
+        list.IsOpeningFolder.Should().BeTrue("the rows on screen are another folder's");
+        release.SetResult();
+        await opening;
+        list.IsOpeningFolder.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ReloadForFolderChange_WhileALoadIsOnItsWay_ReadsAgainOnceItLands_InsteadOfCancellingIt()
+    {
+        // A folder that keeps changing: each reload cancelled the one before, and none of them landed.
+        var server = new InMemoryFileSystem("ftp");
+        server.AddFile("/work/a.txt", [1]);
+        var gated = new HeldListingFileSystem(server);
+        var list = new FileListViewModel(new InMemoryFileSystem("file"), NullLogger<FileListViewModel>.Instance);
+        list.Mount(gated, "/work");
+        await list.LoadAsync("/work");
+        var landed = new List<string>();
+        list.DirectoryLoaded += (_, _) => landed.Add(string.Join(",", list.Files.Where(f => !f.IsParentEntry).Select(f => f.Name)));
+
+        var release = gated.HoldNextListing();
+        var reading = list.LoadAsync("/work");
+        server.AddFile("/work/b.txt", [1]);
+        list.ReloadForFolderChange();
+        release.SetResult();
+        await reading;
+
+        landed.Should().Equal("a.txt", "a.txt,b.txt");
+        list.HasNewerLoadInFlight.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task LoadAsync_ANameEditDroppedByTheListing_ReadsTheFolderAgainOnceItHasLanded()
+    {
+        // F2 a moment after a reload began, and the watcher saw a change meanwhile: the reload put off for
+        // the edit runs after the listing that drops the edit, not inside it, cancelling it.
+        var server = new InMemoryFileSystem("ftp");
+        server.AddFile("/work/a.txt", [1]);
+        var gated = new HeldListingFileSystem(server);
+        var list = new FileListViewModel(new InMemoryFileSystem("file"), NullLogger<FileListViewModel>.Instance);
+        list.Mount(gated, "/work");
+        await list.LoadAsync("/work");
+        var landed = new List<string>();
+        list.DirectoryLoaded += (_, _) => landed.Add(string.Join(",", list.Files.Where(f => !f.IsParentEntry).Select(f => f.Name)));
+        var completed = 0;
+        list.ListingCompleted += (_, _) => completed++;
+
+        var release = gated.HoldNextListing();
+        var reading = list.LoadAsync("/work");
+        var edit = list.EditNameInPlaceAsync(list.Files.Single(f => f.Name == "a.txt"), "a.txt");
+        server.AddFile("/work/b.txt", [1]);
+        list.ReloadForFolderChange();
+        release.SetResult();
+        await reading;
+
+        (await edit).Should().BeNull();
+        landed.Should().Equal("a.txt", "a.txt,b.txt");
+        completed.Should().Be(2, "the listing that dropped the edit is not cancelled by the reload");
+        list.HasNewerLoadInFlight.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task PrepareForRefresh_InAFolderWhoseCursorIsStillToBePlaced_SavesNothing()
     {
         var (list, rows) = await CreateWithFiles("a.txt", "b.txt");

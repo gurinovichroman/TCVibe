@@ -5,15 +5,16 @@
         xmlns:conv="clr-namespace:TCV.App.Converters"
         xmlns:loc="clr-namespace:TCV.App.Localization"
         Title="{Binding WindowTitle}"
-        Width="560" SizeToContent="Height"
+        Width="680" SizeToContent="Height"
+        MaxHeight="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Height}"
         ResizeMode="NoResize">
 
     <local:TcvDialog.Resources>
-        <!-- A hint under a field: what it changes and where that shows. -->
+        <!-- What a field changes and where that shows: one at a time, in the strip above the buttons. -->
         <Style x:Key="HintText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11" />
             <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="Visibility" Value="Hidden" />
             <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
         </Style>
         <!-- Hidden while the bound text is empty: validation messages. -->
@@ -33,168 +34,16 @@
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
         <Style x:Key="ChipButton" TargetType="Button">
-            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="MinWidth" Value="28" />
             <Setter Property="Height" Value="28" />
-            <Setter Property="Margin" Value="0,0,4,4" />
-            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Padding" Value="8,0" />
         </Style>
     </local:TcvDialog.Resources>
 
-    <Grid Margin="16">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="16" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <!-- Name -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource WsProps_Name}" Style="{StaticResource FieldLabel}" />
-        <StackPanel Grid.Row="0" Grid.Column="1">
-            <TextBox x:Name="NameBox"
-                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="{DynamicResource WsProps_Name}" />
-            <TextBlock Text="{Binding NameError}" Style="{StaticResource ErrorText}" />
-        </StackPanel>
-
-        <!-- Icon: one click on a suggestion, or any character typed into the box -->
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource WsProps_Icon}" Style="{StaticResource FieldLabel}" />
-        <StackPanel Grid.Row="2" Grid.Column="1">
-            <DockPanel LastChildFill="True">
-                <TextBox DockPanel.Dock="Left" Width="56" MaxLength="16"
-                         FontSize="14" HorizontalContentAlignment="Center" VerticalAlignment="Top"
-                         Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}"
-                         AutomationProperties.Name="{DynamicResource WsProps_Icon}" />
-                <ItemsControl ItemsSource="{Binding Icons}" Margin="8,0,0,0">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Style="{StaticResource ChipButton}"
-                                    Content="{Binding}"
-                                    FontSize="14"
-                                    AutomationProperties.Name="{Binding}"
-                                    Command="{Binding DataContext.PickIconCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
-            <TextBlock Text="{DynamicResource WsProps_IconHint}" Style="{StaticResource HintText}" />
-        </StackPanel>
-
-        <!-- Colour: ready-made swatches, "none", the system picker for anything else, and the hex value -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource WsProps_Color}" Style="{StaticResource FieldLabel}" />
-        <StackPanel Grid.Row="4" Grid.Column="1">
-            <WrapPanel>
-                <Button Style="{StaticResource ChipButton}"
-                        Content="{DynamicResource WsProps_NoColor}"
-                        ToolTip="{DynamicResource WsProps_NoColorTip}"
-                        Command="{Binding PickColorCommand}"
-                        CommandParameter="" />
-                <ItemsControl ItemsSource="{Binding Swatches}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Width="28" Height="28" Margin="0,0,4,4" Padding="0"
-                                    ToolTip="{Binding Hex}"
-                                    AutomationProperties.Name="{Binding Hex}"
-                                    Background="Transparent"
-                                    Command="{Binding DataContext.PickColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding Hex}">
-                                <Grid>
-                                    <!-- The ring marks the colour in use -->
-                                    <Ellipse Width="24" Height="24" StrokeThickness="2"
-                                             Stroke="{DynamicResource ForegroundBrush}">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Visibility" Value="Hidden" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                    <Ellipse Width="18" Height="18"
-                                             Fill="{Binding Hex, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
-                                </Grid>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Button Style="{StaticResource ChipButton}"
-                        Content="{DynamicResource WsProps_OtherColor}"
-                        Click="OnPickOtherColor" />
-            </WrapPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,6,0"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                        Background="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
-                <TextBox Width="96" FontFamily="Consolas" VerticalContentAlignment="Center"
-                         Text="{Binding ColorText, UpdateSourceTrigger=PropertyChanged}"
-                         AutomationProperties.Name="{DynamicResource WsProps_ColorHex}"
-                         ToolTip="{DynamicResource WsProps_ColorHex}" />
-            </StackPanel>
-            <TextBlock Text="{Binding ColorError}" Style="{StaticResource ErrorText}" />
-            <TextBlock Text="{DynamicResource WsProps_ColorHint}" Style="{StaticResource HintText}" />
-        </StackPanel>
-
-        <!-- Group -->
-        <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource WsProps_Group}" Style="{StaticResource FieldLabel}" />
-        <StackPanel Grid.Row="6" Grid.Column="1">
-            <ComboBox IsEditable="True"
-                      ItemsSource="{Binding Groups}"
-                      Text="{Binding Group, UpdateSourceTrigger=PropertyChanged}"
-                      AutomationProperties.Name="{DynamicResource WsProps_Group}" />
-            <TextBlock Text="{loc:Live WsProps_GroupHint}" Style="{StaticResource HintText}" />
-        </StackPanel>
-
-        <!-- Pinned -->
-        <StackPanel Grid.Row="8" Grid.Column="1">
-            <CheckBox Content="{DynamicResource WsProps_Pinned}" IsChecked="{Binding Pinned}" />
-            <TextBlock Text="{loc:Live WsProps_PinnedHint}" Style="{StaticResource HintText}" Margin="20,4,0,0" />
-        </StackPanel>
-
-        <!-- Preview: the row as the sidebar and the menu will show it -->
-        <TextBlock Grid.Row="10" Grid.Column="0" Text="{DynamicResource WsProps_Preview}" Style="{StaticResource FieldLabel}" Margin="0,3,12,0" />
-        <Border Grid.Row="10" Grid.Column="1"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="3">
-            <DockPanel>
-                <Border DockPanel.Dock="Top" Height="3"
-                        Background="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
-                <StackPanel Orientation="Horizontal" Margin="8,5">
-                    <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center"
-                             Fill="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
-                    <TextBlock Text="{Binding PreviewName}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Group}" Margin="12,0,0,0" VerticalAlignment="Center"
-                               Foreground="{DynamicResource ForegroundDimBrush}" />
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <StackPanel Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal"
-                    HorizontalAlignment="Right" Margin="0,16,0,0">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="{Binding ConfirmText}" MinWidth="90" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"
                     IsDefault="True" />
@@ -202,5 +51,284 @@
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>
-    </Grid>
+
+        <!-- The hint of the field in focus or under the mouse. Under every field they took a third of the
+             window's height. All of them lie in one cell, only one shown: the strip is as tall as the
+             longest, and the buttons do not move as the focus goes from field to field. -->
+        <Border DockPanel.Dock="Bottom" Margin="0,16,0,0" Padding="0,10,0,0"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+            <Grid x:Name="Hints">
+                <TextBlock x:Name="NameHint" Text="{loc:Live WsProps_NameHint}" Style="{StaticResource HintText}" Visibility="Visible" />
+                <TextBlock x:Name="IconHint" Text="{DynamicResource WsProps_IconHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="PictureHint" Text="{DynamicResource WsProps_PictureHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="ColorHint" Text="{DynamicResource WsProps_ColorHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="GroupHint" Text="{loc:Live WsProps_GroupHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="PinnedHint" Text="{loc:Live WsProps_PinnedHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="TerminalCommandHint" Text="{loc:Live WsProps_TerminalCommandHint}" Style="{StaticResource HintText}" />
+                <TextBlock x:Name="TerminalFolderHint" Text="{DynamicResource WsProps_TerminalFolderHint}" Style="{StaticResource HintText}" />
+            </Grid>
+        </Border>
+
+        <!-- On a small screen at a large scale the form may still not fit: there it scrolls, and the buttons
+             below stay on the screen (cut off, the window could only be closed without saving). -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+            <Grid x:Name="Form">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <!-- Field rows (even) with gaps between them (odd), wider between the groups of fields: how the
+                     workspace looks, where it stands on the rail, how the project is run. -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />  <!-- 0 name -->
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />  <!-- 2 icon -->
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />  <!-- 4 picture -->
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />  <!-- 6 colour -->
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="Auto" />  <!-- 8 group -->
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />  <!-- 10 pinned -->
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="Auto" />  <!-- 12 preview -->
+                    <RowDefinition Height="Auto" />  <!-- 13 separator -->
+                    <RowDefinition Height="Auto" />  <!-- 14 terminal command -->
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />  <!-- 16 terminal folder -->
+                </Grid.RowDefinitions>
+
+                <!-- Name -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource WsProps_Name}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=NameHint}" />
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            local:WorkspacePropertiesDialog.Hint="{Binding ElementName=NameHint}">
+                    <TextBox x:Name="NameBox"
+                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{DynamicResource WsProps_Name}" />
+                    <TextBlock Text="{Binding NameError}" Style="{StaticResource ErrorText}" />
+                </StackPanel>
+
+                <!-- Icon: the one in use, typed as any character, and the suggestions beside it in rows of eight -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource WsProps_Icon}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=IconHint}" />
+                <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,-4"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=IconHint}">
+                    <TextBox DockPanel.Dock="Left" Width="56" MaxLength="16"
+                             FontSize="14" HorizontalContentAlignment="Center" VerticalAlignment="Top"
+                             Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{DynamicResource WsProps_Icon}" />
+                    <ItemsControl ItemsSource="{Binding Icons}" Margin="12,0,0,0" HorizontalAlignment="Left">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ChipButton}" Margin="0,0,4,4" Padding="0"
+                                        Content="{Binding}"
+                                        FontSize="14"
+                                        AutomationProperties.Name="{Binding}"
+                                        Command="{Binding DataContext.PickIconCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+
+                <!-- Picture: the project's own, found in its repository, or any file; on the rail in place of the
+                     emoji and the letters (WorkspaceIconStore). The one in use and what can be done with it, then
+                     the pictures found: those arrive while the window is open, on a line of their own. -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource WsProps_Picture}" Style="{StaticResource FieldLabel}"
+                           Margin="0,11,12,0"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=PictureHint}"
+                           Visibility="{Binding CanChoosePicture, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                <StackPanel Grid.Row="4" Grid.Column="1"
+                            local:WorkspacePropertiesDialog.Hint="{Binding ElementName=PictureHint}"
+                            Visibility="{Binding CanChoosePicture, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" Margin="0,0,12,0" CornerRadius="4"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <Grid>
+                                <Image Source="{Binding IconImageSource}" Width="28" Height="28"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                <TextBlock Text="{DynamicResource WsProps_PictureNone}" FontSize="10"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource ForegroundDimBrush}"
+                                           Visibility="{Binding HasIconImage, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />
+                            </Grid>
+                        </Border>
+                        <Button Style="{StaticResource ChipButton}" VerticalAlignment="Center"
+                                Content="{DynamicResource WsProps_PictureFile}"
+                                Command="{Binding PickPictureFileCommand}" />
+                        <Button Style="{StaticResource ChipButton}" VerticalAlignment="Center"
+                                Content="{DynamicResource WsProps_PictureRemove}"
+                                Command="{Binding RemovePictureCommand}"
+                                IsEnabled="{Binding HasIconImage}" />
+                    </StackPanel>
+
+                    <!-- Found in the project's repository, best first; a click takes one -->
+                    <DockPanel Margin="0,8,0,-4"
+                               Visibility="{Binding HasItems, ElementName=PictureCandidates, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}">
+                        <TextBlock DockPanel.Dock="Left" Text="{DynamicResource WsProps_PictureFound}" Margin="0,0,8,4"
+                                   VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource ForegroundDimBrush}" />
+                        <ItemsControl x:Name="PictureCandidates" ItemsSource="{Binding Candidates}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="40" Height="40" Margin="0,0,4,4" Padding="0"
+                                            ToolTip="{Binding Path}" AutomationProperties.Name="{Binding Path}"
+                                            Command="{Binding DataContext.UseCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <Grid>
+                                            <!-- The ring marks the picture in use, as on the colours -->
+                                            <Border CornerRadius="4" BorderThickness="2" Margin="-3"
+                                                    BorderBrush="{DynamicResource AccentBrush}">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            <Image Source="{Binding Picture}" Width="26" Height="26"
+                                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                    <TextBlock Text="{Binding PictureError}" Style="{StaticResource ErrorText}" />
+                </StackPanel>
+
+                <!-- Colour: the ready-made ones ("none" and the swatches) on the first line; any other below — typed
+                     as hex or picked in the Windows dialog, the square showing it -->
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource WsProps_Color}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=ColorHint}" />
+                <StackPanel Grid.Row="6" Grid.Column="1"
+                            local:WorkspacePropertiesDialog.Hint="{Binding ElementName=ColorHint}">
+                    <WrapPanel Margin="0,0,0,-4">
+                        <Button Style="{StaticResource ChipButton}" Margin="0,0,4,4"
+                                Content="{DynamicResource WsProps_NoColor}"
+                                ToolTip="{DynamicResource WsProps_NoColorTip}"
+                                Command="{Binding PickColorCommand}"
+                                CommandParameter="" />
+                        <ItemsControl ItemsSource="{Binding Swatches}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="28" Height="28" Margin="0,0,4,4" Padding="0"
+                                            ToolTip="{Binding Hex}"
+                                            AutomationProperties.Name="{Binding Hex}"
+                                            Background="Transparent"
+                                            Command="{Binding DataContext.PickColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Hex}">
+                                        <Grid>
+                                            <!-- The ring marks the colour in use -->
+                                            <Ellipse Width="24" Height="24" StrokeThickness="2"
+                                                     Stroke="{DynamicResource ForegroundBrush}">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <Ellipse Width="18" Height="18"
+                                                     Fill="{Binding Hex, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </WrapPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,6,0"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Background="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
+                        <TextBox Width="96" Height="28" Margin="0,0,6,0" FontFamily="Consolas" VerticalContentAlignment="Center"
+                                 Text="{Binding ColorText, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{DynamicResource WsProps_ColorHex}"
+                                 ToolTip="{DynamicResource WsProps_ColorHex}" />
+                        <Button Style="{StaticResource ChipButton}"
+                                Content="{DynamicResource WsProps_OtherColor}"
+                                Click="OnPickOtherColor" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding ColorError}" Style="{StaticResource ErrorText}" />
+                </StackPanel>
+
+                <!-- Group, and pinning under it: both place the workspace on the rail -->
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource WsProps_Group}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=GroupHint}" />
+                <ComboBox Grid.Row="8" Grid.Column="1" IsEditable="True"
+                          ItemsSource="{Binding Groups}"
+                          Text="{Binding Group, UpdateSourceTrigger=PropertyChanged}"
+                          AutomationProperties.Name="{DynamicResource WsProps_Group}"
+                          local:WorkspacePropertiesDialog.Hint="{Binding ElementName=GroupHint}" />
+                <CheckBox Grid.Row="10" Grid.Column="1" HorizontalAlignment="Left"
+                          Content="{DynamicResource WsProps_Pinned}" IsChecked="{Binding Pinned}"
+                          local:WorkspacePropertiesDialog.Hint="{Binding ElementName=PinnedHint}" />
+
+                <!-- Preview: the row as the sidebar and the menu will show it -->
+                <TextBlock Grid.Row="12" Grid.Column="0" Text="{DynamicResource WsProps_Preview}" Style="{StaticResource FieldLabel}" Margin="0,3,12,0" />
+                <Border Grid.Row="12" Grid.Column="1"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="3">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Height="3"
+                                Background="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
+                        <StackPanel Orientation="Horizontal" Margin="8,5">
+                            <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center"
+                                     Fill="{Binding NormalizedColor, Converter={x:Static conv:WorkspaceColorToBrushConverter.Instance}}" />
+                            <Image Source="{Binding IconImageSource}" Width="16" Height="16" Margin="0,0,6,0"
+                                   VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"
+                                   Visibility="{Binding HasIconImage, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            <TextBlock Text="{Binding PreviewName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Group}" Margin="12,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource ForegroundDimBrush}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- How the project is run rather than how it looks: below the preview, set apart. The hints name
+                     the command that runs it — under the notes, where this used to be, nothing did. -->
+                <Border Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Height="1" Margin="0,20"
+                        Background="{DynamicResource BorderBrush}" />
+
+                <TextBlock Grid.Row="14" Grid.Column="0" Text="{DynamicResource WsProps_TerminalCommand}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=TerminalCommandHint}" />
+                <TextBox Grid.Row="14" Grid.Column="1"
+                         Text="{Binding TerminalCommand, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="{DynamicResource MonoFontFamily}"
+                         AutomationProperties.Name="{DynamicResource WsProps_TerminalCommand}"
+                         local:WorkspacePropertiesDialog.Hint="{Binding ElementName=TerminalCommandHint}" />
+
+                <TextBlock Grid.Row="16" Grid.Column="0" Text="{DynamicResource WsProps_TerminalFolder}" Style="{StaticResource FieldLabel}"
+                           local:WorkspacePropertiesDialog.Hint="{Binding ElementName=TerminalFolderHint}" />
+                <TextBox Grid.Row="16" Grid.Column="1"
+                         Text="{Binding TerminalDirectory, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="{DynamicResource MonoFontFamily}"
+                         AutomationProperties.Name="{DynamicResource WsProps_TerminalFolder}"
+                         local:WorkspacePropertiesDialog.Hint="{Binding ElementName=TerminalFolderHint}" />
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
 </local:TcvDialog>

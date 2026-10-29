@@ -304,7 +304,8 @@ public partial class MainViewModel
     /// Enter in the command line. <c>cd &lt;path&gt;</c> moves the active panel (relative to its folder),
     /// whatever the shell; anything else runs in the chosen shell in a terminal in the panel's folder. It
     /// is the user's own text in that shell's syntax, so it is passed on as typed, never rebuilt — only
-    /// quoted for the shell's command line (<see cref="Shells.ShellCommandLine"/>, TRAP-41).
+    /// quoted for the shell's command line (<see cref="Shells.ShellCommandLine"/>, TRAP-41). An empty line
+    /// opens the shell itself (<see cref="OpenShellAsync"/>).
     /// </summary>
     [RelayCommand]
     private async Task RunCommandLine()
@@ -312,6 +313,7 @@ public partial class MainViewModel
         var text = CommandText.Trim();
         if (text.Length == 0)
         {
+            await OpenShellAsync();
             return;
         }
 
@@ -336,9 +338,29 @@ public partial class MainViewModel
 
         var shell = await _shells.CurrentAsync();
         CommandText = string.Empty;
-        if (!_shells.Run(shell, folder, text))
+        if (!await _shells.RunAsync(shell, folder, text))
         {
             ShowNotice(LocalizationManager.Format("Shell_CommandFailed", shell.Name), TimeSpan.FromSeconds(4));
+        }
+    }
+
+    /// <summary>
+    /// Opens the command line's shell itself, with no command, in a terminal in the active panel's
+    /// folder: Enter on an empty line, or the item in the shell box.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenShellAsync()
+    {
+        var folder = await WorkingFolderOrRejectAsync(LocalizationManager.Get("Shell_CommandLineTitle"));
+        if (folder is null)
+        {
+            return;
+        }
+
+        var shell = await _shells.CurrentAsync();
+        if (!await _shells.OpenAsync(shell, folder))
+        {
+            ShowNotice(LocalizationManager.Format("Shell_OpenFailed", shell.Name), TimeSpan.FromSeconds(4));
         }
     }
 }

@@ -162,28 +162,26 @@ public interface IDialogService
     Task ShowHotkeySettingsAsync(ViewModels.Dialogs.HotkeySettingsDialogViewModel viewModel);
 
     /// <summary>
-    /// Shows the per-workspace notes editor (markdown scratchpad + saved terminal command and cwd).
-    /// Returns the edited values, or null if cancelled.
+    /// Shows the per-workspace notes editor (a markdown scratchpad). Returns the edited notes,
+    /// trimmed, or null if cancelled.
     /// </summary>
-    Task<WorkspaceNotesResult?> ShowWorkspaceNotesAsync(
-        string workspaceName,
-        string notes,
-        string terminalCommand,
-        string terminalDirectory,
-        string notesPath);
+    Task<string?> ShowWorkspaceNotesAsync(string workspaceName, string notes, string notesPath);
 
     /// <summary>
-    /// Shows the workspace properties (name, icon, colour, group, pinned) in one window. Returns
+    /// Shows the workspace properties (name, icon, colour, group, pinned, terminal) in one window. Returns
     /// the edited values, or null if cancelled; the workspace itself is not touched.
     /// </summary>
     /// <param name="allNames">Every saved workspace name, so a rename cannot take an existing one.</param>
     /// <param name="groups">Groups already in use, offered for reuse.</param>
     /// <param name="isNew">The same window for a workspace being created: its own title, "Create".</param>
+    /// <param name="projectFolder">The folder the project lives in: its repository's logos and favicons are
+    /// offered as the picture, and a file is picked from there.</param>
     Task<WorkspacePropertiesResult?> ShowWorkspacePropertiesAsync(
         TCV.App.Workspaces.Workspace workspace,
         IReadOnlyList<string> allNames,
         IReadOnlyList<string> groups,
-        bool isNew = false);
+        bool isNew = false,
+        string? projectFolder = null);
 
     /// <summary>Shows a modal yes/no question. True when the user confirmed.</summary>
     Task<bool> ConfirmAsync(string title, string message);

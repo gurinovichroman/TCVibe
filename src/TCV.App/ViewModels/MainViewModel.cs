@@ -179,14 +179,14 @@ public partial class MainViewModel : ObservableObject
 
         // The facades are built last: each of them reads the panels, so they need a shell that is
         // already standing (6.26).
-        Workspaces = new WorkspaceCommands(this, _settings, _dialogs, _logger, _terminalService)
+        Workspaces = new WorkspaceCommands(this, _settings, _dialogs, _logger, _terminalService, _shells)
         {
             ShowWorkspaceSidebar = _settings.ShowWorkspaceSidebar,
         };
         Mounts = new MountCommands(this, _dialogs, _logger, services.Connections, services.Transfers);
         Services = new ServiceCommands(
             this, _settings, _serializer, _dialogs, _hotkeyManager, services.Plugins,
-            services.PluginLoader, _terminalService, _shells, _externalTools, services.Updates, _operationLog);
+            services.PluginLoader, _shells, _externalTools, services.Updates, _operationLog);
         Files = new FileCommands(
             this, _settings, _dialogs, _fs, _operationQueue, services.Clipboard, _archivePlugin,
             _agents, _logger, services.CopyLogger, services.MoveLogger, services.DeleteLogger,

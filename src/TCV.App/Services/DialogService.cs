@@ -312,17 +312,11 @@ public sealed class DialogService : IDialogService
         }).Task;
     }
 
-    public Task<WorkspaceNotesResult?> ShowWorkspaceNotesAsync(
-        string workspaceName,
-        string notes,
-        string terminalCommand,
-        string terminalDirectory,
-        string notesPath)
+    public Task<string?> ShowWorkspaceNotesAsync(string workspaceName, string notes, string notesPath)
     {
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var vm = new WorkspaceNotesDialogViewModel(
-                workspaceName, notes, terminalCommand, terminalDirectory, notesPath);
+            var vm = new WorkspaceNotesDialogViewModel(workspaceName, notes, notesPath);
             var dlg = new WorkspaceNotesDialog(vm) { Owner = OwnerWindow };
             return dlg.ShowDialog() == true ? vm.Result : null;
         }).Task;
@@ -332,12 +326,32 @@ public sealed class DialogService : IDialogService
         TCV.App.Workspaces.Workspace workspace,
         IReadOnlyList<string> allNames,
         IReadOnlyList<string> groups,
-        bool isNew = false)
+        bool isNew = false,
+        string? projectFolder = null)
     {
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var vm = new WorkspacePropertiesDialogViewModel(workspace, allNames, groups, isNew);
-            var dlg = new WorkspacePropertiesDialog(vm) { Owner = OwnerWindow };
+            WorkspacePropertiesDialog? dlg = null;
+
+            // Owned by the properties window, which stays modal under it: owned by the main window, it
+            // would leave the properties window clickable behind it.
+            string? PickPicture(string? initialDirectory)
+            {
+                var picker = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = Localization.LocalizationManager.Get("WsProps_PictureChoose"),
+                    Filter = Localization.LocalizationManager.Get("WsProps_PictureFiles")
+                             + "|*.png;*.svg;*.ico;*.jpg;*.jpeg;*.gif;*.bmp",
+                    CheckFileExists = true,
+                    InitialDirectory = initialDirectory,
+                };
+                return picker.ShowDialog(dlg ?? OwnerWindow) == true ? picker.FileName : null;
+            }
+
+            var pictures = new WorkspacePictureContext(
+                TCV.App.Workspaces.WorkspaceIconStore.Default, projectFolder, PickPicture);
+            var vm = new WorkspacePropertiesDialogViewModel(workspace, allNames, groups, isNew, pictures);
+            dlg = new WorkspacePropertiesDialog(vm) { Owner = OwnerWindow };
             return dlg.ShowDialog() == true ? vm.Result : null;
         }).Task;
     }

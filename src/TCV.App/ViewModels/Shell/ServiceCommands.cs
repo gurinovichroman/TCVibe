@@ -30,7 +30,6 @@ public sealed partial class ServiceCommands : ObservableObject
     private readonly HotkeyManager _hotkeyManager;
     private readonly PluginHost.PluginHost _pluginHost;
     private readonly PluginLoader _pluginLoader;
-    private readonly TerminalService _terminalService;
     private readonly ShellService _shells;
     private readonly ExternalToolService _externalTools;
     private readonly UpdateService _updateService;
@@ -46,7 +45,6 @@ public sealed partial class ServiceCommands : ObservableObject
         HotkeyManager hotkeyManager,
         PluginHost.PluginHost pluginHost,
         PluginLoader pluginLoader,
-        TerminalService terminalService,
         ShellService shells,
         ExternalToolService externalTools,
         UpdateService updateService,
@@ -59,7 +57,6 @@ public sealed partial class ServiceCommands : ObservableObject
         _hotkeyManager = hotkeyManager;
         _pluginHost = pluginHost;
         _pluginLoader = pluginLoader;
-        _terminalService = terminalService;
         _shells = shells;
         _externalTools = externalTools;
         _updateService = updateService;
@@ -564,7 +561,10 @@ public sealed partial class ServiceCommands : ObservableObject
             return;
         }
 
-        _terminalService.OpenIn(directory);
+        if (!await _shells.OpenTerminalAsync(directory))
+        {
+            _shell.ShowNotice(LocalizationManager.Format("Shell_OpenFailed", (await _shells.CurrentAsync()).Name), TimeSpan.FromSeconds(4));
+        }
     }
 
     // ──────────────────── Editors and agent CLIs (Ctrl+E / Ctrl+Shift+A) ────────────────────
