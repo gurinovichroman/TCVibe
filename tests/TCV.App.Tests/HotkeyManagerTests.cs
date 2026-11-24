@@ -211,7 +211,9 @@ public class HotkeyManagerTests
         mgr.GetCommandId(Key.Add, ModifierKeys.Control).Should().Be("SelectAll");
         mgr.GetCommandId(Key.A, ModifierKeys.Control).Should().Be("SelectAll");
         mgr.GetCommandId(Key.Subtract, ModifierKeys.Control).Should().Be("DeselectAll");
-        mgr.GetCommandId(Key.Divide, ModifierKeys.None).Should().Be("DeselectAll");
+        mgr.GetCommandId(Key.Divide, ModifierKeys.None).Should().Be("RestoreSelection");
+        mgr.GetCommandId(Key.Add, ModifierKeys.Alt).Should().Be("SelectSameExtension");
+        mgr.GetCommandId(Key.Subtract, ModifierKeys.Alt).Should().Be("UnselectSameExtension");
     }
 
     [Fact]

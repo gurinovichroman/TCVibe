@@ -68,6 +68,7 @@ public partial class ConnectionManagerDialogViewModel : ObservableObject
     private readonly HostTrustPolicy? _trust;
     private readonly Func<SshConfigImportDialogViewModel, bool> _showImport;
     private readonly string _homeDirectory;
+    private readonly Func<string, bool>? _shareIsWanted;
     private List<ConnectionRowViewModel> _allRows = [];
     private bool _selecting;
 
@@ -76,12 +77,13 @@ public partial class ConnectionManagerDialogViewModel : ObservableObject
     /// <param name="disconnect">Closes a connection in every tab that has it.</param>
     /// <param name="select">The connection to show first; the first one when null.</param>
     /// <param name="address">A typed address nothing saved matches: a new connection is filled from it.</param>
-    /// <param name="confirm">Yes/no question (title, message); the default shows the app's confirm.</param>
-    /// <param name="showMessage">Error display (title, message); the default shows a message box.</param>
+    /// <param name="confirm">Yes/no question (title, message); without one nothing destructive is confirmed.</param>
+    /// <param name="showMessage">Error display (title, message).</param>
     /// <param name="trust">Where "forget server key" acts; defaults to the application-wide policy.</param>
     /// <param name="showInfo">Outcome display (title, message) — no error icon on a success.</param>
     /// <param name="showImport">The preview of an import from <c>~/.ssh/config</c>; true when the user chose Import.</param>
     /// <param name="homeDirectory">The user's folder, where <c>.ssh\config</c> is read; the profile folder by default.</param>
+    /// <param name="shareIsWanted">Whether the window's panels hold or are opening a share (<c>\\host\share</c>): the connection test leaves it open then.</param>
     public ConnectionManagerDialogViewModel(
         ConnectionBook book,
         Func<ConnectionInfo, string?>? whereOpen = null,
@@ -93,20 +95,20 @@ public partial class ConnectionManagerDialogViewModel : ObservableObject
         HostTrustPolicy? trust = null,
         Action<string, string>? showInfo = null,
         Func<SshConfigImportDialogViewModel, bool>? showImport = null,
-        string? homeDirectory = null)
+        string? homeDirectory = null,
+        Func<string, bool>? shareIsWanted = null)
     {
-        // The window is the dialog service's (a view model makes none); without one the import shows nothing.
+        _shareIsWanted = shareIsWanted;
+
+        // The windows are the dialog service's (a view model makes none); without them nothing is shown.
         _showImport = showImport ?? (_ => false);
         _homeDirectory = homeDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         _book = book;
         _whereOpen = whereOpen ?? (_ => null);
         _disconnect = disconnect ?? (_ => { });
-        // The app's own confirm (UI-language buttons, owned by the active window), not MessageBox.
-        _confirm = confirm ?? ((title, message) => Views.Dialogs.ConfirmDialog.Ask(title, message, isWarning: true));
-        _showMessage = showMessage ?? ((title, message) => ShowMessageBox(
-            message, title, System.Windows.MessageBoxImage.Error));
-        _showInfo = showInfo ?? ((title, message) => ShowMessageBox(
-            message, title, System.Windows.MessageBoxImage.Information));
+        _confirm = confirm ?? ((_, _) => false);
+        _showMessage = showMessage ?? ((_, _) => { });
+        _showInfo = showInfo ?? ((_, _) => { });
         _trust = trust ?? NetworkSecurity.Default;
 
         Reload();
@@ -213,9 +215,11 @@ public partial class ConnectionManagerDialogViewModel : ObservableObject
         if (Editor is { } old)
         {
             old.Changed -= OnEditorChanged;
+            old.CancelTest();
         }
 
         editor.Changed += OnEditorChanged;
+        editor.ShareIsWanted = _shareIsWanted;
         return editor;
     }
 
@@ -559,19 +563,5 @@ public partial class ConnectionManagerDialogViewModel : ObservableObject
 
         SelectedRow = Rows.FirstOrDefault(r => r.Info.Id == selectedId);
         _selecting = false;
-    }
-
-    private static void ShowMessageBox(string message, string title, System.Windows.MessageBoxImage image)
-    {
-        var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>().FirstOrDefault(w => w.IsActive)
-            ?? System.Windows.Application.Current?.MainWindow;
-        if (owner is not null)
-        {
-            System.Windows.MessageBox.Show(owner, message, title, System.Windows.MessageBoxButton.OK, image);
-        }
-        else
-        {
-            System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, image);
-        }
     }
 }

@@ -63,7 +63,28 @@ public sealed class InMemoryFileSystem : IVirtualFileSystem
     /// <summary>Listings asked for — proves a panel re-read the folder.</summary>
     public int ListCalls { get; private set; }
 
-    public Task<IReadOnlyList<IFileEntry>> ListAsync(VfsPath path, CancellationToken ct = default)
+    private TaskCompletionSource? _heldListing;
+
+    /// <summary>
+    /// The next listing waits until the result is completed, deaf to its token, and only then does what
+    /// it would have done: a server that keeps a listing waiting, and in the end answers or fails.
+    /// </summary>
+    public TaskCompletionSource HoldNextListing() =>
+        _heldListing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task<IReadOnlyList<IFileEntry>> ListAsync(VfsPath path, CancellationToken ct = default) =>
+        Interlocked.Exchange(ref _heldListing, null) is { } held
+            ? ListAfterAsync(held.Task, path, ct)
+            : ListNowAsync(path);
+
+    private async Task<IReadOnlyList<IFileEntry>> ListAfterAsync(Task released, VfsPath path, CancellationToken ct)
+    {
+        _ = ct;
+        await released;
+        return await ListNowAsync(path);
+    }
+
+    private Task<IReadOnlyList<IFileEntry>> ListNowAsync(VfsPath path)
     {
         ListCalls++;
         var dir = Normalize(path.Value);

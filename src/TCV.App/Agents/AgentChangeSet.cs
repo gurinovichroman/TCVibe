@@ -135,6 +135,14 @@ public static class AgentChangeSet
             // to an operation that did not happen.
             if (entry.Outcome == OperationOutcome.Failed) continue;
 
+            // An edit inside an archive changed one file on the disk: the archive. Its paths are paths
+            // inside that, and would claim nothing (TRAP-62).
+            if (!string.IsNullOrWhiteSpace(entry.ChangedArchive))
+            {
+                facts.Add(new ManagerWriteFact(ToUtc(entry.Timestamp), [entry.ChangedArchive], entry.Origin ?? string.Empty, []));
+                continue;
+            }
+
             var raw = entry.Source?.Trim() ?? string.Empty;
             var source = StripCount(entry.Source);
             var batch = source.Length > 0 && source.Length != raw.Length;

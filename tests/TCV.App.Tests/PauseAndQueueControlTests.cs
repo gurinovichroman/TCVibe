@@ -221,17 +221,21 @@ public class OperationQueueControlTests
     [Fact]
     public async Task EnqueueAsync_LongLocalCopyRunning_ServerOperationDoesNotWaitForIt()
     {
+        // The copy holds its lane until told otherwise, so an upload that waited for it would never come:
+        // any limit tells the two apart. A short one only measures how busy the thread pool is under a
+        // parallel test run (one failure in 32 at 3 s).
+        var patience = TimeSpan.FromSeconds(30);
         using var queue = NewQueue();
         var copy = new BlockingOperation();
         var copying = queue.EnqueueAsync(copy);
-        await copy.Started.WaitAsync(TimeSpan.FromSeconds(3));
+        await copy.Started.WaitAsync(patience);
 
         var upload = new QuickOperation(OperationLane.Network);
-        await queue.EnqueueAsync(upload).WaitAsync(TimeSpan.FromSeconds(3));
+        await queue.EnqueueAsync(upload).WaitAsync(patience);
 
         upload.Executed.Should().BeTrue();
         copy.Finish();
-        await copying.WaitAsync(TimeSpan.FromSeconds(3));
+        await copying.WaitAsync(patience);
     }
 
     [Theory]

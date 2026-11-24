@@ -87,7 +87,10 @@ public sealed class ReconnectPolicy
         AuthenticationException => true,
         UnauthorizedAccessException => true,
         FileNotFoundException or DirectoryNotFoundException => true,
-        S3Exception s3 => !IsTransientStatus(s3.StatusCode),
+        ObjectAlreadyExistsException => true,
+
+        // S3 reports a body that stopped arriving as a client error, with a code of its own.
+        S3Exception s3 => !IsTransientStatus(s3.StatusCode) && s3.ErrorCode != "RequestTimeout",
         AzureStorageException azure => !IsTransientStatus(azure.StatusCode),
         CloudDriveException drive => !IsTransientStatus(drive.StatusCode),
         HttpRequestException { StatusCode: { } status } => !IsTransientStatus(status),
@@ -121,9 +124,13 @@ public sealed class ReconnectPolicy
         or DisconnectReason.NoMoreAuthenticationMethodsAvailable
         or DisconnectReason.IllegalUserName;
 
-    /// <summary>An HTTP answer that says "later": a timeout, throttling, a server error.</summary>
+    /// <summary>
+    /// An HTTP answer that says "later": a timeout, throttling, a server error. Not 501: a server does
+    /// not learn an operation between two tries.
+    /// </summary>
     private static bool IsTransientStatus(HttpStatusCode status) =>
-        status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500;
+        status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests
+        || ((int)status >= 500 && status != HttpStatusCode.NotImplemented);
 
     private static IEnumerable<Exception> Flatten(Exception error)
     {

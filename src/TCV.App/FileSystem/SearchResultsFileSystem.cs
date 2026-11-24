@@ -15,7 +15,7 @@ namespace TCV.App.FileSystem;
 /// mount, and disposing it here would take the whole application's file access down with the
 /// results view (TRAP-05).
 /// </remarks>
-public sealed class SearchResultsFileSystem : IVirtualFileSystem, IBatchRenameFileSystem
+public sealed class SearchResultsFileSystem : IVirtualFileSystem, IBatchRenameFileSystem, TCV.Network.IRangeReader
 {
     private readonly IVirtualFileSystem _inner;
 
@@ -105,6 +105,13 @@ public sealed class SearchResultsFileSystem : IVirtualFileSystem, IBatchRenameFi
 
     public Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default) =>
         _inner.OpenReadAsync(path, ct);
+
+    /// <summary>A hit found on a server is viewed like a file in its folder (TRAP-106). A disk file starts at 0: its stream seeks.</summary>
+    public async Task<(Stream Stream, long Offset, long Total, string? Validator)> OpenReadFromAsync(
+        VfsPath path, long offset, string? validator, CancellationToken ct) =>
+        _inner is TCV.Network.IRangeReader ranged
+            ? await ranged.OpenReadFromAsync(path, offset, validator, ct).ConfigureAwait(false)
+            : (await _inner.OpenReadAsync(path, ct).ConfigureAwait(false), 0, 0, null);
 
     public Task<Stream> OpenWriteAsync(VfsPath path, bool overwrite = false, CancellationToken ct = default)
     {

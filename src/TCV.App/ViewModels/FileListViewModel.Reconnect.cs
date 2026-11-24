@@ -31,12 +31,50 @@ public partial class FileListViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsReconnecting))]
     [NotifyPropertyChangedFor(nameof(IsConnectionFailed))]
+    [NotifyPropertyChangedFor(nameof(ShowsLoadingOverlay))]
     private string? _reconnectStatus;
 
     /// <summary>The connection under the panel dropped and is being opened again by itself.</summary>
     public bool IsReconnecting => ReconnectStatus is not null;
 
+    /// <summary>The automatic reconnect pauses before a try, so Retry now has a pause to cut short; a running try has none.</summary>
+    [ObservableProperty]
+    private bool _canRetryReconnectNow;
+
     partial void OnReconnectStatusChanged(string? value) => UpdateEmptyState();
+
+    /// <summary>
+    /// "Loading..." dims the list. Not while a dropped connection comes back: each try opens the folder
+    /// anew, and the overlay lay over the status and over Retry now and Stop, swallowing their clicks.
+    /// </summary>
+    public bool ShowsLoadingOverlay => IsOpeningFolder && !IsReconnecting;
+
+    /// <summary>
+    /// Gives up on the listing under way, and releases the panel now: a file system may not hear the
+    /// token for as long as its call blocks (SSH.NET's connect, a share that stopped answering), so
+    /// nothing here waits for it. Whatever the listing still returns is dropped, and it raises no
+    /// <see cref="ListingCompleted"/>: its failure would start a reconnect the user has just refused
+    /// (TRAP-96). The list ends up as after a failed load, empty and saying why; on a connection, with
+    /// Reconnect and Disconnect under the reason. False when nothing is being read.
+    /// </summary>
+    /// <param name="keepError">An error on screen stays the reason: the drop that started a reconnect.</param>
+    public bool StopLoading(bool keepError = false)
+    {
+        if (!IsLoading)
+        {
+            return false;
+        }
+
+        _loadGivenUp = true;
+        _loadCts.Cancel();
+        IsLoading = false;
+        IsOpeningFolder = false;
+        var reason = keepError && LoadError is { } error
+            ? error
+            : Localization.LocalizationManager.Get("Files_LoadStopped");
+        ShowNoListing(reason, ++_loadsStarted);
+        return true;
+    }
 
     private void RaiseListingCompleted(string path, Exception? error) =>
         ListingCompleted?.Invoke(this, new ListingCompletedEventArgs(path, error));

@@ -21,7 +21,7 @@ public sealed class CreateDirectoryOperation : FileOperationBase
     }
 
     public override OperationLogDescriptor LogDescriptor =>
-        new(OperationKind.CreateFolder, _path.Value, null, 1);
+        new(OperationKind.CreateFolder, _path.Value, null, 1) { ChangedArchive = ArchiveEditing.ArchiveBehind(_fs) };
 
     public override async Task ExecuteAsync(CancellationToken ct)
     {

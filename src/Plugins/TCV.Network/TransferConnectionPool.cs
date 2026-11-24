@@ -13,6 +13,12 @@ namespace TCV.Network;
 /// keeps a ceiling of one at least: a connection of ours that is still closing counts against its limit
 /// for a moment after it is gone from here. A changed host identity is not such a refusal: it is thrown
 /// (TRAP-43). Neither is a failure of a connect that was being cancelled, whatever it surfaces as.
+/// <para>
+/// A refusal of the very first connection says nothing about a limit: the login may have been wrong and
+/// corrected since, and a ceiling of 0 kept every transfer on the shared connection for as long as the file
+/// system lived. It is asked again after <see cref="AskAgainAfter"/>, rarely enough that repeated refusals
+/// do not read as an attack, and at once when the caller knows better (<see cref="AskAgain"/>).
+/// </para>
 /// </remarks>
 internal sealed class TransferConnectionPool<T> : IDisposable where T : class
 {
@@ -24,8 +30,12 @@ internal sealed class TransferConnectionPool<T> : IDisposable where T : class
     private readonly List<(T Client, DateTime IdleSince)> _idle = [];
     private int _count;
     private int? _ceiling;
+    private DateTime _askAgainAt;
     private bool _everOpened;
     private bool _disposed;
+
+    /// <summary>How long a server that has given no connection at all is left alone.</summary>
+    public static readonly TimeSpan AskAgainAfter = TimeSpan.FromMinutes(5);
 
     /// <param name="open">Makes a new connection, logged in and ready; throws when the server refuses it.</param>
     /// <param name="isAlive">Whether a connection kept from an earlier transfer is still open.</param>
@@ -83,12 +93,18 @@ internal sealed class TransferConnectionPool<T> : IDisposable where T : class
                     kept = _idle[^1].Client;
                     _idle.RemoveAt(_idle.Count - 1);
                 }
-                else if (_ceiling is { } ceiling && _count >= ceiling)
+                else if (_ceiling is { } ceiling && _count >= ceiling && (ceiling > 0 || _utcNow() < _askAgainAt))
                 {
                     return null;
                 }
                 else
                 {
+                    if (_ceiling == 0)
+                    {
+                        // Asking again after a refusal: one probe, not one per transfer started meanwhile.
+                        _askAgainAt = _utcNow() + AskAgainAfter;
+                    }
+
                     _count++;
                 }
             }
@@ -122,6 +138,7 @@ internal sealed class TransferConnectionPool<T> : IDisposable where T : class
             {
                 _count--;
                 _ceiling = Math.Max(_count, _everOpened ? 1 : 0);
+                _askAgainAt = _utcNow() + AskAgainAfter;
             }
 
             return null;
@@ -144,9 +161,25 @@ internal sealed class TransferConnectionPool<T> : IDisposable where T : class
         lock (_sync)
         {
             _everOpened = true;
+            if (_ceiling == 0)
+            {
+                _ceiling = null;   // it gives connections after all
+            }
         }
 
         return client;
+    }
+
+    /// <summary>The refusal of the first connection is out of date: the next transfer asks the server again.</summary>
+    public void AskAgain()
+    {
+        lock (_sync)
+        {
+            if (_ceiling == 0)
+            {
+                _ceiling = null;
+            }
+        }
     }
 
     /// <summary>

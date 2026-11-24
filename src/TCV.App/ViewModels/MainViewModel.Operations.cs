@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Windows;
 using CommunityToolkit.Mvvm.Input;
 using TCV.App.Commands;
 using TCV.App.Localization;
@@ -8,7 +7,6 @@ using TCV.App.Operations;
 using TCV.App.Operations.Conflict;
 using TCV.App.Settings;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 
@@ -261,8 +259,10 @@ public partial class MainViewModel
         }
 
         var vm = new DropStackDialogViewModel(_dropStack);
-        var dlg = new DropStackDialog(vm) { Owner = Application.Current.MainWindow };
-        if (dlg.ShowDialog() != true) return;
+        if (!await _dialogs.ShowDropStackAsync(vm))
+        {
+            return;
+        }
 
         // Clearing touches no file, so it does not need anything ticked.
         if (vm.Action == DropStackAction.Clear)

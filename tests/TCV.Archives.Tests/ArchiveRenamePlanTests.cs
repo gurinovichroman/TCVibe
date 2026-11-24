@@ -115,7 +115,7 @@ public class ArchiveRenamePlanTests
     {
         var act = () => ArchiveRenamePlan.Build(["a.txt", "b.txt", "dir/c.txt"], [("a.txt", taken)]);
 
-        act.Should().Throw<IOException>().WithMessage($"*{taken}*");
+        act.Should().Throw<ArchiveNameTakenException>().WithMessage($"*{taken}*").Which.Name.Should().EndWith(taken);
     }
 
     [Fact]

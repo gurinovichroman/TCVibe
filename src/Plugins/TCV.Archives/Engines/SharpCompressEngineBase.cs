@@ -59,7 +59,7 @@ public abstract class SharpCompressEngineBase : IArchiveEngine
 
     // ── Listing ──────────────────────────────────────────────────────────────
 
-    public IReadOnlyList<ArchiveEntry> ListAll(string archivePath)
+    public virtual IReadOnlyList<ArchiveEntry> ListAll(string archivePath)
     {
         try
         {
@@ -152,7 +152,7 @@ public abstract class SharpCompressEngineBase : IArchiveEngine
 
     // ── Single entry ─────────────────────────────────────────────────────────
 
-    public Stream ExtractEntry(string archivePath, string entryPath)
+    public virtual Stream ExtractEntry(string archivePath, string entryPath)
     {
         try
         {
@@ -179,7 +179,7 @@ public abstract class SharpCompressEngineBase : IArchiveEngine
     public void ExtractAll(string archivePath, string destDir, IProgress<double>? progress = null) =>
         ExtractAll(archivePath, destDir, progress, CancellationToken.None);
 
-    public void ExtractAll(string archivePath, string destDir, IProgress<double>? progress, CancellationToken ct)
+    public virtual void ExtractAll(string archivePath, string destDir, IProgress<double>? progress, CancellationToken ct)
     {
         Directory.CreateDirectory(destDir);
 
@@ -258,7 +258,7 @@ public abstract class SharpCompressEngineBase : IArchiveEngine
     /// One pass for the whole batch: a solid archive is decoded once instead of from the start for
     /// every entry, and reading stops after the last entry asked for.
     /// </summary>
-    public void ReadEntries(string archivePath, IReadOnlyList<string> entryPaths, Action<string, Stream> consume,
+    public virtual void ReadEntries(string archivePath, IReadOnlyList<string> entryPaths, Action<string, Stream> consume,
         CancellationToken ct)
     {
         // What the caller throws is the caller's: a disk error while writing a file must not come back
@@ -392,7 +392,7 @@ public abstract class SharpCompressEngineBase : IArchiveEngine
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
-    private static void WriteFile(string destPath, Action<Stream> write)
+    private protected static void WriteFile(string destPath, Action<Stream> write)
     {
         var directory = Path.GetDirectoryName(destPath);
         if (!string.IsNullOrEmpty(directory))

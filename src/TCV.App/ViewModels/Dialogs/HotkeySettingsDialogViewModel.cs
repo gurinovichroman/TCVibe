@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using TCV.App.Commands;
 using TCV.App.Localization;
+using TCV.App.Services;
 using TCV.App.Settings;
 
 namespace TCV.App.ViewModels.Dialogs;
@@ -18,24 +18,23 @@ namespace TCV.App.ViewModels.Dialogs;
 /// </summary>
 public partial class HotkeySettingsDialogViewModel : ObservableObject
 {
+    private const string ProfileFilter = "JSON (*.json)|*.json";
+
     private readonly HotkeyManager _hotkeyManager;
     private readonly AppSettings _settings;
     private readonly SettingsSerializer _serializer;
-    private readonly Func<string?>? _pickExportPath;
-    private readonly Func<string?>? _pickImportPath;
+    private readonly IDialogService _dialogs;
 
     public HotkeySettingsDialogViewModel(
         HotkeyManager hotkeyManager,
         AppSettings settings,
         SettingsSerializer serializer,
-        Func<string?>? pickExportPath = null,
-        Func<string?>? pickImportPath = null)
+        IDialogService dialogs)
     {
         _hotkeyManager = hotkeyManager;
         _settings = settings;
         _serializer = serializer;
-        _pickExportPath = pickExportPath ?? PickExportPathWithDialog;
-        _pickImportPath = pickImportPath ?? PickImportPathWithDialog;
+        _dialogs = dialogs;
         LoadBindings();
     }
 
@@ -291,7 +290,8 @@ public partial class HotkeySettingsDialogViewModel : ObservableObject
     [RelayCommand]
     private void ExportProfile()
     {
-        var path = _pickExportPath?.Invoke();
+        var path = _dialogs.PickSaveFile(
+            LocalizationManager.Get("Hotkeys_ExportTitle"), ProfileFilter, "hotkeys-profile.json");
         if (path is null)
         {
             return;
@@ -314,7 +314,7 @@ public partial class HotkeySettingsDialogViewModel : ObservableObject
     [RelayCommand]
     private void ImportProfile()
     {
-        var path = _pickImportPath?.Invoke();
+        var path = _dialogs.PickOpenFile(LocalizationManager.Get("Hotkeys_ImportTitle"), ProfileFilter);
         if (path is null)
         {
             return;
@@ -463,27 +463,6 @@ public partial class HotkeySettingsDialogViewModel : ObservableObject
 
     private HotkeyBinding? GetDefaultBinding(string commandId) =>
         _defaultBindings.Value.GetBinding(commandId);
-
-    private static string? PickExportPathWithDialog()
-    {
-        var dlg = new SaveFileDialog
-        {
-            Title = LocalizationManager.Get("Hotkeys_ExportTitle"),
-            Filter = "JSON (*.json)|*.json",
-            FileName = "hotkeys-profile.json",
-        };
-        return dlg.ShowDialog() == true ? dlg.FileName : null;
-    }
-
-    private static string? PickImportPathWithDialog()
-    {
-        var dlg = new OpenFileDialog
-        {
-            Title = LocalizationManager.Get("Hotkeys_ImportTitle"),
-            Filter = "JSON (*.json)|*.json",
-        };
-        return dlg.ShowDialog() == true ? dlg.FileName : null;
-    }
 }
 
 public sealed class HotkeyBindingViewModel : ObservableObject

@@ -276,7 +276,8 @@ public sealed class WorkspaceStore
     /// Saves workspaces that came from a settings bundle, one entry at a time (a second window may
     /// own the file). The bundle is a hand-editable file from somewhere else, so entries without a
     /// name are skipped rather than thrown on, and the "command I have approved" marker is dropped:
-    /// trust is earned on this machine, it does not travel. Returns how many were saved.
+    /// trust is earned on this machine, it does not travel. A picture named as the store never names one
+    /// goes too. Returns how many were saved.
     /// </summary>
     public int SaveImported(IEnumerable<Workspace?> workspaces)
     {
@@ -290,6 +291,11 @@ public sealed class WorkspaceStore
 
             workspace.Name = workspace.Name.Trim();
             workspace.TrustedTerminalCommand = string.Empty;
+            if (!WorkspaceIconStore.IsStoredName(workspace.IconImage))
+            {
+                workspace.IconImage = string.Empty;
+            }
+
             if (Save(workspace))
             {
                 saved++;

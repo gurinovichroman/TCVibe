@@ -10,19 +10,27 @@ namespace TCV.Archives;
 /// Virtual file system that exposes the contents of an archive as a navigable tree.
 /// Path "/" is the archive root. Entries like "/folder/file.txt" map to archive entries.
 /// </summary>
-public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSystem
+public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSystem, IReadAheadFileSystem
 {
+    /// <summary>
+    /// The option of <see cref="ArchivesPlugin.Create"/> that opens the file as a <see cref="IsScratchCopy"/>
+    /// (any value but "false").
+    /// </summary>
+    public const string ScratchCopyOption = "scratchCopy";
+
     private readonly string _archivePath;
     private readonly TCV.Core.PluginSdk.IArchiveEngine _engine;
     private IReadOnlyList<TCV.Core.PluginSdk.ArchiveEntry>? _cachedEntries;
     private ILookup<string, TCV.Core.PluginSdk.ArchiveEntry>? _byParent;
     private readonly object _cacheLock = new();
+    private readonly List<ArchiveReadAhead> _readAheads = [];
 
     public ArchiveFileSystem(string archivePath, TCV.Core.PluginSdk.IArchiveEngine engine,
-        IReadOnlyList<TCV.Core.PluginSdk.ArchiveEntry>? preloadedEntries = null)
+        IReadOnlyList<TCV.Core.PluginSdk.ArchiveEntry>? preloadedEntries = null, bool isScratchCopy = false)
     {
         _archivePath = archivePath;
         _engine = engine;
+        IsScratchCopy = isScratchCopy;
         if (preloadedEntries is not null)
         {
             Store(preloadedEntries);
@@ -35,13 +43,31 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
     /// <summary>The engine used to read/write this archive.</summary>
     public TCV.Core.PluginSdk.IArchiveEngine Engine => _engine;
 
-    /// <summary>Clears the cached entry list so the next ListAsync re-reads from disk.</summary>
+    /// <summary>
+    /// True when the file is a temporary copy, not the user's archive: one opened from inside another
+    /// archive or from a server. Nothing writes back to where it came from, so a change would reach only
+    /// the copy and be gone once the panel leaves it. Such an archive is read-only whatever its format
+    /// (TRAP-98).
+    /// </summary>
+    public bool IsScratchCopy { get; }
+
+    /// <summary>
+    /// Whether a change to this archive reaches the user: a format the engine can write, in a file that
+    /// is not a scratch copy. What decides an edit; the engine's own <c>CanWrite</c> only knows the format.
+    /// </summary>
+    public bool CanEdit => _engine.CanWrite && !IsScratchCopy;
+
+    /// <summary>
+    /// Clears the cached entry list so the next ListAsync re-reads from disk. What was read ahead is
+    /// from before the change, so reads go back to the archive itself.
+    /// </summary>
     public void Invalidate()
     {
         lock (_cacheLock)
         {
             _cachedEntries = null;
             _byParent = null;
+            _readAheads.Clear();
         }
     }
 
@@ -153,13 +179,55 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
 
     // ── Reading ───────────────────────────────────────────────────────────────
 
-    public Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default)
+    public async Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default)
     {
         var normalized = NormalizePath(path.Value);
 
+        ArchiveReadAhead? announced;
+        lock (_cacheLock)
+        {
+            announced = _readAheads.FirstOrDefault(r => r.Covers(normalized));
+        }
+
+        // Null when the pass did not bring it (it failed or stopped): the archive itself then answers,
+        // with the reason this file cannot be read if there is one.
+        if (announced is not null && await announced.TryOpenAsync(normalized, ct).ConfigureAwait(false) is { } readAhead)
+        {
+            return readAhead;
+        }
+
         // Decoding an entry is synchronous library work (a solid 7z can take seconds): keep it off
         // the caller's thread (INV-06).
-        return Task.Run(() => _engine.ExtractEntry(_archivePath, normalized), ct);
+        return await Task.Run(() => _engine.ExtractEntry(_archivePath, normalized), ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public IDisposable ReadAhead(IReadOnlyList<VfsPath> files)
+    {
+        var paths = files.Select(f => NormalizePath(f.Value)).Where(p => p.Length > 0)
+            .Distinct(StringComparer.Ordinal).ToList();
+
+        // One file costs the same either way, and would only be written to the disk once more.
+        if (paths.Count < 2)
+        {
+            return ArchiveReadAhead.Nothing;
+        }
+
+        var readAhead = new ArchiveReadAhead(paths,
+            (consume, ct) => _engine.ReadEntries(_archivePath, paths, consume, ct),
+            finished =>
+            {
+                lock (_cacheLock)
+                {
+                    _readAheads.Remove(finished);
+                }
+            });
+        lock (_cacheLock)
+        {
+            _readAheads.Add(readAhead);
+        }
+
+        return readAhead;
     }
 
     // ── Writing (ZIP only) ────────────────────────────────────────────────────
@@ -184,7 +252,7 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
     /// <summary>An empty folder (F7): a directory entry, which a ZIP can hold without any file in it.</summary>
     public async Task CreateDirectoryAsync(VfsPath path, CancellationToken ct)
     {
-        RejectUnlessWritable("Creating directories inside this archive format is not supported.");
+        RejectUnlessEditable("Creating directories inside this archive format is not supported.");
         var entry = NormalizePath(path.Value);
         if (entry.Length == 0)
         {
@@ -202,11 +270,29 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
         }
     }
 
+    /// <summary>
+    /// Adds files and empty folders in one rewrite of the archive, all or nothing (a synchronisation into
+    /// it; F5 runs its files through the engine by itself). An entry name ending in <c>/</c> is an empty
+    /// folder; an entry of that name already there is replaced, and takes the time of its file on the disk.
+    /// </summary>
+    public async Task AddFilesAsync(IReadOnlyList<(string LocalPath, string EntryName)> files, CancellationToken ct)
+    {
+        RejectUnlessEditable("Adding to this archive format is not supported.");
+        try
+        {
+            await Task.Run(() => _engine.AddFiles(_archivePath, files, ct), ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            Invalidate();
+        }
+    }
+
     public Task RenameAsync(VfsPath path, string newName, CancellationToken ct) =>
         RenameBatchAsync([(path, newName)], ct);
 
     /// <inheritdoc/>
-    public bool CanRenameAsBatch => _engine.CanWrite;
+    public bool CanRenameAsBatch => CanEdit;
 
     /// <summary>
     /// Renames entries in one rewrite of the archive (Multi-Rename runs its whole batch through this), a
@@ -214,7 +300,7 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
     /// </summary>
     public async Task RenameBatchAsync(IReadOnlyList<(VfsPath Path, string NewName)> renames, CancellationToken ct)
     {
-        RejectUnlessWritable("Renaming entries inside this archive format is not supported.");
+        RejectUnlessEditable("Renaming entries inside this archive format is not supported.");
         var requests = renames.Select(r => (NormalizePath(r.Path.Value), r.NewName)).ToList();
         try
         {
@@ -229,10 +315,15 @@ public sealed class ArchiveFileSystem : IVirtualFileSystem, IBatchRenameFileSyst
     public bool SupportsOperation(VfsOperation operation) =>
         operation == VfsOperation.Read ||
         (operation is VfsOperation.Delete or VfsOperation.Copy or VfsOperation.Rename or VfsOperation.CreateDirectory
-         && _engine.CanWrite);
+         && CanEdit);
 
-    private void RejectUnlessWritable(string message)
+    private void RejectUnlessEditable(string message)
     {
+        if (IsScratchCopy)
+        {
+            throw new NotSupportedException("This archive is a temporary copy: a change would not reach the original.");
+        }
+
         if (!_engine.CanWrite)
         {
             throw new NotSupportedException(message);

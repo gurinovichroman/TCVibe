@@ -1,8 +1,11 @@
 using System.Windows;
+using TCV.App.Navigation;
 using TCV.App.Operations;
 using TCV.App.Operations.Conflict;
+using TCV.App.ViewModels;
 using TCV.App.ViewModels.Dialogs;
 using TCV.App.Views.Dialogs;
+using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 using TCV.Git;
 using TCV.Network;
@@ -17,6 +20,13 @@ public sealed class DialogService : IDialogService
 
     private Window? OwnerWindow => Application.Current.MainWindow;
     private Window? _activeProgressDialog;
+
+    /// <summary>
+    /// The window a picker opened from a command belongs to: the one that asked, which may be a modal
+    /// dialog. Owned by the main window, a picker leaves that dialog clickable behind it.
+    /// </summary>
+    private Window? ActiveOrMainWindow =>
+        Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? OwnerWindow;
 
     public Task<CopyDialogResult?> ShowCopyDialogAsync(
         IReadOnlyList<IFileEntry> files, string defaultTarget, bool isMove = false,
@@ -141,6 +151,39 @@ public sealed class DialogService : IDialogService
         return vm;
     }
 
+    private CompareDirectoriesDialog? _compareWindow;
+
+    public Task ShowCompareDirectoriesAsync(CompareDirectoriesDialogViewModel viewModel)
+    {
+        var closed = new TaskCompletionSource();
+        var dlg = new CompareDirectoriesDialog(viewModel) { Owner = OwnerWindow };
+        dlg.Closed += (_, _) =>
+        {
+            _compareWindow = null;
+            closed.TrySetResult();
+        };
+        _compareWindow = dlg;
+        dlg.Show();
+        return closed.Task;
+    }
+
+    public bool ActivateCompareDirectories()
+    {
+        if (_compareWindow is null)
+        {
+            return false;
+        }
+
+        _compareWindow.Activate();
+        return true;
+    }
+
+    public void ShowRemoteEditFlush(RemoteEditFlushDialogViewModel viewModel)
+    {
+        var dlg = new RemoteEditFlushDialog(viewModel) { Owner = OwnerWindow };
+        dlg.ShowDialog();
+    }
+
     public void ShowConnectionManager(ConnectionManagerDialogViewModel viewModel)
     {
         var dlg = new ConnectionManagerDialog(viewModel) { Owner = OwnerWindow };
@@ -150,8 +193,7 @@ public sealed class DialogService : IDialogService
     public bool ShowSshConfigImport(SshConfigImportDialogViewModel viewModel)
     {
         // Owned by the connection manager it was opened from, which is the active window.
-        var owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? OwnerWindow;
-        var dlg = new SshConfigImportDialog(viewModel) { Owner = owner };
+        var dlg = new SshConfigImportDialog(viewModel) { Owner = ActiveOrMainWindow };
         return dlg.ShowDialog() == true;
     }
 
@@ -235,11 +277,12 @@ public sealed class DialogService : IDialogService
                 CheckFileExists = true,
                 InitialDirectory = initialDirectory,
             };
-            return dlg.ShowDialog(OwnerWindow) == true ? dlg.FileName : null;
+            return dlg.ShowDialog(ActiveOrMainWindow) == true ? dlg.FileName : null;
         });
     }
 
-    public string? PickSaveFile(string title, string filter, string fileName, string? initialDirectory = null)
+    public string? PickSaveFile(
+        string title, string filter, string fileName, string? initialDirectory = null, string? defaultExtension = null)
     {
         return Application.Current.Dispatcher.Invoke(() =>
         {
@@ -249,11 +292,78 @@ public sealed class DialogService : IDialogService
                 Filter = filter,
                 FileName = fileName,
                 InitialDirectory = initialDirectory,
+                DefaultExt = defaultExtension,
                 AddExtension = true,
             };
-            return dlg.ShowDialog(OwnerWindow) == true ? dlg.FileName : null;
+            return dlg.ShowDialog(ActiveOrMainWindow) == true ? dlg.FileName : null;
         });
     }
+
+    public string? PickFolder(string title, string? initialDirectory = null)
+    {
+        return Application.Current.Dispatcher.Invoke(() =>
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = title,
+                InitialDirectory = initialDirectory,
+            };
+            return dlg.ShowDialog(ActiveOrMainWindow) == true ? dlg.FolderName : null;
+        });
+    }
+
+    public Task<FileIndexEntry?> ShowFileFinderAsync(
+        FileFinderViewModel viewModel, IVirtualFileSystem vfs, VfsPath root, FileIndexOptions options)
+    {
+        return Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            var dlg = new FileFinderDialog(viewModel, vfs, root, options) { Owner = OwnerWindow };
+            return dlg.ShowDialog() == true ? viewModel.SelectedItem : null;
+        }).Task;
+    }
+
+    public void ShowSearch(
+        SearchDialogViewModel viewModel, Action<SearchResultViewModel> openResult, Action? closed = null)
+    {
+        var dlg = new SearchDialog(viewModel) { Owner = OwnerWindow };
+        dlg.NavigateRequested += (_, result) => openResult(result);
+
+        // On the event itself, not on a task after it: nothing is left waiting for a later turn of the
+        // dispatcher when the program is closing. The window's own handler has stopped the search by then.
+        if (closed is not null)
+        {
+            dlg.Closed += (_, _) => closed();
+        }
+
+        dlg.Show();
+    }
+
+    private TransferQueueDialog? _transferQueueWindow;
+
+    public void ShowTransferQueue(TransferQueue queue)
+    {
+        if (_transferQueueWindow is { IsLoaded: true })
+        {
+            _transferQueueWindow.Activate();
+            return;
+        }
+
+        _transferQueueWindow = new TransferQueueDialog(queue) { Owner = OwnerWindow };
+        _transferQueueWindow.Closed += (_, _) => _transferQueueWindow = null;
+        _transferQueueWindow.Show();   // non-blocking — transfers run in the background
+    }
+
+    public Task<bool> ShowDropStackAsync(DropStackDialogViewModel viewModel) =>
+        ShowModalAsync(() => new DropStackDialog(viewModel));
+
+    public Task<bool> ShowColumnsAsync(ColumnsDialogViewModel viewModel) =>
+        ShowModalAsync(() => new ColumnsDialog(viewModel));
+
+    public Task<bool> ShowSelectByMaskAsync(SelectByMaskDialogViewModel viewModel) =>
+        ShowModalAsync(() => new SelectByMaskDialog(viewModel));
+
+    public Task ShowMultiRenameAsync(MultiRenameDialogViewModel viewModel) =>
+        ShowModalAsync(() => new MultiRenameDialog(viewModel));
 
     public Task ShowBookmarksManagerAsync(BookmarksManagerDialogViewModel viewModel)
     {
@@ -300,15 +410,15 @@ public sealed class DialogService : IDialogService
 
     /// <summary>
     /// Creates a window on the UI thread and shows it modally over the main one; returns when it is
-    /// closed. For dialogs whose outcome, if any, lives in their view model.
+    /// closed, true when it was accepted. For dialogs whose outcome, if any, lives in their view model.
     /// </summary>
-    private Task ShowModalAsync(Func<Window> createDialog)
+    private Task<bool> ShowModalAsync(Func<Window> createDialog)
     {
         return Application.Current.Dispatcher.InvokeAsync(() =>
         {
             var dlg = createDialog();
             dlg.Owner = OwnerWindow;
-            dlg.ShowDialog();
+            return dlg.ShowDialog() == true;
         }).Task;
     }
 
@@ -363,11 +473,19 @@ public sealed class DialogService : IDialogService
         ).Task.ContinueWith(_ => { });
     }
 
+    // No owner given: Windows hands the box to the active window, and on the way out there may be none.
+    public void ShowMessage(string title, string message, MessageBoxImage image) =>
+        MessageBox.Show(message, title, MessageBoxButton.OK, image);
+
     public Task<bool> ConfirmAsync(string title, string message)
     {
         // Our own dialog rather than MessageBox: its Yes/No follow the UI language, not Windows'.
         return Application.Current.Dispatcher.InvokeAsync(() => ConfirmDialog.Ask(title, message)).Task;
     }
+
+    public bool Confirm(
+        string title, string message, string? confirmText = null, string? cancelText = null, bool isWarning = false) =>
+        ConfirmDialog.Ask(title, message, confirmText, cancelText, isWarning);
 
     public Task<ConfirmChoice> ChooseAsync(
         string title, string message, string confirmText, string alternateText, bool isWarning = false)

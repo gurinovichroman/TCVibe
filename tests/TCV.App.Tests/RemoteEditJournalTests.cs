@@ -18,6 +18,7 @@ public sealed class RemoteEditJournalTests : IDisposable
     private static readonly UTF8Encoding NoBom = new(false);
 
     private readonly string _logPath = Path.Combine(Path.GetTempPath(), $"tcv-edit-log-{Guid.NewGuid():N}.json");
+    private readonly string _copies = Path.Combine(Path.GetTempPath(), $"tcv-edit-tests-{Guid.NewGuid():N}");
     private readonly OperationLog _log;
     private readonly RemoteEditService _service;
     private readonly Server _server = new();
@@ -26,8 +27,10 @@ public sealed class RemoteEditJournalTests : IDisposable
     public RemoteEditJournalTests()
     {
         _log = new OperationLog(_logPath);
+        Directory.CreateDirectory(_copies);
         _service = new RemoteEditService(NullLogger<RemoteEditService>.Instance, _ => true, _log)
         {
+            CopiesRoot = _copies,
             SettleDelay = TimeSpan.FromMilliseconds(50),
             RetryDelays = [TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(10)],
         };
@@ -40,6 +43,15 @@ public sealed class RemoteEditJournalTests : IDisposable
         if (File.Exists(_logPath))
         {
             File.Delete(_logPath);
+        }
+
+        try
+        {
+            Directory.Delete(_copies, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort: a scanner's handle on a copy is not this test's failure.
         }
     }
 
@@ -68,7 +80,7 @@ public sealed class RemoteEditJournalTests : IDisposable
         entry.Kind.Should().Be(OperationKind.Upload);
         entry.Outcome.Should().Be(OperationOutcome.Completed);
         entry.Source.Should().Be(session.LocalPath);
-        entry.Destination.Should().Be("/etc");
+        entry.Destination.Should().Be("sftp://fake/etc");
         entry.Error.Should().BeNull();
     }
 

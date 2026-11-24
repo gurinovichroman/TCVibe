@@ -94,7 +94,7 @@
                     Command="{Binding ConfirmCommand}"
                     IsEnabled="{Binding CanConfirm}"
                     IsDefault="True" />
-            <Button Content="{DynamicResource Cancel}" Width="90"
+            <Button Content="{DynamicResource Cancel}" MinWidth="90"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>

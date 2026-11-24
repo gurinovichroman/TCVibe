@@ -111,6 +111,10 @@ public partial class ProgressDialogViewModel : ObservableObject, IProgress<FileP
     /// <summary>The Pause button is shown while the work runs and only when it can pause.</summary>
     public bool ShowPause => CanPause && !IsCompleted;
 
+    /// <summary>How far is not known (a folder still being walked): the bar moves instead of standing at 0 %.</summary>
+    [ObservableProperty]
+    private bool _isIndeterminate;
+
     /// <summary>
     /// The window is hidden and the work goes on: the status bar counts it, and a click there brings the
     /// window back (ADR-0038). Hiding is not closing — closing the window still cancels the work.
@@ -173,6 +177,14 @@ public partial class ProgressDialogViewModel : ObservableObject, IProgress<FileP
             RemainingText = value.Remaining is { } left ? FormatTime(left) : string.Empty;
         });
     }
+
+    /// <summary>What a walk has found so far, where a copy shows its bytes. From any thread.</summary>
+    public void ReportCount(string current, string count) =>
+        OnUiThread(() =>
+        {
+            CurrentFile = current;
+            BytesText = count;
+        });
 
     public void Complete()
     {

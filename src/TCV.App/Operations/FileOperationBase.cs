@@ -404,7 +404,7 @@ public abstract class FileOperationBase : IFileOperation
     /// FTP, SFTP or WebDAV: a move there renames over an existing file. Asked of the file system under
     /// a search-results list too (ADR-0028): its own scheme is "search".
     /// </summary>
-    protected static bool IsRemoteServer(IVirtualFileSystem fs) =>
+    protected internal static bool IsRemoteServer(IVirtualFileSystem fs) =>
         FileSystemIdentity.Underlying(fs).Scheme.ToLowerInvariant() is "ftp" or "ftps" or "sftp" or "dav" or "davs";
 
     /// <summary>
@@ -412,6 +412,6 @@ public abstract class FileOperationBase : IFileOperation
     /// would double the requests), but a write replaces the file in one step at commit, so it needs no
     /// temporary-name swap — which there would cost a server-side copy and a delete.
     /// </summary>
-    protected static bool IsCloudStorage(IVirtualFileSystem fs) =>
+    protected internal static bool IsCloudStorage(IVirtualFileSystem fs) =>
         FileSystemIdentity.Underlying(fs).Scheme.ToLowerInvariant() is "s3" or "azblob" or "gdrive" or "dropbox" or "onedrive";
 }

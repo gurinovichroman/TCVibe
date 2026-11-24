@@ -37,7 +37,23 @@ public partial class TransferQueueDialog : TcvDialog
 
     private TransferItem? Selected => TransferGrid.SelectedItem as TransferItem;
 
-    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshState();
+    private bool _refreshQueued;
+
+    /// <summary>Once per burst, after the burst: RefreshState looks at every item, and items come by the thousand (TRAP-107).</summary>
+    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_refreshQueued)
+        {
+            return;
+        }
+
+        _refreshQueued = true;
+        Dispatcher.InvokeAsync(() =>
+        {
+            _refreshQueued = false;
+            RefreshState();
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
 
     private void TransferGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

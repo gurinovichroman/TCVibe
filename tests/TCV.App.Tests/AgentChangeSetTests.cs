@@ -1,3 +1,4 @@
+using System.IO;
 using FluentAssertions;
 using TCV.Ai.Agents;
 using TCV.App.Agents;
@@ -126,6 +127,75 @@ public class AgentChangeSetTests
         var facts = AgentChangeSet.ToWriteFacts([Entry(@"D:\dir\old.txt", "new.txt", kind: OperationKind.Rename)]);
 
         facts[0].Paths.Should().Equal(@"D:\dir\old.txt", @"D:\dir\new.txt");
+    }
+
+    [Theory]
+    [InlineData(OperationKind.Rename, "/dir/old.txt", "new.txt")]
+    [InlineData(OperationKind.CreateFolder, "/dir/new", null)]
+    [InlineData(OperationKind.Delete, "/dir/a.txt", null)]
+    [InlineData(OperationKind.Delete, "/dir (3)", null)]
+    public void ToWriteFacts_EditInsideAnArchive_ClaimsTheArchiveAndNothingInIt(OperationKind kind, string source, string? destination)
+    {
+        var entry = Entry(source, destination, kind: kind) with { ChangedArchive = @"D:\repo\dist.zip" };
+
+        var facts = AgentChangeSet.ToWriteFacts([entry]);
+
+        facts.Should().ContainSingle();
+        facts[0].Paths.Should().Equal(@"D:\repo\dist.zip");
+        facts[0].Directories.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ToWriteFacts_FailedEditInsideAnArchive_ClaimsNothing()
+    {
+        var entry = Entry("/a.txt", outcome: OperationOutcome.Failed) with { ChangedArchive = @"D:\repo\dist.zip" };
+
+        AgentChangeSet.ToWriteFacts([entry]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Attribution_ZipRewrittenByAnEditInsideIt_IsTheManagersWork()
+    {
+        var now = new DateTime(2026, 7, 27, 12, 0, 30, DateTimeKind.Local).ToUniversalTime();
+        var entry = Entry("/a.txt", "b.txt", kind: OperationKind.Rename) with { ChangedArchive = @"D:\repo\dist.zip" };
+
+        var verdicts = ChangeAttribution.Attribute(
+            [new ChangedFileFact("dist.zip", @"D:\repo\dist.zip", new DateTime(2026, 7, 27, 12, 0, 0, DateTimeKind.Local).ToUniversalTime())],
+            AgentChangeSet.ToWriteFacts([entry]), [], now);
+
+        verdicts[0].Origin.Should().Be(ChangeOrigin.Manager);
+    }
+
+    [Fact]
+    public void LogRow_EditInsideAnArchive_NamesTheArchive_AndIsNoReplay()
+    {
+        var entry = Entry("/dir/new", kind: OperationKind.CreateFolder) with { ChangedArchive = @"D:\repo\dist.zip" };
+
+        var row = new TCV.App.ViewModels.Dialogs.OperationLogRow(entry);
+
+        row.Source.Should().Be(@"D:\repo\dist.zip!/dir/new");
+        row.CanReplay.Should().BeFalse("a replay would make the folder on the disk");
+    }
+
+    [Fact]
+    public void LogLine_ChangedArchive_SurvivesTheFile_AndAnOldLineReads()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "tcv-log-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            var log = new OperationLog(path);
+            log.Append(Entry("/a.txt", kind: OperationKind.Delete) with { ChangedArchive = @"D:\dist.zip" });
+            log.Append(Entry(@"D:\plain.txt"));
+
+            var lines = log.LoadAll();
+
+            lines.Select(l => l.ChangedArchive).Should().Equal(null, @"D:\dist.zip");
+            File.ReadAllLines(path)[1].Should().NotContain("ChangedArchive", "a line without it stays as it was");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

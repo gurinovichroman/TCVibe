@@ -9,7 +9,9 @@ public partial class CompareDirectoriesDialog : TcvDialog
     {
         InitializeComponent();
         DataContext = viewModel;
-        viewModel.CloseRequested += (_, _) => CloseWithResult(viewModel.Confirmed);
+
+        // Not modal (6.96), so no DialogResult: the caller reads viewModel.Confirmed.
+        viewModel.CloseRequested += (_, _) => Close();
 
         // The user asked to compare the two panels: start now instead of showing an empty grid.
         Loaded += (_, _) => viewModel.CompareCommand.Execute(null);

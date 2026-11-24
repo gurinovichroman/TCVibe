@@ -69,14 +69,105 @@ public sealed class CabEngine : IArchiveEngine
         }
         finally
         {
-            try
+            DeleteScratch(tempDir);
+        }
+    }
+
+    /// <summary>
+    /// Several entries in one run of expand.exe over the whole cabinet (6.42): one run per entry starts a
+    /// process and decodes the folder up to that entry, every time. A single entry stays a run of its own,
+    /// which leaves out what comes after it. A path that names no file is left out.
+    /// </summary>
+    public void ReadEntries(string archivePath, IReadOnlyList<string> entryPaths, Action<string, Stream> consume,
+        CancellationToken ct)
+    {
+        if (entryPaths.Distinct(StringComparer.Ordinal).Count() < 2)
+        {
+            foreach (var entryPath in entryPaths.Distinct(StringComparer.Ordinal))
             {
-                Directory.Delete(tempDir, recursive: true);
+                ct.ThrowIfCancellationRequested();
+                using var source = ExtractEntry(archivePath, entryPath);
+                consume(entryPath, source);
             }
-            catch (IOException)
+
+            return;
+        }
+
+        var files = ListAll(archivePath).Where(e => !e.IsDirectory).Select(e => e.FullPath).ToList();
+        var requests = new EntryRequests(entryPaths, files);
+        var tempDir = Path.Combine(Path.GetTempPath(), "TCV_CAB_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            // Names are validated up front: expand.exe writes wherever the cabinet says.
+            var unpacked = files.Select(f => (Name: f, Path: ArchivePathSafety.ResolveDestination(tempDir, f))).ToList();
+            RunExpand(["/F:*", Path.GetFullPath(archivePath), tempDir], ct);
+
+            foreach (var (name, path) in unpacked)
             {
-                // Temp folder: swept by the OS eventually.
+                if (requests.Remaining == 0)
+                {
+                    return;
+                }
+
+                ct.ThrowIfCancellationRequested();
+                if (requests.Claim(name) is { } requested)
+                {
+                    using var source = File.OpenRead(path);
+                    consume(requested, source);
+                }
             }
+        }
+        finally
+        {
+            DeleteScratch(tempDir);
+        }
+    }
+
+    /// <summary>
+    /// A read-only file in the cabinet comes out read-only, and <see cref="Directory.Delete(string, bool)"/>
+    /// answers that with <see cref="UnauthorizedAccessException"/> (TRAP-50): a read that worked must not end
+    /// in that error. Temp folder: swept by the OS eventually.
+    /// </summary>
+    private static void DeleteScratch(string folder)
+    {
+        try
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Left behind, as the summary says.
+        }
+    }
+
+    /// <summary>In one run too; one the cabinet does not have fails the batch once the rest is out, as the default does.</summary>
+    public void ExtractEntries(string archivePath, IReadOnlyList<(string entryPath, string destPath)> entries,
+        CancellationToken ct)
+    {
+        var missing = entries.Select(e => e.entryPath).ToHashSet(StringComparer.Ordinal);
+        ReadEntries(archivePath, [.. missing], (entryPath, content) =>
+        {
+            missing.Remove(entryPath);
+            string? first = null;
+            foreach (var (_, destPath) in entries.Where(e => string.Equals(e.entryPath, entryPath, StringComparison.Ordinal)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+                if (first is not null)
+                {
+                    File.Copy(first, destPath, overwrite: true);
+                    continue;
+                }
+
+                using var target = File.Create(destPath);
+                content.CopyTo(target);
+                first = destPath;
+            }
+        }, ct);
+
+        if (missing.Count > 0)
+        {
+            throw new FileNotFoundException($"Entry '{missing.First()}' not found in CAB.");
         }
     }
 

@@ -105,7 +105,9 @@ public partial class DriveBar : UserControl
             if (panel.IsReconnecting)
             {
                 // Reconnecting by itself (6.82): Reconnect skips the pause, and it can be stopped.
-                menu.Items.Add(Command("Conn_ReconnectNow", "Reconnect"));
+                var retry = Command("Conn_ReconnectNow", "Reconnect");
+                retry.IsEnabled = panel.FileList.CanRetryReconnectNow;
+                menu.Items.Add(retry);
                 menu.Items.Add(Action("Conn_ReconnectStop", () => mounts.StopReconnectCommand.Execute(panel)));
                 menu.Items.Add(Command("Menu_Disconnect", "Disconnect"));
             }

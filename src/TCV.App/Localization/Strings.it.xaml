@@ -19,10 +19,7 @@
 
     <!-- File list columns -->
     <sys:String x:Key="Col_Name">Nome</sys:String>
-    <sys:String x:Key="Col_Ext">Est.</sys:String>
-    <sys:String x:Key="Col_Size">Dimensione</sys:String>
-    <sys:String x:Key="Col_Date">Data</sys:String>
-    <sys:String x:Key="Col_Attr">Attr.</sys:String>
+    <sys:String x:Key="Col_Size">Dimens.</sys:String>
     <sys:String x:Key="Col_Computed">calcolato</sys:String>
     <sys:String x:Key="Col_Reset">Reimposta colonne</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Comparing and synchronising directories, editing a remote file (6.23) -->
     <sys:String x:Key="Cmp_Title">Confronta cartelle</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Nessuna riga è spuntata per la copia. Spuntare le righe o usare la freccia su una riga per impostarne la direzione.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">verifica che nulla sia cambiato…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">Modificati dopo il confronto: {0} {0:plural:file|file}, il primo è {1}. Non è stato copiato nulla. Premi Confronta per vedere le cartelle come sono ora.</sys:String>
     <sys:String x:Key="Cmp_Compare">Confronta</sys:String>
     <sys:String x:Key="Cmp_Recursive">Includi sottocartelle</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Mostra identici</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Sincronizza</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">Copiare le voci spuntate? In totale {0}. I file esistenti verranno sovrascritti.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Modifica file remoto</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">"{0}" aperto come copia temporanea. Ogni salvataggio viene ricaricato sul server.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">"{0}" aperto come copia temporanea. Ogni salvataggio viene ricaricato sul server.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Impossibile recuperare il file, oppure l'origine è di sola lettura.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Caricamento delle modifiche</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Le modifiche salvate stanno arrivando al server. Il programma si chiude quando sono arrivate.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">Se smetti di attendere non si perde nulla: le modifiche restano nella copia locale, e il programma ti dice dove si trova.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Interrompi e tieni le copie</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">Un caricamento non è terminato: il file sul server potrebbe essere incompleto.</sys:String>
+    <sys:String x:Key="Fetch_Title">Recupero del file</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} è stato recuperato, ma il pannello ora è altrove. Premi di nuovo Invio sul file per aprirlo.</sys:String>
 
     <!-- Saved operations, the drop stack and gadgets (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Operazioni salvate</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">Nuovo worktree per un'attività…</sys:String>
     <sys:String x:Key="Git_WtRemove">Rimuovi worktree</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Rimuovi</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">Rimuovere il worktree "{0}" e la sua cartella?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">Rimuovere il worktree "{0}" e la sua cartella?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Attenzione: {0} {0:plural:modifica non committata andrà persa|modifiche non committate andranno perse} per sempre.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree "{0}" rimosso.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">Impossibile rimuovere il worktree: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">Impossibile ricavare un nome di branch da questo titolo: non contiene lettere latine o cirilliche né cifre. Digitare a mano il branch e la cartella.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">La cartella non è vuota: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">Impossibile creare il worktree: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree su "{0}" creato: {1}&#x0a;File riportati: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree su "{0}" creato: {1}&#x0a;File riportati: {2}</sys:String>
 
     <!-- Git: index, commit, branches, stash -->
     <sys:String x:Key="Git_CommitTitle">Commit</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Rimuovi</sys:String>
     <sys:String x:Key="WsProps_PictureNone">nessuna</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Trovate nel progetto:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Compare nella barra laterale delle aree di lavoro al posto dell'icona e delle lettere. Finché un'area di lavoro non ha né immagine né icona, il logo o la favicon del suo repository vengono inseriti da soli; una volta fatta la scelta (un'immagine, un'icona o nessuna) non vengono più cercati.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Compare al posto dell'icona e delle lettere nella barra laterale delle aree di lavoro, e prima del nome nel menu, nel selettore e nella barra del titolo. Finché un'area di lavoro non ha né immagine né icona, il logo o la favicon del suo repository vengono inseriti da soli; una volta fatta la scelta (un'immagine, un'icona o nessuna) non vengono più cercati.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Immagine dell'area di lavoro</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Immagini</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">Questo file non può essere letto come immagine.</sys:String>
@@ -482,8 +488,8 @@
     <sys:String x:Key="AgentLaunch_Start">Avvia</sys:String>
     <sys:String x:Key="AgentLaunch_Started">«{0}» avviato in {1}. Esaminare il risultato in «Modifiche dell'agente» ({gesture:AgentChanges}).</sys:String>
 
-    <!-- AI rename (Ctrl+K Ctrl+N, 6.15) -->
-    <sys:String x:Key="AiRename_Title">Rinomina con AI</sys:String>
+    <!-- IA rename (Ctrl+K Ctrl+N, 6.15) -->
+    <sys:String x:Key="AiRename_Title">Rinomina con IA</sys:String>
     <sys:String x:Key="AiRename_Explain">I nomi vengono proposti in base al contenuto dei file. Nulla viene rinominato finché non si preme «Applica»; la colonna «Nuovo nome» è modificabile e «Annulla» ripristina un batch applicato — qui oppure, dopo la chiusura di questa finestra, dal registro delle operazioni ({gesture:OperationLog}).</sys:String>
     <sys:String x:Key="AiRename_ColApply">Usa</sys:String>
     <sys:String x:Key="AiRename_ColFrom">Attuale</sys:String>
@@ -496,7 +502,7 @@
     <sys:String x:Key="AiRename_Proposed">{0} nomi proposti su {1}.</sys:String>
     <sys:String x:Key="AiRename_NothingChecked">Nessuna riga è spuntata.</sys:String>
     <sys:String x:Key="AiRename_NoSelection">Selezionare i file da rinominare.</sys:String>
-    <sys:String x:Key="AiRename_OneFolder">I risultati di ricerca selezionati si trovano in cartelle diverse. La rinomina con AI lavora su una cartella alla volta: selezionare i risultati di una sola cartella.</sys:String>
+    <sys:String x:Key="AiRename_OneFolder">I risultati di ricerca selezionati si trovano in cartelle diverse. La rinomina con IA lavora su una cartella alla volta: selezionare i risultati di una sola cartella.</sys:String>
     <sys:String x:Key="AiRename_PartialFailure">{0} {0:plural:file non rinominato|file non rinominati}. Primo errore: {1}</sys:String>
 
     <!-- Semantic search (Ctrl+K Ctrl+F, 6.16) -->
@@ -522,8 +528,8 @@
     <sys:String x:Key="Semantic_State">Indicizzati: {0} {0:plural:file|file}, {1} {1:plural:frammento|frammenti}.</sys:String>
     <sys:String x:Key="Semantic_NotOpened">L'indice non è stato ancora aperto.</sys:String>
 
-    <!-- AI commit-message draft and F3 summary (6.14) -->
-    <sys:String x:Key="Git_DraftMessage">Bozza AI</sys:String>
+    <!-- IA commit-message draft and F3 summary (6.14) -->
+    <sys:String x:Key="Git_DraftMessage">Bozza IA</sys:String>
     <sys:String x:Key="Git_DraftMessageHint">Compila la casella del messaggio a partire dal diff. Non esegue il commit: il testo va rivisto.</sys:String>
     <sys:String x:Key="Git_Drafting">Lettura del diff e stesura di un messaggio…</sys:String>
     <sys:String x:Key="Git_Drafted">Bozza pronta: leggerla e correggerla.</sys:String>
@@ -537,7 +543,7 @@
     <sys:String x:Key="Settings_AgentMcpEnabled">Abilita il server MCP</sys:String>
     <sys:String x:Key="Settings_AgentMcpAutoStart">Avvialo con l'applicazione</sys:String>
     <sys:String x:Key="Settings_AgentMcpPort">Porta (0 = ne viene scelta una libera):</sys:String>
-    <sys:String x:Key="Settings_AgentApprovalTimeout">Attesa della decisione su una scrittura, s:</sys:String>
+    <sys:String x:Key="Settings_AgentApprovalTimeout">Attesa decisione di scrittura, s:</sys:String>
     <sys:String x:Key="Settings_AgentRemotePanels">Consenti agli agenti di leggere le connessioni (server e archiviazione cloud) aperte nei pannelli</sys:String>
     <sys:String x:Key="Settings_AgentMcpHint">Il server resta in ascolto solo su 127.0.0.1 e richiede un token; indirizzo e token vengono scritti in mcp-endpoint.json nella cartella dati del programma (data\ in una copia portatile). Le cartelle si approvano in «Modifiche dell'agente» ({gesture:AgentChanges}).</sys:String>
     <sys:String x:Key="Settings_AgentLlm">Modello linguistico (endpoint compatibile con OpenAI)</sys:String>
@@ -550,7 +556,7 @@
 
     <!-- Settings: git and gadgets tabs (6.30) -->
     <!-- User tools (6.29) -->
-    <sys:String x:Key="UserTool_Menu">Esegui uno s_trumento</sys:String>
+    <sys:String x:Key="UserTool_Menu">Esegui uno strumento</sys:String>
     <sys:String x:Key="UserTool_MountedRejected">Uno strumento funziona solo sui file su disco: questo pannello mostra un archivio o un server.</sys:String>
     <sys:String x:Key="UserTool_TargetNotOnDisk">“{0}” usa %T, la cartella dell'altro pannello, ma quel pannello non mostra alcuna cartella su disco (un archivio, un server o l'elenco dei risultati di ricerca).</sys:String>
 
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Fissa area di lavoro</sys:String>
     <sys:String x:Key="Ws_RenameTaken">Esiste già un'area di lavoro denominata “{0}”.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">Impossibile rinominare l'area di lavoro: workspaces.json al momento non è leggibile o scrivibile.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Immagini non scritte nel file: {0}. Mancano qui o superano il limite di dimensione.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Immagini non accettate dal file: {0}. È accettato un PNG 64×64 fino a 24 KB.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Aree di lavoro</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">workspaces.json era danneggiato, quindi è stata caricata la copia precedente (workspaces.json.bak). Il file danneggiato è stato conservato accanto al programma come {0}.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">Quest'area di lavoro è impostata per eseguire in {1} il comando riportato sotto. Non è stato digitato su questo computer (potrebbe provenire da un file di progetto), quindi controllarlo prima dell'esecuzione.&#10;&#10;{0}&#10;&#10;Eseguirlo?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">Eliminare il branch locale &quot;{0}&quot;? I branch remoti non vengono toccati.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">Il branch &quot;{0}&quot; contiene commit che non esistono altrove. Eliminandolo andranno persi per sempre. Eliminare comunque?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Branch &quot;{0}&quot; eliminato.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">Ci sono modifiche non committate, quindi git non può passare a &quot;{0}&quot;.&#x0a;&#x0a;Metterle in stash (file non tracciati inclusi) e passare? Si possono ripristinare con Stash pop ({gesture:GitStashPop}).</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">Ci sono modifiche non committate, quindi git non può passare a &quot;{0}&quot;.&#x0a;&#x0a;Metterle in stash (file non tracciati inclusi) e passare? Si possono ripristinare con Stash pop ({gesture:GitStashPop}).</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">prima di passare a {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Conflitto di merge non risolto</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Contiene modifiche</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Scarta</sys:String>
     <sys:String x:Key="Git_DiscardHint">Scarta le modifiche selezionate dell'albero di lavoro e ripristina l'ultima versione committata. Non può essere annullato.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Scarta modifiche</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">Scartare le modifiche in {0} {0:plural:file|file} e ripristinare l'ultima versione committata?&#x0a;&#x0a;{1}&#x0a;&#x0a;L'operazione non può essere annullata.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">Scartare le modifiche in {0} {0:plural:file|file} e ripristinare l'ultima versione committata?&#x0a;&#x0a;{1}&#x0a;&#x0a;L'operazione non può essere annullata.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} di essi sono anche in staging; vengono scartate anche le relative modifiche in staging.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0} {0:plural:file non tracciato saltato|file non tracciati saltati}: non {0:plural:ha|hanno} una versione committata a cui tornare. {0:plural:Eliminarlo|Eliminarli} con {gesture:Delete}.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">I file non tracciati non possono essere scartati qui (non c'è nulla da ripristinare). Eliminarli con {gesture:Delete}.</sys:String>
@@ -845,9 +853,9 @@
     <sys:String x:Key="Menu_Files">_File</sys:String>
     <sys:String x:Key="Menu_Commands">_Comandi</sys:String>
     <sys:String x:Key="Menu_Settings">Imp_ostazioni</sys:String>
-    <sys:String x:Key="Menu_Bookmarks">_Segnalibri</sys:String>
-    <sys:String x:Key="Menu_Workspaces">_Aree di lavoro</sys:String>
-    <sys:String x:Key="Menu_Help">_Guida</sys:String>
+    <sys:String x:Key="Menu_Bookmarks">Segnalib_ri</sys:String>
+    <sys:String x:Key="Menu_Workspaces">Aree di _lavoro</sys:String>
+    <sys:String x:Key="Menu_Help">Gui_da</sys:String>
     <sys:String x:Key="Git_Menu_Worktrees">_Dashboard dei worktree…</sys:String>
     <sys:String x:Key="Git_Menu_NewWorktree">_Nuovo worktree per un'attività…</sys:String>
     <sys:String x:Key="Git_Menu_Commit">_Commit…</sys:String>
@@ -944,12 +952,12 @@
     <sys:String x:Key="AiRename_NoteCollision">Un suffisso numerico ha risolto un conflitto di nomi.</sys:String>
     <sys:String x:Key="AiRename_NoteNoName">Il modello non ha proposto alcun nome.</sys:String>
     <sys:String x:Key="AiRename_NoteUnchanged">Invariato.</sys:String>
-    <sys:String x:Key="AiRename_GuardRepository">Questa cartella si trova in una copia di lavoro git. La rinomina con AI è limitata ai file non versionati (download, scansioni, foto): rinominare file tracciati romperebbe riferimenti e cronologia.</sys:String>
-    <sys:String x:Key="AiRename_GuardProjectDir">«{0}» è una cartella di progetto. La rinomina con AI è limitata alle cartelle di file senza un nome significativo, come download o scansioni.</sys:String>
-    <sys:String x:Key="AiRename_GuardSource">{0} su {1} file selezionati sono file di codice sorgente o di configurazione. La rinomina con AI è limitata alle cartelle di file senza un nome significativo; per il codice usare la rinomina multipla ({gesture:MultiRename}).</sys:String>
-    <sys:String x:Key="AiRename_SkippedCode">{0} {0:plural:file di codice sorgente o di configurazione escluso|file di codice sorgente o di configurazione esclusi}: la rinomina con AI non tocca il codice.</sys:String>
+    <sys:String x:Key="AiRename_GuardRepository">Questa cartella si trova in una copia di lavoro git. La rinomina con IA è limitata ai file non versionati (download, scansioni, foto): rinominare file tracciati romperebbe riferimenti e cronologia.</sys:String>
+    <sys:String x:Key="AiRename_GuardProjectDir">«{0}» è una cartella di progetto. La rinomina con IA è limitata alle cartelle di file senza un nome significativo, come download o scansioni.</sys:String>
+    <sys:String x:Key="AiRename_GuardSource">{0} su {1} file selezionati sono file di codice sorgente o di configurazione. La rinomina con IA è limitata alle cartelle di file senza un nome significativo; per il codice usare la rinomina multipla ({gesture:MultiRename}).</sys:String>
+    <sys:String x:Key="AiRename_SkippedCode">{0} {0:plural:file di codice sorgente o di configurazione escluso|file di codice sorgente o di configurazione esclusi}: la rinomina con IA non tocca il codice.</sys:String>
     <sys:String x:Key="AiRename_Capped">In questo batch ci sono solo i primi {0} di {1} file; eseguire di nuovo il comando per gli altri.</sys:String>
-    <sys:String x:Key="AiRename_UploadConfirm">La rinomina con AI invia un estratto di testo di ciascun file selezionato ({0}) a {1}. Continuare? (Richiesto una sola volta per questo server.)</sys:String>
+    <sys:String x:Key="AiRename_UploadConfirm">La rinomina con IA invia un estratto di testo di ciascun file selezionato ({0}) a {1}. Continuare? (Richiesto una sola volta per questo server.)</sys:String>
 
     <sys:String x:Key="Semantic_Clear">Svuota indice</sys:String>
     <sys:String x:Key="Semantic_ClearConfirm">Eliminare l'intero indice semantico? Viene ricostruito da «Indice», ma ciò comporta di nuovo chiamate di embedding.</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Accesso negato.</sys:String>
     <sys:String x:Key="Files_NotFound">Questa cartella non esiste.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Impossibile leggere questa cartella: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">La lettura della cartella è stata interrotta.</sys:String>
     <sys:String x:Key="Files_Empty">Questa cartella è vuota</sys:String>
     <sys:String x:Key="Files_NoMatches">Nessun nome corrisponde al filtro digitato (Esc lo cancella)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Trascorso:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Deseleziona per maschera</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Maschera da selezionare (ad es. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Maschera da deselezionare (ad es. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">_Modello:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Modello</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">_Elimina</sys:String>
+    <sys:String x:Key="Sel_Mask">Masc_hera:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Separare le maschere con ;. Dopo | vengono le esclusioni, una maschera che termina con \ indica cartelle: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">Includi _cartelle</sys:String>
+    <sys:String x:Key="Sel_Age">E_tà:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Età</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Quantità</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Unità</sys:String>
+    <sys:String x:Key="Sel_AgeAny">qualsiasi</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">più vecchio di</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">più recente di</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">minuti</sys:String>
+    <sys:String x:Key="Sel_UnitHours">ore</sys:String>
+    <sys:String x:Key="Sel_UnitDays">giorni</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Solo modificati in _Git</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Modificati, nell'area di staging, non tracciati o in conflitto. Funziona in una cartella su disco.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Solo modificati da un _agente</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">Ciò che le modifiche agente del progetto attribuiscono a un agente. Funziona in una cartella su disco.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Salva come modello</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">_Nome:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">Ta_sto:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Tasto</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">Una combinazione con Ctrl, Alt o Maiusc. Un tasto già usato da un altro comando viene ignorato.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">Sal_va</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Le condizioni su Git e sull'agente funzionano solo in una cartella su disco.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Nessuna corrispondenza.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Posizionare il cursore su un file per selezionare in base alla sua estensione.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">Non c'è una selezione precedente da ripristinare.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">Nessuno dei nomi selezionati in precedenza si trova in questa cartella.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Seleziona: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Codice sorgente</sys:String>
+    <sys:String x:Key="SelTpl_Config">File di configurazione</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Documenti</sys:String>
+    <sys:String x:Key="SelTpl_Images">Immagini</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Archivi</sys:String>
+    <sys:String x:Key="SelTpl_Junk">File temporanei e log</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Cartelle di build</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">Modificati in Git</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Modificati da un agente</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">Modificati nelle ultime 24 ore</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Più vecchi di 2 giorni</sys:String>
     <sys:String x:Key="Log_Title">Registro delle operazioni</sys:String>
     <sys:String x:Key="Log_ColTime">Ora</sys:String>
     <sys:String x:Key="Log_ColOperation">Operazione</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Eliminare l'intero registro delle operazioni? È la traccia di ciò che hanno fatto il file manager e gli agenti e non può essere ripristinato.</sys:String>
     <sys:String x:Key="Log_ClearButton">Cancella il registro</sys:String>
     <sys:String x:Key="Log_UndoRename">Annulla rinomina</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Restituisce ai file del batch di rinomina selezionato (rinomina con AI) i nomi precedenti. Controlla la cartella e chiede prima conferma.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Restituisce ai file del batch di rinomina selezionato i nomi precedenti. Controlla la cartella e chiede prima conferma.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">Restituire a {0} {0:plural:file|file} in {1} {0:plural:il nome che aveva|i nomi che avevano} prima di questa rinomina?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:file resta|file restano} {0:plural:com'è|come sono}: rinominato, spostato o eliminato nel frattempo, oppure il vecchio nome è occupato da un altro file.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">Nulla può essere rinominato di nuovo in {0}: i file non hanno più i nomi assegnati da questo batch, oppure i loro vecchi nomi sono occupati.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">Questo batch è stato rinominato su {0}. Collega un pannello a quel server e riprova.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">Questo batch è stato rinominato nell'archivio {0}. Apri quell'archivio in un pannello e riprova.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Cestino</sys:String>
     <sys:String x:Key="Log_KindCopy">Copia</sys:String>
     <sys:String x:Key="Log_KindMove">Sposta</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Alcuni elementi non sono stati spostati; restano dove erano.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Alcuni elementi non sono stati aggiunti all'archivio; gli originali sono rimasti al loro posto.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">Il formato dell'archivio non può essere modificato: i file sono stati estratti ma restano anche nell'archivio.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">I file sono stati estratti, ma restano nell'archivio: è stato aperto da un server o da un altro archivio, e qui ne è aperta solo una copia temporanea.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Le proprietà non sono disponibili</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">L'estrazione non è disponibile</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Scegliere come destinazione una cartella normale del disco locale nell'altro pannello.</sys:String>
@@ -1160,45 +1215,50 @@
     <sys:String x:Key="Fc_FileInTheWay">Un file chiamato "{0}" ostacola la cartella.</sys:String>
     <sys:String x:Key="Fc_FolderInTheWay">Una cartella chiamata "{0}" ostacola il file.</sys:String>
     <sys:String x:Key="Menu_Rename">_Rinomina…</sys:String>
-    <sys:String x:Key="Menu_View">_Visualizza</sys:String>
-    <sys:String x:Key="Menu_Edit">_Modifica</sys:String>
+    <sys:String x:Key="Menu_View">Vis_ualizza</sys:String>
+    <sys:String x:Key="Menu_Edit">Mo_difica</sys:String>
     <sys:String x:Key="Menu_Copy">_Copia…</sys:String>
     <sys:String x:Key="Menu_Move">_Sposta…</sys:String>
     <sys:String x:Key="Menu_NewFolder">_Nuova cartella…</sys:String>
     <sys:String x:Key="Menu_Delete">_Elimina</sys:String>
-    <sys:String x:Key="Menu_SelectByMask">Selez_iona per maschera…</sys:String>
-    <sys:String x:Key="Menu_UnselectByMask">_Deseleziona per maschera…</sys:String>
-    <sys:String x:Key="Menu_CopyFullPath">Copia _percorso completo</sys:String>
+    <sys:String x:Key="Menu_SelectByMask">Sele_ziona per maschera…</sys:String>
+    <sys:String x:Key="Menu_UnselectByMask">Deseleziona per masc_hera…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">Sele_zione</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Seleziona stessa e_stensione</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">_Deseleziona stessa estensione</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">_Ripristina selezione</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">_Modelli</sys:String>
+    <sys:String x:Key="Menu_CopyFullPath">Copia percorso comp_leto</sys:String>
     <sys:String x:Key="Menu_CopyNames">Copia n_omi</sys:String>
-    <sys:String x:Key="Menu_CopyReadLink">Copia c_ollegamento</sys:String>
+    <sys:String x:Key="Menu_CopyReadLink">Copia colle_gamento</sys:String>
     <sys:String x:Key="Link_ForHour">Per 1 ora</sys:String>
     <sys:String x:Key="Link_ForDay">Per 1 giorno</sys:String>
     <sys:String x:Key="Link_ForWeek">Per 7 giorni</sys:String>
     <sys:String x:Key="Menu_Properties">Pro_prietà</sys:String>
     <sys:String x:Key="Menu_FolderSizes">Dimensioni car_telle</sys:String>
     <sys:String x:Key="Menu_Pack">Co_mprimi…</sys:String>
-    <sys:String x:Key="Menu_Unpack">Est_rai…</sys:String>
-    <sys:String x:Key="Menu_Exit">Es_ci</sys:String>
+    <sys:String x:Key="Menu_Unpack">Estr_ai…</sys:String>
+    <sys:String x:Key="Menu_Exit">Esc_i</sys:String>
     <sys:String x:Key="Menu_NewFile">Nuovo _file…</sys:String>
     <sys:String x:Key="Menu_DeletePermanent">Elimina definiti_vamente</sys:String>
-    <sys:String x:Key="Menu_NameSearch">Trova file _ovunque…</sys:String>
-    <sys:String x:Key="Menu_QuickFilter">Filtro _rapido</sys:String>
+    <sys:String x:Key="Menu_NameSearch">Trova file ovun_que…</sys:String>
+    <sys:String x:Key="Menu_QuickFilter">_Filtro rapido</sys:String>
     <sys:String x:Key="Menu_CompareDirs">Confronta _cartelle…</sys:String>
     <sys:String x:Key="Menu_SavedOps">Operazioni sal_vate…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">Gestisci _operazioni salvate…</sys:String>
-    <sys:String x:Key="Menu_DropStackAdd">Pila di rilascio: aggiungi _selezione</sys:String>
-    <sys:String x:Key="Menu_DropStackShow">Pila di rila_scio…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Gestisci operazioni salvate…</sys:String>
+    <sys:String x:Key="Menu_DropStackAdd">Pila di rilascio: aggiungi selezione</sys:String>
+    <sys:String x:Key="Menu_DropStackShow">Pi_la di rilascio…</sys:String>
     <sys:String x:Key="Menu_RunGadget">Esegui un _gadget…</sys:String>
-    <sys:String x:Key="Menu_GadgetsManage">Gestisci ga_dget…</sys:String>
+    <sys:String x:Key="Menu_GadgetsManage">Gestisci gadget…</sys:String>
     <sys:String x:Key="Menu_Agents">_Agenti</sys:String>
     <sys:String x:Key="Menu_AgentChanges">_Modifiche dell'agente…</sys:String>
     <sys:String x:Key="Menu_AgentLaunch">Avvia un agente su un'_attività…</sys:String>
-    <sys:String x:Key="Menu_AiRename">_Rinomina con AI…</sys:String>
+    <sys:String x:Key="Menu_AiRename">_Rinomina con IA…</sys:String>
     <sys:String x:Key="Menu_SemanticSearch">Ricerca _semantica…</sys:String>
     <sys:String x:Key="Menu_FolderTree">_Albero delle cartelle</sys:String>
-    <sys:String x:Key="Menu_HideIgnored">_Nascondi file gitignored</sys:String>
-    <sys:String x:Key="Menu_ShowHidden">Mostra file na_scosti</sys:String>
-    <sys:String x:Key="Menu_ShowExtensions">Mostra _estensioni dei file</sys:String>
+    <sys:String x:Key="Menu_HideIgnored">Nascondi _file gitignored</sys:String>
+    <sys:String x:Key="Menu_ShowHidden">_Mostra file nascosti</sys:String>
+    <sys:String x:Key="Menu_ShowExtensions">Mostra estensioni _dei file</sys:String>
     <sys:String x:Key="Menu_FoldersFirst">Cartelle per _prime</sys:String>
     <sys:String x:Key="Menu_Columns">_Colonne…</sys:String>
     <sys:String x:Key="Menu_ExportSettings">_Esporta impostazioni…</sys:String>
@@ -1207,30 +1267,30 @@
     <sys:String x:Key="Menu_FindFiles">_Trova file…</sys:String>
     <sys:String x:Key="Menu_MultiRename">Rinomina _multipla…</sys:String>
     <sys:String x:Key="Menu_Checksums">Chec_ksum…</sys:String>
-    <sys:String x:Key="Menu_OperationLog">_Registro delle operazioni…</sys:String>
+    <sys:String x:Key="Menu_OperationLog">Registro delle opera_zioni…</sys:String>
     <sys:String x:Key="Menu_BackgroundOperations">Operazioni in _background</sys:String>
-    <sys:String x:Key="Menu_Terminal">Apri _terminale</sys:String>
-    <sys:String x:Key="Menu_ShellsManage">_Shell della riga di comando…</sys:String>
+    <sys:String x:Key="Menu_Terminal">_Apri terminale</sys:String>
+    <sys:String x:Key="Menu_ShellsManage">S_hell della riga di comando…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Apri nell'_editor</sys:String>
-    <sys:String x:Key="Menu_OpenInEditorPicker">Apri nell'e_ditor…</sys:String>
-    <sys:String x:Key="Menu_RunAgent">Esegui _agente qui</sys:String>
+    <sys:String x:Key="Menu_OpenInEditorPicker">Apri nell'editor…</sys:String>
+    <sys:String x:Key="Menu_RunAgent">_Esegui agente qui</sys:String>
     <sys:String x:Key="Menu_RunAgentPicker">Esegui a_gente qui…</sys:String>
     <sys:String x:Key="Menu_GoRoot">Vai alla _radice</sys:String>
     <sys:String x:Key="Menu_GoHome">Vai alla cartella _utente</sys:String>
-    <sys:String x:Key="Menu_GoClipboard">Vai al percorso degli _Appunti</sys:String>
-    <sys:String x:Key="Menu_EditPath">_Digita un percorso</sys:String>
-    <sys:String x:Key="Menu_OpenExplorer">Apri in _Esplora file</sys:String>
-    <sys:String x:Key="Menu_UserTools">Strumenti _utente…</sys:String>
+    <sys:String x:Key="Menu_GoClipboard">Vai al percorso negli Appunti</sys:String>
+    <sys:String x:Key="Menu_EditPath">Digita un percorso</sys:String>
+    <sys:String x:Key="Menu_OpenExplorer">Apri _in Esplora file</sys:String>
+    <sys:String x:Key="Menu_UserTools">Strumenti utente…</sys:String>
     <sys:String x:Key="Menu_ConnectionManager">Gestione co_nnessioni…</sys:String>
     <sys:String x:Key="Menu_Disconnect">_Disconnetti</sys:String>
-    <sys:String x:Key="Menu_QueueTransfer">Aggiungi alla _coda di trasferimento</sys:String>
+    <sys:String x:Key="Menu_QueueTransfer">Aggiungi alla coda di trasferimento</sys:String>
     <sys:String x:Key="Menu_TransferQueue">Coda di tra_sferimento…</sys:String>
-    <sys:String x:Key="Menu_Options">_Impostazioni…</sys:String>
-    <sys:String x:Key="Menu_Hotkeys">Scorcia_toie da tastiera…</sys:String>
-    <sys:String x:Key="Menu_PluginManager">Gestione _plug-in…</sys:String>
+    <sys:String x:Key="Menu_Options">Imposta_zioni…</sys:String>
+    <sys:String x:Key="Menu_Hotkeys">Scelte _rapide da tastiera…</sys:String>
+    <sys:String x:Key="Menu_PluginManager">_Gestione plugin…</sys:String>
     <sys:String x:Key="Menu_SplitVertical">Dividi i pannelli _verticalmente</sys:String>
     <sys:String x:Key="Menu_SwapPanels">Scambia pa_nnelli</sys:String>
-    <sys:String x:Key="Menu_ToggleTheme">Tema _chiaro / scuro</sys:String>
+    <sys:String x:Key="Menu_ToggleTheme">_Tema chiaro / scuro</sys:String>
     <sys:String x:Key="Menu_ViewMode">Modalità di vi_sualizzazione</sys:String>
     <sys:String x:Key="Menu_ViewDetails">_Dettagli</sys:String>
     <sys:String x:Key="Menu_ViewBrief">_Breve</sys:String>
@@ -1251,7 +1311,7 @@
     <sys:String x:Key="Menu_Ws_ExportDefinition">Sal_va file di progetto (.tcvproj)…</sys:String>
     <sys:String x:Key="Menu_Ws_SwitchTo">_Passa a</sys:String>
     <sys:String x:Key="Menu_Ws_Pin">_Fissa alla barra laterale delle aree di lavoro</sys:String>
-    <sys:String x:Key="Menu_Ws_Unpin">_Rimuovi dalla barra laterale delle aree di lavoro</sys:String>
+    <sys:String x:Key="Menu_Ws_Unpin">Rimuovi dalla _barra laterale delle aree di lavoro</sys:String>
     <sys:String x:Key="Menu_Ws_PropertiesItem">P_roprietà: nome, icona, colore, gruppo, terminale…</sys:String>
     <sys:String x:Key="Menu_Ws_NotesItem">_Note…</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalItem">_Terminale</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">La versione {0} è disponibile.&#10;&#10;{1}&#10;&#10;Installarla ora? Il programma si chiude, si aggiorna e si riapre. Impostazioni e aree di lavoro vengono conservate.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">La versione {0} è disponibile. Installarla dalla finestra principale: chiude le finestre delle aree di lavoro e riavvia.</sys:String>
     <sys:String x:Key="Update_Busy">L'aggiornamento chiude il programma e ci sono operazioni o trasferimenti in corso. Attendere che terminino e riprovare.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">L'aggiornamento non è stato installato: le modifiche di file su un server non sono state caricate. Sono al sicuro in:&#10;{0}&#10;&#10;Salvale di nuovo nell'editor, poi riprova.</sys:String>
     <sys:String x:Key="Update_Downloading">download dell'aggiornamento… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">Impossibile scaricare l'aggiornamento: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Non tutte le finestre delle aree di lavoro sono state chiuse. Chiuderle e riprovare l'aggiornamento.</sys:String>
@@ -1301,7 +1362,7 @@
     <sys:String x:Key="Update_NotInstalled">La versione {0} è stata scaricata ma non installata: l'installazione è stata interrotta, oppure un altro programma (ad esempio un antivirus) teneva bloccati i file del programma. È in esecuzione la versione precedente. Per installarla: Guida → Verifica aggiornamenti.</sys:String>
     <sys:String x:Key="Update_FeedNeedsPortable">Una cartella o un URL di feed di aggiornamento funziona solo per una copia portatile; questa può controllare soltanto un repository GitHub (proprietario/nome).</sys:String>
     <sys:String x:Key="Checksum_Unavailable">I checksum non sono disponibili qui</sys:String>
-    <sys:String x:Key="UserTools_NotLoaded">Il plug-in degli strumenti utente non è caricato.</sys:String>
+    <sys:String x:Key="UserTools_NotLoaded">Il plugin degli strumenti utente non è caricato.</sys:String>
     <sys:String x:Key="Settings_ExtCommand">Comando</sys:String>
     <sys:String x:Key="Settings_ExtArguments">Argomenti</sys:String>
     <sys:String x:Key="Settings_ExtInTerminal">Nel terminale</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">Nuovo nome</sys:String>
     <sys:String x:Key="MR_ColConflict">Problema</sys:String>
     <sys:String x:Key="MR_Rename">Rinomina</sys:String>
-    <sys:String x:Key="MR_Undo">Annulla</sys:String>
-    <sys:String x:Key="MR_UndoTip">Restituisce ai file appena rinominati i vecchi nomi</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Un altro file riceve lo stesso nome</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Nome vuoto</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Nome non valido</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Nessun elemento da rinominare. Conflitti: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Nessun elemento da rinominare: nessuna modifica ai nomi.</sys:String>
     <sys:String x:Key="MR_Error">Errore: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Nomi ripristinati: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">Ripristinati {0} di {1}; {2} non riusciti.</sys:String>
-    <sys:String x:Key="MR_UndoError">Impossibile annullare: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">File rinominati: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Ignorati a causa di conflitti: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Non riusciti: {0} (ad esempio "{1}": {2}).</sys:String>
@@ -1381,10 +1437,11 @@
     <sys:String x:Key="Conn_Protocol">_Protocollo:</sys:String>
     <sys:String x:Key="Conn_AuthMethod">_Accedi con:</sys:String>
     <sys:String x:Key="Conn_KeyFile">_File chiave:</sys:String>
-    <sys:String x:Key="Conn_Passphrase">Pass_phrase:</sys:String>
+    <sys:String x:Key="Conn_Passphrase">Pa_ssphrase:</sys:String>
     <sys:String x:Key="Conn_Browse">Sfoglia…</sys:String>
     <sys:String x:Key="Conn_Test">Verifica connessione</sys:String>
     <sys:String x:Key="Conn_Connecting">Connessione in corso…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Connessione a “{0}” in corso…</sys:String>
     <sys:String x:Key="Conn_TestOk">Connessione riuscita.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Verifica annullata.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Non riuscita: {0}</sys:String>
@@ -1447,8 +1504,8 @@
     <sys:String x:Key="Conn_QuickTitle">Connessione rapida</sys:String>
     <sys:String x:Key="Conn_QuickPrompt">Indirizzo di un server o di uno spazio di archiviazione: sftp://user@host:22/path, ftp://…, davs://…, s3://bucket/prefix</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">“{0}” non è un indirizzo di connessione. Ad esempio: sftp://user@host/path, s3://bucket.</sys:String>
-    <sys:String x:Key="Menu_Reconnect">Ri_connetti</sys:String>
-    <sys:String x:Key="Menu_QuickConnect">Connessione _rapida…</sys:String>
+    <sys:String x:Key="Menu_Reconnect">Riconnetti</sys:String>
+    <sys:String x:Key="Menu_QuickConnect">C_onnessione rapida…</sys:String>
     <sys:String x:Key="Conn_Saved">Connessione “{0}” salvata.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">“{0}”: indicare la condivisione, con un percorso come /share o /share/folder.</sys:String>
     <sys:String x:Key="Conn_ShareInUse">Windows non ha chiuso la connessione a {0}: {1} Chiudere i file aperti da quella condivisione e riprovare.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">nessun IdentityFile: la chiave predefinita</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">il file della chiave non è presente su questo computer</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">nessuna chiave: verrà richiesta una password</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump e ProxyCommand non sono supportati: connessione diretta</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Raggiungibile tramite {0}, ma qui i tunnel non sono supportati: se selezionato, si connette direttamente, senza passare da lì</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">I blocchi Match non possono essere valutati qui; le relative impostazioni non sono state applicate ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: file inesistente.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include non letto: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Download</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Upload</sys:String>
     <sys:String x:Key="Transfer_Empty">La coda è vuota. Selezionare i file su un server e premere {gesture:QueueTransfer}.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Aggiunta alla coda</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">{0} {0:plural:file trovato|file trovati}</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Non messi in coda: {0} {0:plural:elemento|elementi}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: un collegamento, non viene seguito</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: stesso contenuto di una cartella superiore, probabilmente un ciclo di collegamenti</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: annidamento troppo profondo</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: lettura non riuscita: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: questo nome non può esistere nella destinazione</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: un file e una cartella avrebbero lo stesso nome</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">Aprire in uno dei pannelli una connessione a un server o a uno spazio di archiviazione: la coda funziona solo con questi.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">L'altro pannello deve mostrare un disco locale: la coda sposta i file tra un server e il disco.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">Solo i file possono essere messi in coda: copiare le cartelle con {gesture:Copy}.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">"{0}" esiste già ed è stato lasciato invariato.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">"{0}" esiste già sul server ed è stato lasciato invariato.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">Trasferimento di "{0}" non riuscito.</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">La cartella in cui cercare non esiste: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Dimensione "{0}" non valida. Immettere byte, oppure un numero con KB, MB o GB (ad esempio 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">La dimensione minima è maggiore di quella massima.</sys:String>
-    <sys:String x:Key="Search_BadDate">Data "{0}" non valida. Immettere un giorno, ad esempio 2026-10-01 o 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Data "{0}" non valida. Immettere un giorno, ad esempio 2026-10-31 o 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">La data iniziale è successiva alla data finale.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Automatica</sys:String>
     <sys:String x:Key="Search_NameRegex">Il nome del file è un'espressione regolare</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Byte, oppure un numero con KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Modificato il o dopo il</sys:String>
     <sys:String x:Key="Search_DateTo">Modificato il o prima del</sys:String>
-    <sys:String x:Key="Search_DateHint">Un giorno: 2026-10-01 oppure 01.10.2026. Entrambi i giorni sono inclusi; lasciare vuoto per nessun limite.</sys:String>
+    <sys:String x:Key="Search_DateHint">Un giorno: 2026-10-31 oppure 31.10.2026. Entrambi i giorni sono inclusi; lasciare vuoto per nessun limite.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">impossibile da leggere</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">i nomi differiscono solo per maiuscole/minuscole</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Confronta contenuto</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">la cartella non esiste</sys:String>
     <sys:String x:Key="Cmp_Failed">Confronto non riuscito: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · {0} cartelle non leggibili sono state escluse</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">il lato sinistro non può essere modificato, quindi non vi viene copiato nulla</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">il lato destro non può essere modificato, quindi non vi viene copiato nulla</sys:String>
     <sys:String x:Key="Cmp_TickRow">Includi questa riga</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Direzione della copia</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Fare clic per cambiare la direzione: → copia a destra, ← copia a sinistra, = non fare nulla</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">File che verranno sostituiti:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… e altri {0}</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">I file sostituiti vengono prima spostati nel Cestino, così possono essere ripristinati.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Alcuni file sostituiti si trovano su un server, che non ha un Cestino: non sarà possibile recuperarli.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Alcuni file sostituiti si trovano su un server o in un archivio, che non hanno un Cestino: non sarà possibile recuperarli.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">ATTENZIONE: {0} dei file sostituiti sono PIÙ RECENTI della copia che li sostituisce:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">{0} voci vengono ignorate: un file da una parte e una cartella dall'altra.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Sincronizzare?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: impossibile spostare il file esistente nel Cestino, lasciato invariato</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: la copia non è stata completata</sys:String>
     <sys:String x:Key="Cmp_Unstamped">Non è stato possibile assegnare ai {0} file copiati la data di modifica dell'origine (il server non lo consente). Hanno l'ora della copia, quindi il prossimo confronto li mostrerà come più recenti: usare "Confronta contenuto" prima di sincronizzare nella direzione opposta.</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Alcuni file modificati in remoto non sono stati caricati prima della chiusura. Le modifiche sono conservate in:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Alcuni file modificati in remoto non sono stati caricati prima della chiusura. Le modifiche sono conservate in:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0} caricato sul server</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">Impossibile caricare {0}: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">Impossibile caricare {0}: {1}
 
 Le modifiche sono al sicuro nella copia locale, che è stata conservata:
 {2}
 
 Il file sul server potrebbe essere incompleto. Salvare di nuovo nell'editor per riprovare.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} non è stato caricato: la copia sul server è cambiata dopo l'apertura e si è scelto di non sovrascriverla.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} non è stato caricato: la copia sul server è cambiata dopo l'apertura e si è scelto di non sovrascriverla.
 
 Le modifiche restano in:
 {1}
 
 Salvare di nuovo nell'editor per ricevere di nuovo la richiesta.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} è cambiato sul server dopo l'apertura.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} è cambiato sul server dopo l'apertura.
 
 All'apertura: {1:N0} byte, {2}
 Ora: {3:N0} byte, {4}
@@ -1893,8 +1960,11 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Help_Cmd_SelectAll">Seleziona tutti i file e le cartelle visibili (nel rispetto del filtro rapido).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Cancella tutte le selezioni nel pannello attivo.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Inverte la selezione: gli elementi selezionati vengono deselezionati e gli altri selezionati (cartelle incluse).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Seleziona gli elementi i cui nomi corrispondono a una maschera, ad esempio *.cs; *.md. Separare le maschere con ;, una virgola o uno spazio; *.* corrisponde a tutto, cartelle incluse.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Seleziona gli elementi in base a una maschera o a un modello, ad esempio *.cs;*.md | *.g.cs. Le maschere si separano con ;, dopo | vengono le esclusioni, una maschera che termina con \ indica cartelle. Un modello può anche richiedere un'età (più vecchio o più recente di), una modifica in Git o una modifica di un agente.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Deseleziona gli elementi i cui nomi corrispondono alla maschera.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Seleziona tutti i file con la stessa estensione del file sotto il cursore.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Deseleziona tutti i file con la stessa estensione del file sotto il cursore.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Seleziona di nuovo i nomi selezionati prima dell'ultima deselezione, eliminazione o cambio di cartella, in questa cartella o in un'altra con gli stessi nomi.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Mette i file selezionati negli Appunti per incollarli qui ({gesture:ClipboardPaste}) o in Esplora file. Funziona su disco, negli archivi (quelli si incollano solo all'interno dell'app) e nei risultati di ricerca; non sui server: lì usare {gesture:Copy}.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Come Copia negli Appunti, ma incollando i file vengono spostati; gli originali vengono rimossi solo dopo che tutto è arrivato a destinazione.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Incolla nella cartella corrente (o in uno ZIP aperto) i file copiati o tagliati qui o in Esplora file. Chiede cosa fare quando i nomi coincidono; una copia nella stessa cartella diventa "file (1)".</sys:String>
@@ -1935,15 +2005,15 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Blocca la scheda sulla sua cartella (icona del lucchetto): non può essere chiusa e, ogni volta che vi si torna, riapre quella cartella. Eseguire di nuovo per sbloccare.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Assegna alla scheda un nome proprio al posto del nome della cartella (anche con doppio clic sulla scheda). Un nome vuoto ripristina il nome della cartella.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">Ricerca di file: per maschera del nome o espressione regolare, per contenuto, dimensione e attributi, anche negli archivi e nel rispetto di .gitignore; i criteri si possono salvare come preimpostazioni. Mostra nel pannello elenca i risultati nel pannello attivo, dove i comandi consueti agiscono su di essi. Cerca nei dischi locali.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Rinomina in blocco con un modello ([N] nome, [E] estensione, [C] contatore, [D] e [T] data e ora, [P] cartella), sostituzione con espressioni regolari, inserimento ed eliminazione di caratteri e cambi di maiuscole/minuscole. L'anteprima mostra subito i conflitti; dopo Rinomina si può premere Annulla finché la finestra è aperta. In un archivio ZIP l'intero blocco è un'unica riscrittura dell'archivio, tutto o niente; gli altri formati di archivio sono di sola lettura.</sys:String>
-    <sys:String x:Key="Help_Cmd_OperationLog">Cronologia delle operazioni sui file, proprie e degli agenti: copia, spostamento, eliminazione, rinomina, creazione, compressione ed estrazione, download e upload (la coda di trasferimento e i salvataggi di un file aperto da un server), con esito ed errori. Una riga può essere salvata come operazione riutilizzabile. L'unica cosa che il registro può annullare è un blocco di rinomina o la rinomina con IA (Annulla rinomina); per il resto la via del ritorno è il Cestino.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Rinomina in blocco con un modello ([N] nome, [E] estensione, [C] contatore, [D] e [T] data e ora, [P] cartella), sostituzione con espressioni regolari, inserimento ed eliminazione di caratteri e cambi di maiuscole/minuscole. L'anteprima mostra subito i conflitti; Rinomina chiude la finestra e il batch viene eseguito in background; «Annulla rinomina» nel registro delle operazioni ripristina i vecchi nomi (su un server, quando un pannello vi è collegato). In un archivio ZIP l'intero batch è un'unica riscrittura dell'archivio, tutto o niente; gli altri formati di archivio sono di sola lettura.</sys:String>
+    <sys:String x:Key="Help_Cmd_OperationLog">Cronologia delle operazioni sui file, proprie e degli agenti: copia, spostamento, eliminazione, rinomina, creazione, compressione ed estrazione, download e upload (la coda di trasferimento e i salvataggi di un file aperto da un server), con esito ed errori. Una riga può essere salvata come operazione riutilizzabile. L'unica cosa che il registro può annullare è un batch di rinomina o la rinomina con IA (Annulla rinomina); per il resto la via del ritorno è il Cestino.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Mostra di nuovo le finestre di avanzamento nascoste con «In background». Una copia, uno spostamento o un'eliminazione prosegue con la finestra nascosta; la barra di stato mostra quante operazioni sono in background e a che punto sono, e un clic su di essa le elenca, ognuna con il suo avanzamento o «in coda», per mostrarne la finestra o annullarla. Le operazioni con un server da un lato vanno accanto a quelle sul disco, quindi un download lungo non trattiene una copia locale.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Aggiunge ai segnalibri la cartella corrente del pannello attivo con un nome a scelta. I segnalibri si trovano nel menu Segnalibri.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Editor dei segnalibri: nome, percorso, ordine e gruppo (i gruppi diventano sottomenu del menu Segnalibri), importazione ed esportazione come JSON. Le modifiche si applicano con OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Apre la shell della riga di comando (quella scelta a sinistra della riga) nella cartella del pannello attivo, in Windows Terminal se installato. Se Windows Terminal ha un profilo per quella shell, la scheda si apre con esso. In Impostazioni → Shell si può aprire invece il profilo predefinito di Windows Terminal. Solo cartelle su disco.</sys:String>
     <sys:String x:Key="Help_Cmd_OpenInEditor">Apre la cartella corrente e i file selezionati nell'editor predefinito (VS Code, Cursor, Rider, Zed, Sublime Text, Notepad++ e altri vengono trovati automaticamente). Scegliere quello predefinito in Impostazioni → Strumenti esterni, oppure con Apri nell'editor….</sys:String>
     <sys:String x:Key="Help_Cmd_OpenInEditorPicker">Come Apri nell'editor, ma prima permette di scegliere l'editor da un elenco; la scelta diventa quella predefinita.</sys:String>
-    <sys:String x:Key="Help_Cmd_RunAgentHere">Avvia una CLI di agente (Claude Code, Codex, Gemini, Aider e altri) in una nuova finestra del terminale nella cartella del pannello attivo. L'avvio viene registrato come sessione dell'agente, quindi le sue modifiche compaiono poi in Modifiche degli agenti ({gesture:AgentChanges}).</sys:String>
+    <sys:String x:Key="Help_Cmd_RunAgentHere">Avvia una CLI di agente (Claude Code, Codex, Gemini, Aider e altri) in una nuova finestra del terminale nella cartella del pannello attivo. L'avvio viene registrato come sessione dell'agente, quindi le sue modifiche compaiono poi in Modifiche dell'agente ({gesture:AgentChanges}).</sys:String>
     <sys:String x:Key="Help_Cmd_RunAgentPicker">Come Esegui agente qui, ma prima permette di scegliere l'agente; la scelta viene ricordata.</sys:String>
     <sys:String x:Key="Help_Cmd_RunGadget">Un gadget è una riga di comando salvata con un nome, ad esempio build = dotnet build. Questo comando apre un elenco ricercabile di gadget ed esegue quello scelto nella cartella del pannello attivo. I gadget si aggiungono, modificano ed eliminano in Impostazioni → Gadget (Comandi → Gestisci gadget…); finché non ce ne sono, il comando propone di descrivere il primo in una riga.</sys:String>
     <sys:String x:Key="Help_Cmd_GadgetsManager">Apre Impostazioni nella scheda Gadget: aggiungere, modificare ed eliminare gadget: nome, comando, argomenti con macro, cartella di lavoro e se viene eseguito in un terminale. Un gadget viene scelto in base al nome, quindi i nomi devono essere univoci.</sys:String>
@@ -1967,12 +2037,12 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Help_Cmd_GitStashPop">Ripristina l'ultima voce dello stash e la elimina. Mostra prima di quale voce si tratta; in caso di conflitto la voce viene conservata.</sys:String>
     <sys:String x:Key="Help_Cmd_GitClone">Esegue il clone di un repository da un URL https nella cartella corrente del pannello; l'URL viene preso dagli Appunti. Per un repository privato immettere un nome utente e un token: il token resta solo in memoria. SSH non è supportato: un collegamento SSH a GitHub, GitLab, Bitbucket o Codeberg viene clonato invece tramite https, qualsiasi altro collegamento SSH richiede il proprio URL https.</sys:String>
     <sys:String x:Key="Help_Cmd_AgentChanges">Ogni modifica non sottoposta a commit nel repository, con chi l'ha fatta e quanto è certo: una scrittura di un agente approvata da voi, un'operazione di questa app, "probabilmente un agente" o sconosciuto. Qualsiasi modifica si ripristina con un clic (prima viene eseguito il backup del file). La stessa finestra contiene il registro delle operazioni, le sessioni degli agenti, i controlli del server MCP e le cartelle a cui gli agenti possono accedere.</sys:String>
-    <sys:String x:Key="Help_Cmd_AgentLaunch">Avvia un agente su un'attività: crea facoltativamente un worktree separato con un proprio branch e un'area di lavoro, registra una sessione (le sue modifiche compaiono poi in Modifiche degli agenti) e apre l'agente in un terminale. Il testo dell'attività va negli Appunti: incollarlo come primo messaggio dell'agente.</sys:String>
+    <sys:String x:Key="Help_Cmd_AgentLaunch">Avvia un agente su un'attività: crea facoltativamente un worktree separato con un proprio branch e un'area di lavoro, registra una sessione (le sue modifiche compaiono poi in Modifiche dell'agente) e apre l'agente in un terminale. Il testo dell'attività va negli Appunti: incollarlo come primo messaggio dell'agente.</sys:String>
     <sys:String x:Key="Help_Cmd_AiRename">Propone nomi leggibili per file "spazzatura" (scansioni, download, foto) in base al loro contenuto, usando il proprio modello linguistico. Nulla viene rinominato finché non si preme Applica, i nomi si possono modificare e Annulla funziona nella finestra e, dopo la sua chiusura, nel registro delle operazioni ({gesture:OperationLog}). Non funziona all'interno di un repository Git né sul codice. Richiede un modello in Impostazioni → Livello agenti.</sys:String>
     <sys:String x:Key="Help_Cmd_SemanticSearch">Ricerca per significato: una domanda a parole ("dove viene verificato il token?") trova i frammenti di codice corrispondenti. Premere prima Indicizza: il testo dei file viene inviato al modello di embedding e l'indice resta su questo computer. Richiede un modello di embedding in Impostazioni → Livello agenti.</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Connessioni salvate: SFTP (password o chiave), FTP e FTPS, WebDAV, S3 e archivi compatibili (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Drive, Dropbox, OneDrive e condivisioni Windows. A sinistra l'elenco con la ricerca e un segno dove una connessione è aperta; a destra i suoi campi: modifica, verifica, etichetta colorata, sola lettura. Un indirizzo incollato in alto compila i campi. Password, chiavi e token di accesso sono archiviati crittografati per l'account Windows. Importa aggiunge gli host di ~/.ssh/config come connessioni SFTP, dopo aver mostrato cosa aggiungerà; quelli già salvati vengono esclusi.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Chiude la connessione al server (nel pannello attivo, oppure nell'altro se quello attivo non ne ha) e riporta il pannello alla cartella del disco che mostrava prima.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Mette in coda i file selezionati per un trasferimento in background tra un server e il disco: un download se il pannello del server è attivo, altrimenti un upload dal disco al server nell'altro pannello. I trasferimenti si possono mettere in pausa e riprendere; solo file, non cartelle.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Mette in coda i file selezionati per un trasferimento in background tra un server e il disco: un download se il pannello del server è attivo, altrimenti un upload dal disco al server nell'altro pannello. Una cartella entra con tutto il suo contenuto; i collegamenti non vengono seguiti, e ciò che resta fuori viene indicato. I trasferimenti si possono mettere in pausa e riprendere.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">La finestra della coda di trasferimento: avanzamento per file, pausa, ripresa, annullamento, nuovo tentativo dopo un errore e rimozione degli elementi completati. Non blocca i pannelli; la coda dura fino alla chiusura del programma.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">Un elenco ricercabile delle aree di lavoro salvate: digitare una parte del nome e premere Invio, ed entrambi i pannelli con le loro schede e il layout tornano allo stato di quel progetto. A destra sono indicati il gruppo e il segno "fissata".</sys:String>
     <sys:String x:Key="Help_Cmd_NewWorkspace">Crea un'area di lavoro vuota. Una finestra chiede nome, icona, colore e gruppo, poi entrambi i pannelli si aprono nella cartella utente con una scheda ciascuno. L'area di lavoro in uso viene salvata, come a ogni cambio. La nuova area di lavoro viene subito fissata nella barra laterale delle aree di lavoro (deselezionarla nella finestra se si preferisce). Rilasciare una cartella sulla barra laterale delle aree di lavoro apre la stessa finestra, e poi entrambi i pannelli file si aprono in quella cartella. Per copiare i pannelli correnti con un nuovo nome, usare {gesture:SaveWorkspace}.</sys:String>
@@ -2012,7 +2082,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Help_Topic_Git">Git</sys:String>
     <sys:String x:Key="Help_Topic_Git_Body" xml:space="preserve">## Vedere lo stato&#10;• Il branch corrente è mostrato sulla scheda accanto al suo nome.&#10;• La colonna Git ({gesture:ColumnSettings}) mostra lo stato di ogni file con le lettere di git status --short: rosso conflitto, ambra modificato, verde in staging, grigio non tracciato.&#10;• {gesture:GitDiff} mostra il diff del file o della cartella sotto il cursore.&#10;## Registrare le modifiche&#10;{gesture:GitStage} e {gesture:GitUnstage} aggiungono gli elementi selezionati all'indice e li tolgono, {gesture:GitCommit} apre la finestra di commit, {gesture:GitBranch} i branch, {gesture:GitStash} e {gesture:GitStashPop} mettono da parte le modifiche e le riportano. Push e pull sono lasciati volutamente fuori: usare il terminale.&#10;## Un worktree per un'attività&#10;Un worktree è una seconda cartella di lavoro dello stesso repository su un altro branch. È un modo comodo per dare a un agente una propria copia del progetto: {gesture:GitNewWorktree} crea un worktree con un branch, copia i file di configurazione locali e crea un'area di lavoro; {gesture:GitWorktrees} elenca tutti i worktree e rimuove quelli non più necessari.&#10;## Clone&#10;{gesture:GitClone} esegue il clone di un repository da un URL https; se contiene un file .tcvproj, il programma propone di aprirlo come area di lavoro.</sys:String>
     <sys:String x:Key="Help_Topic_Agents">Lavorare con gli agenti</sys:String>
-    <sys:String x:Key="Help_Topic_Agents_Body" xml:space="preserve">## Avviare un agente&#10;• {gesture:RunAgentHere} avvia un agente (Claude Code, Codex, Gemini, Aider e altri) in un terminale nella cartella corrente; {gesture:RunAgentPicker} permette di scegliere l'agente.&#10;• {gesture:AgentLaunch} avvia un agente su un'attività, facoltativamente in un worktree separato con un proprio branch e un'area di lavoro.&#10;• Un avvio dal programma viene registrato come sessione: tutto ciò che cambia sotto la sua cartella è contrassegnato come "probabilmente un agente". Chiudere la sessione quando l'agente ha finito, altrimenti anche le modifiche personali gli verranno attribuite.&#10;## Esaminare e ripristinare&#10;{gesture:AgentChanges} mostra ogni modifica non sottoposta a commit nel repository e chi l'ha fatta. Si può visualizzare una modifica (diff), aggiungerla allo staging o ripristinarla; prima di un ripristino viene eseguito il backup del file nella cartella agent-revert-backups accanto al programma.&#10;## Il server MCP: l'agente vede i pannelli&#10;• Il server MCP permette a un agente di leggere ciò che è aperto nei pannelli: la selezione, gli elenchi di file, i contenuti (anche negli archivi), la ricerca e il registro delle operazioni.&#10;• Attivarlo in Impostazioni → Livello agenti o nella scheda Server MCP di Modifiche degli agenti, che contiene anche il comando di registrazione per l'agente. Il server ascolta solo su 127.0.0.1 e richiede un token.&#10;• Un agente raggiunge solo le cartelle approvate. Se gli agenti possono proporre modifiche, ogni copia, spostamento o eliminazione da parte di un agente arriva a una finestra di approvazione, con Rifiuta come impostazione predefinita.&#10;## Modello linguistico&#10;Rinomina con IA ({gesture:AiRename}), ricerca semantica ({gesture:SemanticSearch}), la bozza del messaggio di commit e il riepilogo del visualizzatore usano il proprio modello (Ollama, LM Studio o uno cloud). Impostare l'indirizzo e i modelli in Impostazioni → Livello agenti; finché l'indirizzo è vuoto, il programma non contatta nulla.</sys:String>
+    <sys:String x:Key="Help_Topic_Agents_Body" xml:space="preserve">## Avviare un agente&#10;• {gesture:RunAgentHere} avvia un agente (Claude Code, Codex, Gemini, Aider e altri) in un terminale nella cartella corrente; {gesture:RunAgentPicker} permette di scegliere l'agente.&#10;• {gesture:AgentLaunch} avvia un agente su un'attività, facoltativamente in un worktree separato con un proprio branch e un'area di lavoro.&#10;• Un avvio dal programma viene registrato come sessione: tutto ciò che cambia sotto la sua cartella è contrassegnato come "probabilmente un agente". Chiudere la sessione quando l'agente ha finito, altrimenti anche le modifiche personali gli verranno attribuite.&#10;## Esaminare e ripristinare&#10;{gesture:AgentChanges} mostra ogni modifica non sottoposta a commit nel repository e chi l'ha fatta. Si può visualizzare una modifica (diff), aggiungerla allo staging o ripristinarla; prima di un ripristino viene eseguito il backup del file nella cartella agent-revert-backups accanto al programma.&#10;## Il server MCP: l'agente vede i pannelli&#10;• Il server MCP permette a un agente di leggere ciò che è aperto nei pannelli: la selezione, gli elenchi di file, i contenuti (anche negli archivi), la ricerca e il registro delle operazioni.&#10;• Attivarlo in Impostazioni → Livello agenti o nella scheda Server MCP di Modifiche dell'agente, che contiene anche il comando di registrazione per l'agente. Il server ascolta solo su 127.0.0.1 e richiede un token.&#10;• Un agente raggiunge solo le cartelle approvate. Se gli agenti possono proporre modifiche, ogni copia, spostamento o eliminazione da parte di un agente arriva a una finestra di approvazione, con Rifiuta come impostazione predefinita.&#10;## Modello linguistico&#10;Rinomina con IA ({gesture:AiRename}), ricerca semantica ({gesture:SemanticSearch}), la bozza del messaggio di commit e il riepilogo del visualizzatore usano il proprio modello (Ollama, LM Studio o uno cloud). Impostare l'indirizzo e i modelli in Impostazioni → Livello agenti; finché l'indirizzo è vuoto, il programma non contatta nulla.</sys:String>
     <sys:String x:Key="Help_Topic_Remote">Server e cloud</sys:String>
     <sys:String x:Key="Help_Topic_Remote_Body" xml:space="preserve">## Connessioni&#10;Il pulsante Connessioni nella barra delle unità connette proprio questo pannello: il suo elenco contiene le connessioni salvate (quelle aperte contrassegnate), Connessione rapida ({gesture:QuickConnect}) e il gestore ({gesture:ConnectionManager}). Un indirizzo come sftp://user@host/path o s3://bucket si può anche digitare direttamente nella barra del percorso.&#10;Finché il pannello è su una connessione, il pulsante ne mostra il nome, l'etichetta colorata e un punto di stato: verde, il server risponde; ambra, un elenco è in caricamento; rosso, il server non ha risposto (Riconnetti è allora nel suo menu). Quando la connessione cade, il pannello si riconnette da solo — dopo 1, 2, 5, 10, 20 e poi 30 secondi, otto tentativi in tutto — e l'elenco mostra il conto alla rovescia con Riprova ora e Interrompi la riconnessione; un accesso rifiutato o una chiave del server cambiata non vengono ritentati. Le connessioni delle schede in background vengono mantenute attive, quindi sono ancora aperte quando si ritorna. Disconnetti ({gesture:Disconnect}) è accanto.&#10;## Schede&#10;Una connessione vive nella scheda in cui è stata aperta: la scheda prende il suo nome, e passare a un'altra scheda e tornare non la chiude. Un altro server si apre in una nuova scheda; uno già aperto viene mostrato dov'è. Chiudere la scheda chiude la connessione; cambiare area di lavoro le chiude tutte.&#10;## File su un server&#10;• {gesture:Copy} e {gesture:Move} copiano tra il server e il disco, {gesture:View} mostra un file sul posto.&#10;• {gesture:Edit} modifica un file tramite una copia temporanea: ogni salvataggio viene ricaricato.&#10;• {gesture:QueueTransfer} mette i file in coda per un trasferimento in background che può essere messo in pausa e ripreso; la finestra della coda è {gesture:TransferQueue}.&#10;• L'eliminazione su un server è definitiva (Google Drive e OneDrive spostano il file nel proprio cestino).&#10;• Una connessione di sola lettura non permette alcuna modifica, né da parte dell'utente né di un agente.&#10;## Archiviazione cloud&#10;S3 e gli archivi compatibili (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex Object Storage, Google Cloud Storage con chiavi HMAC) si connettono con una chiave di accesso o un profilo AWS; la scelta del provider compila endpoint e regione. Azure Blob usa la chiave dell'account o un token SAS. Google Drive, Dropbox e OneDrive eseguono l'accesso tramite il browser e richiedono l'ID client di un'app registrata presso il provider.&#10;## Sicurezza&#10;Alla prima connessione SFTP il programma mostra l'impronta della chiave del server e chiede se considerarlo attendibile. Se la chiave cambia in seguito, la connessione viene rifiutata: potrebbe indicare un'intercettazione; se la modifica è legittima, usare Dimentica la chiave del server in Gestione connessioni. Password, chiavi e token di accesso sono archiviati crittografati per l'account Windows.&#10;## Cartelle di rete Windows&#10;I percorsi come \\server\share si aprono se digitati nella barra del percorso; le unità di rete mappate sono nell'elenco delle unità. Salvare una condivisione che richiede un accesso proprio in Gestione connessioni come Condivisione Windows (SMB).</sys:String>
     <sys:String x:Key="Help_Topic_Customize">Personalizzazione</sys:String>
@@ -2053,7 +2123,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Tool_BranchTip">Il branch del pannello attivo e quanti file sono cambiati nel suo repository</sys:String>
     <sys:String x:Key="Tool_Commit">Commit</sys:String>
     <sys:String x:Key="Tool_CommitTip">Commit ({gesture:GitCommit})</sys:String>
-    <sys:String x:Key="Tool_AgentChanges">Modifiche degli agenti</sys:String>
+    <sys:String x:Key="Tool_AgentChanges">Modifiche dell'agente</sys:String>
     <sys:String x:Key="Tool_AgentChangesTip">Cosa hanno modificato gli agenti e chi ha modificato cosa ({gesture:AgentChanges})</sys:String>
     <sys:String x:Key="Tool_Theme">Tema chiaro o scuro</sys:String>
     <sys:String x:Key="Tool_ThemeTip">Tema chiaro o scuro</sys:String>
@@ -2114,6 +2184,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Shell_ShellBoxTip">La shell in cui viene eseguito il comando. Cambiarla con un clic, oppure Alt+↓ nella riga</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Configura shell…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">Cartella inesistente: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">«{1}» è un percorso interno a {0}: il pannello apre solo cartelle di Windows.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">I pannelli non possono essere scambiati mentre uno di essi è in un archivio, su un server o nei risultati di ricerca.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:modifica|modifiche}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Tutte le operazioni completate</sys:String>
@@ -2150,6 +2221,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Palette_Title">Riquadro comandi</sys:String>
     <sys:String x:Key="Palette_Placeholder">Digitare un comando…</sys:String>
     <sys:String x:Key="Palette_UserTools">Strumenti utente</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Modelli di selezione</sys:String>
     <!-- Titles of the palette commands, their categories and the file-list columns: English and Russian
          keep them in CommandCatalog / ColumnCatalog, every other language here (Cmd_<Id>, CmdCat_<Category>,
          ColTitle_<Id>). -->
@@ -2186,6 +2258,9 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Cmd_InvertSelection">Inverti selezione</sys:String>
     <sys:String x:Key="Cmd_SelectByMask">Seleziona per maschera…</sys:String>
     <sys:String x:Key="Cmd_UnselectByMask">Deseleziona per maschera…</sys:String>
+    <sys:String x:Key="Cmd_SelectSameExtension">Seleziona stessa estensione</sys:String>
+    <sys:String x:Key="Cmd_UnselectSameExtension">Deseleziona stessa estensione</sys:String>
+    <sys:String x:Key="Cmd_RestoreSelection">Ripristina selezione</sys:String>
     <sys:String x:Key="Cmd_ClipboardCopy">Copia negli Appunti</sys:String>
     <sys:String x:Key="Cmd_ClipboardCut">Taglia negli Appunti</sys:String>
     <sys:String x:Key="Cmd_ClipboardPaste">Incolla dagli Appunti</sys:String>
@@ -2259,7 +2334,7 @@ Il caricamento ora sostituisce tali modifiche sul server. Sostituire la copia su
     <sys:String x:Key="Cmd_GitStash">Git: stash…</sys:String>
     <sys:String x:Key="Cmd_GitStashPop">Git: stash pop</sys:String>
     <sys:String x:Key="Cmd_GitClone">Git: clone da URL…</sys:String>
-    <sys:String x:Key="Cmd_AgentChanges">Modifiche degli agenti…</sys:String>
+    <sys:String x:Key="Cmd_AgentChanges">Modifiche dell'agente…</sys:String>
     <sys:String x:Key="Cmd_AgentLaunch">Avvia un agente su un'attività…</sys:String>
     <sys:String x:Key="Cmd_AiRename">Rinomina con IA…</sys:String>
     <sys:String x:Key="Cmd_SemanticSearch">Ricerca semantica…</sys:String>

@@ -15,8 +15,14 @@ namespace TCV.App.Tests;
 /// </summary>
 public sealed class RemoteEditTests : IDisposable
 {
-    private readonly RemoteEditService _service = new(NullLogger<RemoteEditService>.Instance, _ => true)
+    private readonly string _copies = Directory.CreateDirectory(
+        Path.Combine(Path.GetTempPath(), "tcv-edit-tests-" + Guid.NewGuid().ToString("N"))).FullName;
+
+    private readonly RemoteEditService _service;
+
+    private RemoteEditService NewService() => new(NullLogger<RemoteEditService>.Instance, _ => true)
     {
+        CopiesRoot = _copies,
         SettleDelay = TimeSpan.FromMilliseconds(50),
         RetryDelays = [TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(10)],
     };
@@ -29,6 +35,7 @@ public sealed class RemoteEditTests : IDisposable
 
     public RemoteEditTests()
     {
+        _service = NewService();
         _service.Uploaded += (_, e) =>
         {
             lock (_events)
@@ -40,7 +47,18 @@ public sealed class RemoteEditTests : IDisposable
         };
     }
 
-    public void Dispose() => _service.Dispose();
+    public void Dispose()
+    {
+        _service.Dispose();
+        try
+        {
+            Directory.Delete(_copies, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort: a scanner's handle on a copy is not this test's failure.
+        }
+    }
 
     private async Task<RemoteEditEventArgs> NextEventAsync()
     {

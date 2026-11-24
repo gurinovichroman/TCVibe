@@ -307,6 +307,241 @@ public class ConnectionResilienceTests
         list.ActiveVfs.Should().BeSameAs(dead);
     }
 
+    // ── Giving up on a server that keeps the panel waiting ────────────────────
+
+    private static async Task UntilAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 2000 && !condition(); i++)
+        {
+            await Task.Delay(5);
+        }
+
+        condition().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Stop_WhileAFreshListingHangs_FreesThePanel_AndItsFailureStartsNoNewReconnect()
+    {
+        var list = List();
+        var fresh = Server(drop: true);
+        var hold = fresh.HoldNextListing();
+        var opener = new ScriptedOpener(fresh, Server());
+        var reconnector = new PanelReconnector(list, opener.OpenAsync, ThreeTries);
+        var ended = new List<ReconnectFinished>();
+        reconnector.Finished += ended.Add;
+
+        list.Mount(Server(drop: true), "/srv", Prod(), MountKind.Remote);   // drops; the try's listing then hangs
+        await UntilAsync(() => ReferenceEquals(list.ActiveVfs, fresh) && list.IsOpeningFolder);
+        var theDrop = list.LoadError;
+        theDrop.Should().NotBeNull();
+
+        reconnector.Stop().Should().BeTrue();
+
+        ended.Should().ContainSingle().Which.StoppedByUser.Should().BeTrue();
+        list.IsLoading.Should().BeFalse("Stop must not leave the panel waiting for the server's timeout");
+        list.IsOpeningFolder.Should().BeFalse();
+        list.HasNewerLoadInFlight.Should().BeFalse();
+        list.LoadError.Should().Be(theDrop, "the reason stays, with Reconnect and Disconnect under it");
+
+        hold.SetResult();   // the server answers at last, with the failure
+        await Task.Delay(100);
+
+        reconnector.IsRunning.Should().BeFalse("the user stopped it: a late failure does not start it over");
+        opener.Opened.Should().Be(1);
+        list.LoadError.Should().Be(theDrop);
+    }
+
+    [Fact]
+    public void ShowsLoadingOverlay_WhileReconnecting_LeavesTheStatusAndItsButtonsFree()
+    {
+        var list = List();
+        var server = Server();
+        var hold = server.HoldNextListing();
+
+        list.Mount(server, "/srv", Prod(), MountKind.Remote);
+        list.ShowsLoadingOverlay.Should().BeTrue();
+
+        list.ReconnectStatus = "Reconnecting to “prod” — attempt 1 of 8…";
+        list.ShowsLoadingOverlay.Should().BeFalse("it would take the clicks of Stop and Retry now");
+        list.EmptyStateText.Should().Be(list.ReconnectStatus);
+
+        list.ReconnectStatus = null;
+        list.ShowsLoadingOverlay.Should().BeTrue();
+        hold.SetResult();
+    }
+
+    [Fact]
+    public async Task StopLoading_WhileAServerKeepsTheListingWaiting_ReleasesThePanelAtOnce_AndTheLateListingDoesNotLand()
+    {
+        var list = List();
+        var server = Server();
+        var opener = new ScriptedOpener();
+        _ = new PanelReconnector(list, opener.OpenAsync, ThreeTries);
+        var hold = server.HoldNextListing();
+        list.Mount(server, "/srv", Prod(), MountKind.Remote);
+
+        list.StopLoading().Should().BeTrue();
+
+        list.IsLoading.Should().BeFalse();
+        list.ShowsLoadingOverlay.Should().BeFalse();
+        list.HasNewerLoadInFlight.Should().BeFalse();
+        list.HasLoadError.Should().BeTrue();
+        list.IsConnectionFailed.Should().BeTrue("Reconnect and Disconnect show under the reason");
+        list.EmptyStateText.Should().Be(list.LoadError);
+        list.RemoteConnection.Should().NotBeNull("giving up on a listing is not leaving the connection");
+
+        hold.SetResult();   // the listing comes back after all
+        await Task.Delay(100);
+
+        list.Files.Should().NotContain(f => f.Name == "app.log", "it was given up on");
+        list.HasLoadError.Should().BeTrue();
+        opener.Opened.Should().Be(0, "the user stopped reading: nothing dropped");
+
+        await list.LoadAsync("/srv");   // Refresh
+
+        list.HasLoadError.Should().BeFalse();
+        list.Files.Should().Contain(f => f.Name == "app.log");
+    }
+
+    [Fact]
+    public void StopLoading_ANewErrorReplacesAnOlderOne_UnlessAskedToKeepIt()
+    {
+        var list = List();
+        var server = Server(drop: true);
+        list.Mount(server, "/srv", Prod(), MountKind.Remote);
+        var older = list.LoadError;
+        older.Should().NotBeNull();
+
+        server.HoldNextListing();
+        _ = list.LoadAsync("/srv");
+        list.StopLoading(keepError: true).Should().BeTrue();
+        list.LoadError.Should().Be(older);
+
+        server.HoldNextListing();
+        _ = list.LoadAsync("/srv");
+        list.StopLoading().Should().BeTrue();
+        list.LoadError.Should().NotBe(older, "the panel now says the reading was stopped, not what failed before");
+    }
+
+    [Fact]
+    public void StopLoading_WithNothingBeingRead_ChangesNothing()
+    {
+        var list = List();
+
+        list.StopLoading().Should().BeFalse();
+
+        list.HasLoadError.Should().BeFalse();
+    }
+
+    [Fact]
+    public void StopLoading_OnADiskFolderThatKeepsItWaiting_SaysSo_WithNoConnectionToReopen()
+    {
+        // A share that stopped answering is a disk path: no mount, no Reconnect, and it can be given up too.
+        var disk = new InMemoryFileSystem("file");
+        disk.AddFile("/C:/share/a.txt", [1]);
+        var list = new FileListViewModel(disk, NullLogger<FileListViewModel>.Instance);
+        var hold = disk.HoldNextListing();
+        list.CurrentPath = "/C:/share";
+        list.ShowsLoadingOverlay.Should().BeTrue();
+
+        list.StopLoading().Should().BeTrue();
+
+        list.IsLoading.Should().BeFalse();
+        list.ShowsLoadingOverlay.Should().BeFalse();
+        list.HasLoadError.Should().BeTrue();
+        list.IsConnectionFailed.Should().BeFalse("there is nothing to reconnect to");
+        hold.SetResult();
+    }
+
+    [Fact]
+    public async Task StopLoading_WithAFileSystemDeafToTheToken_EndsTheLoadAtOnce_AndRefreshIsEnabledAgain()
+    {
+        var list = List();
+        var server = Server();
+        list.Mount(server, "/srv", Prod(), MountKind.Remote);
+        var hold = server.HoldNextListing();
+
+        var refreshing = list.RefreshCommand.ExecuteAsync(null);
+        list.RefreshCommand.CanExecute(null).Should().BeFalse("the listing is being read");
+
+        list.StopLoading().Should().BeTrue();
+
+        await refreshing.WaitAsync(TimeSpan.FromSeconds(10));
+        list.RefreshCommand.CanExecute(null).Should().BeTrue("the user just gave up on it: nothing holds the panel now");
+        hold.SetResult();
+    }
+
+    [Fact]
+    public async Task ReloadForFolderChange_AfterStopLoading_LeavesTheFolderGivenUpOn_UntilALoadIsAskedFor()
+    {
+        var disk = new InMemoryFileSystem("file");
+        disk.AddFile("/C:/share/a.txt", [1]);
+        var list = new FileListViewModel(disk, NullLogger<FileListViewModel>.Instance);
+        var hold = disk.HoldNextListing();
+        list.CurrentPath = "/C:/share";
+        list.StopLoading().Should().BeTrue();
+        var reads = disk.ListCalls;
+
+        list.ReloadForFolderChange();
+
+        disk.ListCalls.Should().Be(reads, "Cancel is final: the next change in the folder does not start it over");
+        list.IsLoading.Should().BeFalse();
+        list.HasLoadError.Should().BeTrue();
+        hold.SetResult();
+
+        await list.LoadAsync("/C:/share");   // Refresh
+        list.HasLoadError.Should().BeFalse();
+        reads = disk.ListCalls;
+
+        list.ReloadForFolderChange();
+
+        disk.ListCalls.Should().Be(reads + 1, "the user asked for this folder again, and it is watched as usual");
+    }
+
+    [Fact]
+    public void ConnectingText_FollowsTheConnect_AndTheSignInInTheBrowser()
+    {
+        var panel = Panel();
+        var heard = new List<string?>();
+        panel.PropertyChanged += (_, e) => heard.Add(e.PropertyName);
+        panel.ConnectingText.Should().BeNull();
+
+        panel.ConnectingTo = Prod();
+
+        var connecting = panel.ConnectingText;
+        connecting.Should().NotBeNullOrEmpty();
+        heard.Should().Contain(nameof(PanelViewModel.ConnectingText));
+
+        panel.IsSigningIn = true;
+        panel.ConnectingText.Should().NotBe(connecting, "the wait is now the user's own sign-in");
+
+        panel.IsSigningIn = false;
+        panel.ConnectingTo = null;
+        panel.ConnectingText.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task LoadAsync_OfAFolderThatFailed_HidesTheOlderErrorUntilItsOwnOutcomeIsIn()
+    {
+        var list = List();
+        var server = Server(drop: true);
+        list.Mount(server, "/srv", Prod(), MountKind.Remote);
+        list.EmptyStateText.Should().Be(list.LoadError);
+
+        var hold = server.HoldNextListing();
+        var opening = list.LoadAsync("/srv");
+
+        list.ShowsLoadingOverlay.Should().BeTrue();
+        list.EmptyStateText.Should().BeEmpty("the error and its buttons would lie under the overlay");
+
+        server.FailListingOf = null;
+        hold.SetResult();
+        await opening;
+
+        list.ShowsLoadingOverlay.Should().BeFalse();
+        list.HasLoadError.Should().BeFalse();
+    }
+
     // ── Swapping the connection under the tab ─────────────────────────────────
 
     [Fact]

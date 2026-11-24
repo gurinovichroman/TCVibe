@@ -27,7 +27,7 @@
                   AutomationProperties.Name="{DynamicResource Transfer_Title}"
                   SelectionChanged="TransferGrid_SelectionChanged">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{DynamicResource Transfer_Col_File}" Binding="{Binding FileName}" Width="*"/>
+                <DataGridTextColumn Header="{DynamicResource Transfer_Col_File}" Binding="{Binding DisplayName}" Width="*"/>
                 <DataGridTextColumn Header="{DynamicResource Transfer_Col_Direction}"
                                     Binding="{Binding Direction, Converter={x:Static conv:EnumLocalizationConverter.Instance}, ConverterParameter=Transfer_Dir_}"
                                     Width="100"/>

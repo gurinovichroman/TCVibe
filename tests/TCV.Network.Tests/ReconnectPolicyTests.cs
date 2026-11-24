@@ -82,6 +82,7 @@ public class ReconnectPolicyTests
         new ReadOnlyConnectionException(),
         new DirectoryNotFoundException("/gone"),
         new S3Exception("Access denied (AccessDenied)", HttpStatusCode.Forbidden, "AccessDenied"),
+        new S3Exception("Not implemented", HttpStatusCode.NotImplemented, "NotImplemented"),
         new HttpRequestException("Unauthorized", null, HttpStatusCode.Unauthorized),
         new SignInRequiredException("Google Drive"),
         new InvalidOperationException("Key-file authentication is selected but no key file is set."),

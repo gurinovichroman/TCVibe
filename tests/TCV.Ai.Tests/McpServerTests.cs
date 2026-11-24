@@ -30,6 +30,50 @@ public sealed class McpServerTests : IAsyncDisposable
         _endpoint = _server.Start(preferredPort: 0, endpointFilePath: _endpointFile)!;
     }
 
+    [Fact]
+    public async Task Start_FirstPortsTaken_TakesTheNextOne()
+    {
+        // Held by HttpListener under the same prefix, as a second server would: 183 from Start (TRAP-112).
+        var takenPort = new Uri(_endpoint.Url).Port;
+        var candidates = new Queue<int>([takenPort, takenPort]);
+        using var free = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        free.Start();
+        var freePort = ((IPEndPoint)free.LocalEndpoint).Port;
+        free.Stop();
+        candidates.Enqueue(freePort);
+
+        var file = Path.Combine(Path.GetTempPath(), $"tcv-mcp-{Guid.NewGuid():n}.json");
+        var second = new McpServer(new McpProtocol(_bridge), () => _bridge.CurrentScope().Roots);
+        try
+        {
+            var endpoint = second.Start(0, file, candidates.Dequeue);
+
+            endpoint.Should().NotBeNull();
+            new Uri(endpoint!.Url).Port.Should().Be(freePort);
+        }
+        finally
+        {
+            await second.StopAsync();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public async Task Start_APortAskedForByNumberIsTaken_IsThatPortOrNothing()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"tcv-mcp-{Guid.NewGuid():n}.json");
+        var second = new McpServer(new McpProtocol(_bridge), () => _bridge.CurrentScope().Roots);
+        try
+        {
+            second.Start(new Uri(_endpoint.Url).Port, file).Should().BeNull();
+        }
+        finally
+        {
+            await second.StopAsync();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _server.StopAsync();

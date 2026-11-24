@@ -50,6 +50,20 @@ public sealed record OperationLogEntry
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ArrivedIn { get; init; }
+
+    /// <summary>
+    /// The archive file an edit inside it rewrote (<see cref="OperationLogDescriptor.ChangedArchive"/>).
+    /// Absent for every other operation and in lines written before it existed.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ChangedArchive { get; init; }
+
+    /// <summary>
+    /// <see cref="Source"/> as it reads on its own: a path inside an archive goes with the archive
+    /// («D:\x.zip!/dir/a.txt»), as it does for an agent (TRAP-35).
+    /// </summary>
+    [JsonIgnore]
+    public string SourceWithArchive => ChangedArchive is null ? Source : $"{ChangedArchive}!{Source}";
 }
 
 /// <summary>

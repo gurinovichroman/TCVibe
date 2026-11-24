@@ -68,6 +68,7 @@ public sealed partial class MountCommands
         }
 
         var title = PanelViewModel.ConnectionTitle(connection);
+        panel.FileList.CanRetryReconnectNow = progress.IsWaiting;
         panel.FileList.ReconnectStatus = progress.IsWaiting
             ? LocalizationManager.Format("Conn_ReconnectWaiting", title,
                 Math.Max(0, (int)Math.Ceiling((progress.NextAttemptAt - DateTime.UtcNow).TotalSeconds)),
@@ -85,6 +86,7 @@ public sealed partial class MountCommands
     {
         // The reason goes in before the status comes off: clearing the status re-reads the error.
         ReportReconnectOutcome(panel, finished);
+        panel.FileList.CanRetryReconnectNow = false;
         panel.FileList.ReconnectStatus = null;
         UpdateReconnectClock();
     }

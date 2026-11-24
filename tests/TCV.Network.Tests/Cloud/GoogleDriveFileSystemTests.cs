@@ -20,6 +20,10 @@ public sealed class GoogleDriveFileSystemTests
 
     private static bool IsQuery(Recorded r) => r.Method == HttpMethod.Get && r.Uri.GetLeftPart(UriPartial.Path) == Files;
 
+    /// <summary>Not one of the two virtual folders the root always shows beside the items of My Drive.</summary>
+    private static bool IsReal(TCV.Core.Interfaces.IFileEntry entry) =>
+        entry.Name is not (GoogleDriveFileSystem.SharedDrivesName or GoogleDriveFileSystem.SharedWithMeName);
+
     // ── Listing and paths ────────────────────────────────────────────────────
 
     [Fact]
@@ -37,7 +41,7 @@ public sealed class GoogleDriveFileSystemTests
 
         var entries = await fs.ListAsync(VfsPath.Root);
 
-        entries.Select(e => (e.Path.Value, e.Name, e.IsDirectory, e.Size)).Should().BeEquivalentTo(new[]
+        entries.Where(IsReal).Select(e => (e.Path.Value, e.Name, e.IsDirectory, e.Size)).Should().BeEquivalentTo(new[]
         {
             ("/src", "src", true, 0L),
             ("/notes.txt", "notes.txt", false, 12L),
@@ -61,7 +65,7 @@ public sealed class GoogleDriveFileSystemTests
 
         var entries = await fs.ListAsync(VfsPath.Root);
 
-        entries.Should().ContainSingle().Which.Size.Should().Be(1, "the oldest of the same-named items is the one a path names");
+        entries.Where(IsReal).Should().ContainSingle().Which.Size.Should().Be(1, "the oldest of the same-named items is the one a path names");
     }
 
     [Fact]
@@ -332,7 +336,7 @@ public sealed class GoogleDriveFileSystemTests
 
         var entries = await fs.ListAsync(VfsPath.Root);
 
-        entries.Should().BeEmpty();
+        entries.Where(IsReal).Should().BeEmpty();
         http.Api.Should().HaveCount(2);
     }
 

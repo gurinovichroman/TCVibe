@@ -238,7 +238,7 @@ public sealed class AgentBridge : IAgentBridge
             .Select(entry => new AgentOperationRecord(
                 ToUtc(entry.Timestamp),
                 entry.Kind.ToString(),
-                entry.Source,
+                entry.ChangedArchive is null ? entry.Source : "zip://" + entry.SourceWithArchive,
                 entry.Destination,
                 entry.ItemCount,
                 entry.Outcome.ToString(),

@@ -76,7 +76,67 @@ public class ShellCommandLineTests
         var launch = ShellCommandLine.Build(
             @"C:\Program Files\Git\bin\bash.exe", "--login -i -c \"%C; exec bash --login -i\"", "npm test", Folder);
 
-        launch.Arguments.Should().Equal("--login", "-i", "-c", "npm test; exec bash --login -i");
+        launch.Arguments.Should().Equal("--login", "-i", "-c", "eval 'npm test'\nexec bash --login -i");
+    }
+
+    [Theory]
+    [InlineData("npm test # why", "eval 'npm test # why'\nexec bash")]
+    [InlineData("npm start &", "eval 'npm start &'\nexec bash")]
+    [InlineData("echo a\necho b", "eval 'echo a\necho b'\nexec bash")]
+    [InlineData("cat <<EOF\nhi\nEOF", "eval 'cat <<EOF\nhi\nEOF'\nexec bash")]
+    [InlineData("npm ci; npm test", "eval 'npm ci; npm test'\nexec bash")]
+    [InlineData("echo 'it", "eval 'echo '\\''it'\nexec bash")]
+    [InlineData("echo \"open", "eval 'echo \"open'\nexec bash")]
+    [InlineData("trailing \\", "eval 'trailing \\'\nexec bash")]
+    [InlineData("cat <<EOF", "eval 'cat <<EOF'\nexec bash")]
+    [InlineData("if true", "eval 'if true'\nexec bash")]
+    public void Build_Bash_WhatEndsTheCommand_DoesNotReachWhatKeepsTheShellOpen(string command, string expected)
+    {
+        var launch = ShellCommandLine.Build("bash.exe", "-c \"%C; exec bash\"", command, Folder);
+
+        launch.Arguments[^1].Should().Be(expected);
+        ShellCommandLine.SplitArguments(ShellCommandLine.Arguments(launch)).Should().Equal(launch.Arguments);
+    }
+
+    [Theory]
+    [InlineData("-c \"%C;exec bash\"", "eval 'ls'\nexec bash")]
+    [InlineData("-c \"%C ; exec bash\"", "eval 'ls'\nexec bash")]
+    [InlineData("-c \"%C; exec /bin/zsh -l\"", "eval 'ls'\nexec /bin/zsh -l")]
+    [InlineData("-c \"%C; exec ssh host\"", "eval 'ls'\nexec ssh host")]
+    [InlineData("-c \"%C;\"", "ls\n")]
+    [InlineData("-NoExit -Command \"%C; Write-Host done\"", "ls\nWrite-Host done")]
+    [InlineData("-c \"%C && exec bash\"", "ls && exec bash")]
+    [InlineData("-c \"cd x; %C\"", "cd x; ls")]
+    public void Build_OnlyASemicolonRightAfterTheCommand_BecomesALineBreak(string template, string expected)
+    {
+        ShellCommandLine.Build("bash.exe", template, "ls", Folder).Arguments[^1].Should().Be(expected);
+    }
+
+    [Fact]
+    public void Build_TextThatIsNotTheCommandMacro_KeepsItsSemicolon()
+    {
+        ShellCommandLine.Build("bash.exe", "-c \"%Cx; y\"", "ls", Folder).Arguments.Should().Equal("-c", "%Cx; y", "ls");
+    }
+
+    [Fact]
+    public void Build_ASemicolonInTheTypedCommand_IsTheUsersOwn()
+    {
+        ShellCommandLine.Build("bash.exe", "-c %C", "echo %C; ls", Folder).Arguments[^1].Should().Be("echo %C; ls");
+    }
+
+    [Fact]
+    public void Build_Cmd_ASemicolonInTheTemplateStays_ALineBreakWouldEndItsLine()
+    {
+        ShellCommandLine.Build("cmd.exe", "/s /k \"%C; echo\"", "dir", Folder).Arguments[^1].Should().Be("dir; echo");
+    }
+
+    [Fact]
+    public void Arguments_ALineBreakWithoutABlank_StaysOneArgumentForACygwinProgram()
+    {
+        // Git's bash splits its command line at an unquoted line break, too.
+        var launch = ShellCommandLine.Build("bash.exe", "-c \"%C;echo\"", "ls", Folder);
+
+        ShellCommandLine.Arguments(launch).Should().Be("-c \"ls\necho\"");
     }
 
     [Fact]
@@ -108,7 +168,7 @@ public class ShellCommandLineTests
 
         launch.Arguments[^1].Should().Be("echo %P %PATH% %C", "a macro in the typed text is the shell's business");
         ShellCommandLine.Build("bash.exe", "-c \"%C; echo $HOME %USERPROFILE%\"", "ls", Folder)
-            .Arguments[^1].Should().Be("ls; echo $HOME %USERPROFILE%");
+            .Arguments[^1].Should().Be("ls\necho $HOME %USERPROFILE%");
     }
 
     // ── Opening the shell itself ──────────────────────────────────────────────
@@ -196,6 +256,9 @@ public class ShellCommandLineTests
         "echo \"\"",
         "git log --format=\"%h %s\" -n 3",
         "echo привет; exit",
+        "npm test # why; because",
+        "npm start &",
+        "echo a\necho \"b c\"\n",
     };
 
     [Theory]
@@ -257,17 +320,33 @@ public class ShellCommandLineTests
 
         var line = WindowsTerminal.CommandlineOfNewTab(ShellCommandLine.ForWindowsTerminal(launch, Folder), out _);
 
-        ShellCommandLine.SplitArguments(line).Should().Equal("bash.exe", "-c", "find . -exec rm {} \\;; exec bash");
+        ShellCommandLine.SplitArguments(line).Should().Equal("bash.exe", "-c", "eval 'find . -exec rm {} \\;'\nexec bash");
+    }
+
+    [Theory]
+    [InlineData("-c \"%C;echo\"", "ls")]
+    [InlineData("-c \"%C; echo\"", "ls")]
+    [InlineData("-c \"%C; echo\"", "npm test # why")]
+    [InlineData("-c \"%C; echo\"", "echo a\n;b")]
+    public void ForWindowsTerminal_ALineBreak_ReachesBashInsideItsArgument(string template, string command)
+    {
+        var launch = ShellCommandLine.Build("bash.exe", template, command, Folder);
+
+        var line = WindowsTerminal.CommandlineOfNewTab(ShellCommandLine.ForWindowsTerminal(launch, Folder), out _);
+
+        ShellCommandLine.SplitArguments(line).Should().Equal(launch.Arguments.Prepend("bash.exe"));
+        line.Should().Contain("\"", "Git's bash would split an unquoted line break into two arguments");
     }
 
     /// <summary>
     /// What Windows Terminal does with its command line (AppCommandlineArgs, Commandline::AddArg): argv,
     /// a new command at every <c>;</c> without a <c>\</c> in front, <c>\;</c> back to <c>;</c>, and the
-    /// arguments joined again — quoted when they hold a space, inner quotes untouched.
+    /// arguments joined again — quoted when they hold a space, inner quotes untouched. The delimiter
+    /// is written as <c>^;</c> there; here <c>^</c> also matches after a line break, the stricter reading.
     /// </summary>
     private static class WindowsTerminal
     {
-        private static readonly Regex Delimiter = new(@"^;|[^\\];");
+        private static readonly Regex Delimiter = new(@"^;|[^\\];", RegexOptions.Multiline);
 
         public static string CommandlineOfNewTab(string arguments, out string folder)
         {

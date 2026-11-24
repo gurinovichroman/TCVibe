@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using TCV.App.Localization;
 using TCV.App.PluginHost;
+using TCV.App.Services;
 
 namespace TCV.App.ViewModels.Dialogs;
 
@@ -15,22 +15,21 @@ public partial class PluginManagerDialogViewModel : ObservableObject
 
     private readonly PluginHost.PluginHost _pluginHost;
     private readonly string _pluginsDirectory;
-    private readonly Func<string, string, bool> _confirm;
+    private readonly IDialogService _dialogs;
 
     /// <param name="loader">Kept for the existing constructor shape; loading goes through the host.</param>
-    /// <param name="confirm">Yes/no question (title, message); the default shows a message box.</param>
+    /// <param name="dialogs">Asks before a plugin is loaded and picks its file.</param>
     /// <param name="pluginsDirectory">Where a loaded plugin is copied so it is still there next launch.</param>
     public PluginManagerDialogViewModel(
         PluginHost.PluginHost pluginHost,
         PluginLoader loader,
-        Func<string, string, bool>? confirm = null,
+        IDialogService dialogs,
         string? pluginsDirectory = null)
     {
         _ = loader;
         _pluginHost = pluginHost;
         _pluginsDirectory = pluginsDirectory ?? global::TCV.Core.Domain.AppPaths.Data("plugins");
-        // The app's own confirm (UI-language buttons, owned by the active window), not MessageBox.
-        _confirm = confirm ?? ((title, message) => Views.Dialogs.ConfirmDialog.Ask(title, message, isWarning: true));
+        _dialogs = dialogs;
         Refresh();
     }
 
@@ -84,26 +83,24 @@ public partial class PluginManagerDialogViewModel : ObservableObject
     private void LoadPlugin()
     {
         // A plugin is arbitrary code running as this user: say so before the file is opened.
-        if (!_confirm(
+        if (!_dialogs.Confirm(
                 LocalizationManager.Get("Plugins_LoadTitle"),
-                LocalizationManager.Get("Plugins_LoadWarning")))
+                LocalizationManager.Get("Plugins_LoadWarning"),
+                isWarning: true))
         {
             return;
         }
 
-        var dlg = new OpenFileDialog
-        {
-            Title = LocalizationManager.Get("Plugins_LoadTitle"),
-            Filter = LocalizationManager.Get("Plugins_Filter"),
-            Multiselect = false,
-        };
+        var path = _dialogs.PickOpenFile(
+            LocalizationManager.Get("Plugins_LoadTitle"),
+            LocalizationManager.Get("Plugins_Filter"));
 
-        if (dlg.ShowDialog() != true)
+        if (path is null)
         {
             return;
         }
 
-        LoadFrom(dlg.FileName);
+        LoadFrom(path);
     }
 
     /// <summary>

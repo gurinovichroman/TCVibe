@@ -12,10 +12,10 @@ using TCV.App.PluginHost;
 using TCV.App.Services;
 using TCV.App.Settings;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
 using TCV.Archives;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
+using TCV.MultiRename;
 using TCV.Core.PluginSdk;
 
 namespace TCV.App.ViewModels;
@@ -314,31 +314,41 @@ public sealed partial class FileCommands : ObservableObject
 
     /// <summary>
     /// True, after saying why, when the archive the active panel shows cannot take an edit in place
-    /// (F2, F7, Multi-Rename): a format the engine cannot write, or a scratch copy — an archive opened
-    /// from a server or from inside another archive (<see cref="TemporaryFiles"/>), where the change
-    /// would reach only the copy and be lost once the panel leaves it. False on anything but an archive.
+    /// (F2, F7, Multi-Rename): a format the engine cannot write, or a scratch copy (TRAP-98). False on
+    /// anything but an archive.
     /// </summary>
     private async Task<bool> RejectArchiveEditAsync(VfsOperation operation, string titleKey, string unsupportedKey)
     {
-        if (ActiveArchive is not { } archive)
+        if (ActiveArchive is not { } archive || archive.SupportsOperation(operation))
         {
             return false;
         }
 
-        if (!archive.SupportsOperation(operation))
-        {
-            await ShowErrorKeyAsync(titleKey, unsupportedKey);
-            return true;
-        }
-
-        if (TemporaryFiles.Holds(archive.ArchivePath))
-        {
-            await ShowErrorKeyAsync(titleKey, "Fc_ArchiveTemporaryCopy");
-            return true;
-        }
-
-        return false;
+        await ShowErrorKeyAsync(titleKey, archive.IsScratchCopy ? "Fc_ArchiveTemporaryCopy" : unsupportedKey);
+        return true;
     }
+
+    /// <summary>
+    /// True, after saying why, when <paramref name="archive"/> takes no change: every way of writing to
+    /// an archive asks this first (F5/F6 into it, F8, a drop, a paste), and not its engine, which only
+    /// knows the format (TRAP-98).
+    /// </summary>
+    /// <param name="formatKey">What to say about a format the engine cannot write.</param>
+    private async Task<bool> RejectIfArchiveReadOnlyAsync(ArchiveFileSystem archive, string formatKey)
+    {
+        if (archive.CanEdit)
+        {
+            return false;
+        }
+
+        await ShowErrorKeyAsync("Fc_ArchiveReadOnly", archive.IsScratchCopy ? "Fc_ArchiveTemporaryCopy" : formatKey);
+        return true;
+    }
+
+    /// <summary>A move out of an archive that takes no change stayed a copy, and the user has to know (INV-11).</summary>
+    private Task ShowMoveKeptInArchiveAsync(string archivePath) =>
+        ShowErrorKeyAsync("Fc_ArchiveReadOnly",
+            TemporaryFiles.Holds(archivePath) ? "Fc_MoveKeptInTemporaryCopy" : "Fc_MoveKeptInArchive");
 
     /// <summary>The archive open in the destination panel, or null when it is a normal directory.</summary>
     private ArchiveFileSystem? TargetArchive => OppositePanel.FileList.IsInsideArchive
@@ -366,13 +376,7 @@ public sealed partial class FileCommands : ObservableObject
             return false;
         }
 
-        if (!destArchive.Engine.CanWrite)
-        {
-            await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_ArchiveReadOnlyAdd");
-            return false;
-        }
-
-        return true;
+        return !await RejectIfArchiveReadOnlyAsync(destArchive, "Fc_ArchiveReadOnlyAdd");
     }
 
     /// <summary>
@@ -618,9 +622,8 @@ public sealed partial class FileCommands : ObservableObject
         // F8 runs concurrently (TRAP-92): by the time the rewrite ends another panel may be active.
         var panel = ActivePanel;
 
-        if (!archiveVfs.Engine.CanWrite)
+        if (await RejectIfArchiveReadOnlyAsync(archiveVfs, "Fc_ArchiveReadOnlyDelete"))
         {
-            await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_ArchiveReadOnlyDelete");
             return;
         }
 
@@ -631,8 +634,10 @@ public sealed partial class FileCommands : ObservableObject
         // One rewrite for the whole selection, all or nothing (6.35).
         var paths = entries.Select(e => e.Path.Value.TrimStart('/')).ToList();
         var op = new DelegateOperation(
-            new OperationLogDescriptor(OperationKind.Delete,
-                OperationLogDescriptor.DescribeEntries(entries), archiveVfs.ArchivePath, entries.Count),
+            new OperationLogDescriptor(OperationKind.Delete, OperationLogDescriptor.DescribeEntries(entries), null, entries.Count)
+            {
+                ChangedArchive = archiveVfs.ArchivePath,
+            },
             (_, ct) => Task.Run(() => archiveVfs.Engine.DeleteEntries(archiveVfs.ArchivePath, paths, ct), ct));
 
         // The archive file system must outlive the rewrite (INV-09).
@@ -746,8 +751,9 @@ public sealed partial class FileCommands : ObservableObject
         return Task.CompletedTask;
     }
 
-    // F3/Enter — Open file or navigate into directory/archive
-    [RelayCommand]
+    // F3/Enter — Open file or navigate into directory/archive. Concurrent: a download from a server runs
+    // in the background, and Enter must keep working meanwhile (ADR-0038).
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task OpenFile()
     {
         var item = ActivePanel.FileList.SelectedItem;
@@ -769,35 +775,7 @@ public sealed partial class FileCommands : ObservableObject
         // are disk files: a temporary copy of one would swallow the edits and be swept on exit.
         if (!ActivePanel.FileList.EntriesOnDisk)
         {
-            var vfs = ActivePanel.FileList.ActiveVfs;
-            try
-            {
-                // A folder of its own per open (two readme.txt from different places must not collide),
-                // with a name Windows can hold, swept on exit: decrypted archive content does not linger.
-                var tempPath = TemporaryFiles.PathFor(item.Name);
-                using (LeasePanelFileSystems())
-                {
-                    var stream = await vfs.OpenReadAsync(item.Entry.Path);
-                    await using (stream)
-                    await using (var file = File.Create(tempPath))
-                        await stream.CopyToAsync(file);
-                }
-
-                // An archive inside an archive (or on a server) opens in the panel like any other;
-                // Backspace at its root returns to the one it came from.
-                if (KnownArchiveExtensions.IsArchiveFileName(item.Name) && _archivePlugin.IsArchive(tempPath))
-                {
-                    await TryOpenArchiveInPanelAsync(tempPath);
-                    return;
-                }
-
-                Shell32.ShellExecute(IntPtr.Zero, "open", tempPath, null, null, Shell32.SW_SHOWNORMAL);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to open {Name} from {Vfs}", item.Name, vfs.DisplayName);
-                await _dialogs.ShowErrorAsync(LocalizationManager.Get("Fc_OpenFailed"), GetFileErrorMessage(ex));
-            }
+            await OpenThroughCopyAsync(ActivePanel, item);
             return;
         }
 
@@ -811,6 +789,79 @@ public sealed partial class FileCommands : ObservableObject
         }
 
         Shell32.ShellExecute(IntPtr.Zero, "open", winPath, null, null, Shell32.SW_SHOWNORMAL);
+    }
+
+    /// <summary>
+    /// Enter on a file of a server or an archive: fetches a scratch copy in the background, with progress
+    /// and Cancel once it takes a while, and opens it. A second Enter on a file already on its way brings
+    /// its window back. The panel may have moved on by the end (TRAP-92): what follows goes to the panel
+    /// the command started in.
+    /// </summary>
+    private async Task OpenThroughCopyAsync(PanelViewModel panel, FileEntryViewModel item)
+    {
+        var vfs = panel.FileList.ActiveVfs;
+        var fetches = _shell.RemoteFetches;
+        if (fetches.TryBegin(vfs, item.Entry.Path, Services.RemoteFetchPurpose.Open) is not { } ticket)
+        {
+            fetches.Find(vfs, item.Entry.Path, Services.RemoteFetchPurpose.Open)?.Window?.BringBack();
+            return;
+        }
+
+        string? tempPath = null;
+        using (ticket)
+        {
+            try
+            {
+                // A folder of its own per open (two readme.txt from different places must not collide),
+                // with a name Windows can hold, swept on exit: decrypted archive content does not linger.
+                tempPath = TemporaryFiles.PathFor(item.Name);
+                using (LeasePanelFileSystems())
+                {
+                    var fetch = Services.RemoteFetch.CopyToFileAsync(
+                        vfs, item.Entry.Path, tempPath, item.Entry.Size, item.Name, ticket, ticket.Token);
+                    await _shell.WatchFetchAsync(ticket, fetch);
+                    await fetch;
+                }
+            }
+            catch (OperationCanceledException) when (ticket.Token.IsCancellationRequested)
+            {
+                Services.RemoteFetch.DeleteFolder(Path.GetDirectoryName(tempPath));
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to open {Name} from {Vfs}", item.Name, vfs.DisplayName);
+                Services.RemoteFetch.DeleteFolder(Path.GetDirectoryName(tempPath));
+                await _dialogs.ShowErrorAsync(LocalizationManager.Get("Fc_OpenFailed"), GetFileErrorMessage(ex));
+                return;
+            }
+        }
+
+        try
+        {
+            // An archive inside an archive (or on a server) opens in the panel like any other;
+            // Backspace at its root returns to the one it came from.
+            if (KnownArchiveExtensions.IsArchiveFileName(item.Name) && _archivePlugin.IsArchive(tempPath))
+            {
+                if (ReferenceEquals(panel.FileList.ActiveVfs, vfs))
+                {
+                    await TryOpenArchiveInPanelAsync(tempPath, panel);
+                }
+                else
+                {
+                    _shell.ShowNotice(string.Format(LocalizationManager.Get("Fetch_ArchivePanelMoved"), item.Name), TimeSpan.FromSeconds(6));
+                }
+
+                return;
+            }
+
+            Shell32.ShellExecute(IntPtr.Zero, "open", tempPath, null, null, Shell32.SW_SHOWNORMAL);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to open {Name} from {Vfs}", item.Name, vfs.DisplayName);
+            await _dialogs.ShowErrorAsync(LocalizationManager.Get("Fc_OpenFailed"), GetFileErrorMessage(ex));
+        }
     }
 
     // F3 — internal viewer (Lister): render the file's content in-app (text/hex/image) instead of
@@ -841,16 +892,14 @@ public sealed partial class FileCommands : ObservableObject
     /// Mounts an archive into the active panel, asking for a password and retrying while the
     /// archive stays encrypted. Returns false when it could not be opened — cancelled or broken.
     /// </summary>
-    internal async Task<bool> TryOpenArchiveInPanelAsync(string archivePath)
+    internal async Task<bool> TryOpenArchiveInPanelAsync(string archivePath, PanelViewModel? panel = null)
     {
         string? password = null;
         while (true)
         {
             try
             {
-                var options = password is not null
-                    ? new Dictionary<string, string> { ["password"] = password }
-                    : null;
+                var options = ArchiveEditing.OpenOptions(archivePath, password);
 
                 // Create lists the whole archive (and probes the password): seconds of decoding for a
                 // big 7z or ISO, so it runs off the UI thread (INV-06).
@@ -865,7 +914,7 @@ public sealed partial class FileCommands : ObservableObject
                     System.Windows.Input.Mouse.OverrideCursor = null;
                 }
 
-                ActivePanel.FileList.NavigateToArchive(archiveFs);
+                (panel ?? ActivePanel).FileList.NavigateToArchive(archiveFs);
                 return true;
             }
             catch (ArchivePasswordRequiredException)
@@ -953,8 +1002,8 @@ public sealed partial class FileCommands : ObservableObject
             await EditFile();
     }
 
-    // F4 — Edit file in the associated editor
-    [RelayCommand]
+    // F4 — Edit file in the associated editor. Concurrent: a server file downloads in the background first.
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task EditFile()
     {
         var item = ActivePanel.FileList.SelectedItem;
@@ -999,8 +1048,8 @@ public sealed partial class FileCommands : ObservableObject
         }
     }
 
-    // Ctrl+M — Multi-Rename
-    [RelayCommand]
+    // Ctrl+M — Multi-Rename. Concurrent: a batch runs in the background once the window has closed.
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private Task OpenMultiRename() => OpenMultiRenameAsync(GetSelectedOrCurrent());
 
     private async Task OpenMultiRenameAsync(IReadOnlyList<IFileEntry> selected)
@@ -1018,17 +1067,108 @@ public sealed partial class FileCommands : ObservableObject
             return;
         }
 
-        // Renames go through the panel's own file system, so a remote panel renames remotely. The dialog
-        // renames (and undoes) while it is open: the mounted file system must outlive it (INV-09).
-        var vm = new MultiRenameDialogViewModel(selected, SourceVfs, _multiRenameProfiles, _operationQueue);
-        var dlg = new MultiRenameDialog(vm) { Owner = Application.Current.MainWindow };
+        // Renames go through the panel's own file system, so a remote panel renames remotely. The window
+        // only prepares the batch and closes; the file system must outlive it and the batch (INV-09), and
+        // the panel to refresh is the one it started in, whatever is active by then (TRAP-92).
+        var panel = ActivePanel;
+        var vfs = SourceVfs;
         using (LeasePanelFileSystems())
         {
-            dlg.ShowDialog();
+            var vm = new MultiRenameDialogViewModel(selected, vfs, _multiRenameProfiles);
+            await _dialogs.ShowMultiRenameAsync(vm);
+
+            if (vm.Accepted is { } batch)
+            {
+                await RunMultiRenameAsync(batch, vfs, panel);
+                await panel.FileList.LoadAsync(panel.CurrentPath);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Runs a prepared batch through the queue like every other background operation (ADR-0038): the same
+    /// progress window, «In background», the status bar, and the outcome said at the end. Each folder of the
+    /// batch is an operation and a log line of its own, because that line is how it is taken back (6.96).
+    /// </summary>
+    private async Task RunMultiRenameAsync(MultiRenameBatch batch, IVirtualFileSystem vfs, PanelViewModel panel)
+    {
+        var title = LocalizationManager.Get("MR_Title");
+        var progress = _dialogs.ShowProgressDialog(title);
+        progress.CanPause = false;
+
+        // The log can take a batch back on the disk, and on a server or in an archive that a panel has open then.
+        var server = panel.FileList.RemoteConnection;
+        var undoable = panel.FileList.EntriesOnDisk || server is not null || ArchiveEditing.ArchiveBehind(vfs) is not null;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var engine = new RenameEngine(vfs, GetFileErrorMessage);   // as F2 says it
+
+        var performed = new List<RenameAction>();
+        var failures = new List<RenameFailure>();
+        var cancelled = false;
+        Exception? thrown = null;
+
+        foreach (var folder in batch.ByFolder(vfs))
+        {
+            var doneBefore = performed.Count;
+            var counter = new InlineCounter(done => ((IProgress<ItemProgress>)progress).Report(
+                new ItemProgress(doneBefore + done, batch.Changes, folder.Source, clock.Elapsed)));
+            var operation = new RenameBatchOperation(
+                ct => engine.ExecuteBatchAsync(folder.Files, folder.Previews, ct, counter), folder.Source, folder.Changes, vfs)
+            {
+                Undoable = undoable,
+                Server = server?.DescribeAddress("/"),
+                ChangedArchive = ArchiveEditing.ArchiveBehind(vfs),
+            };
+            progress.Attach(operation);
+
+            await _operationQueue.EnqueueAsync(operation);
+
+            if (operation.Result is { } result)
+            {
+                performed.AddRange(result.Performed);
+                failures.AddRange(result.Failures);
+                cancelled |= result.Cancelled;
+            }
+            else
+            {
+                thrown ??= operation.FailureException;
+                cancelled |= operation.State == OperationState.Cancelled;
+            }
+
+            if (cancelled || thrown is not null)
+            {
+                break;
+            }
         }
 
-        // The dialog can rename and undo several times before closing — reload unconditionally.
-        _ = ActivePanel.FileList.LoadAsync(ActivePanel.CurrentPath);
+        if (failures.Count == 0 && thrown is null && !cancelled)
+        {
+            progress.Complete();
+        }
+        else
+        {
+            progress.Dismiss();
+        }
+
+        var summary = new RenameBatchResult(performed, failures, cancelled);
+        if (thrown is not null)
+        {
+            await _dialogs.ShowErrorAsync(title, GetFileErrorMessage(thrown));
+        }
+        else if (failures.Count > 0)
+        {
+            await _dialogs.ShowErrorAsync(title, MultiRenameDialogViewModel.DescribeResult(summary, batch.Conflicts));
+        }
+        else if (!cancelled || performed.Count > 0)
+        {
+            _shell.ShowNotice(MultiRenameDialogViewModel.DescribeResult(summary, batch.Conflicts), TimeSpan.FromSeconds(6));
+        }
+    }
+
+    /// <summary>Reports on the thread that counts: the progress window marshals by itself.</summary>
+    private sealed class InlineCounter(Action<int> report) : IProgress<int>
+    {
+        public void Report(int value) => report(value);
     }
 
     /// <summary>Portable store for Multi-Rename profiles (JSON next to the exe).</summary>
@@ -1390,22 +1530,6 @@ public sealed partial class FileCommands : ObservableObject
         catch (System.Runtime.InteropServices.ExternalException) { return null; }
     }
 
-    // Ctrl+Num+ — Select entries by wildcard mask (TC's "Select group")
-    [RelayCommand]
-    private void SelectByMask() => ShowSelectByMaskDialog(select: true);
-
-    // Ctrl+Num- — Unselect entries by wildcard mask (TC's "Unselect group")
-    [RelayCommand]
-    private void UnselectByMask() => ShowSelectByMaskDialog(select: false);
-
-    private void ShowSelectByMaskDialog(bool select)
-    {
-        var vm = new SelectByMaskDialogViewModel(select);
-        var dlg = new SelectByMaskDialog(vm) { Owner = Application.Current.MainWindow };
-        if (dlg.ShowDialog() == true)
-            ActivePanel.FileList.SelectByMask(vm.Mask, select);
-    }
-
     // Ctrl+C — Copy selected files to clipboard
     [RelayCommand]
     private Task CopyToClipboard() => SetFileClipboardAsync(cut: false);
@@ -1703,10 +1827,14 @@ public sealed partial class FileCommands : ObservableObject
 
                 if (isCut && landed.Count > 0)
                 {
-                    if (engine.CanWrite)
+                    if (ArchiveEditing.CanEditFile(engine, group.Key))
+                    {
                         await DeleteArchiveEntriesAsync(group.Key, landed.Select(i => i.SourcePath).ToList());
+                    }
                     else
-                        await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_MoveKeptInArchive");
+                    {
+                        await ShowMoveKeptInArchiveAsync(group.Key);
+                    }
                 }
             }
         }

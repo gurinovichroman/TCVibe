@@ -19,10 +19,7 @@
 
     <!-- Колонки файлового списка -->
     <sys:String x:Key="Col_Name">Имя</sys:String>
-    <sys:String x:Key="Col_Ext">Расш</sys:String>
     <sys:String x:Key="Col_Size">Размер</sys:String>
-    <sys:String x:Key="Col_Date">Дата</sys:String>
-    <sys:String x:Key="Col_Attr">Атр</sys:String>
     <sys:String x:Key="Col_Computed">считается</sys:String>
     <sys:String x:Key="Col_Reset">Сбросить колонки</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Сравнение и синхронизация каталогов, правка удалённого файла (6.23) -->
     <sys:String x:Key="Cmp_Title">Сравнить каталоги</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Не отмечено ничего для копирования. Отметьте строки или задайте направление стрелкой в строке.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">проверка, что ничего не изменилось…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">С момента сравнения изменилось: {0} {0:plural:файл|файла|файлов}, первый — {1}. Ничего не скопировано. Нажмите «Сравнить», чтобы увидеть папки как они есть сейчас.</sys:String>
     <sys:String x:Key="Cmp_Compare">Сравнить</sys:String>
     <sys:String x:Key="Cmp_Recursive">С подкаталогами</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Показывать одинаковые</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Синхронизировать</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">Скопировать отмеченные записи? Всего: {0}. Существующие файлы будут перезаписаны.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Правка удалённого файла</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">«{0}» открыт во временной копии. Каждое сохранение выгружается обратно.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">«{0}» открыт во временной копии. Каждое сохранение выгружается обратно.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Не удалось получить файл или источник доступен только для чтения.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Выгрузка правок</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Сохранённые правки уходят на сервер. Программа закроется, когда они дойдут.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">Если не ждать, ничего не пропадёт: правки останутся в локальной копии, и программа скажет, где она.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Прервать и оставить копии</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">Выгрузка не завершилась: файл на сервере может быть неполным.</sys:String>
+    <sys:String x:Key="Fetch_Title">Получение файла</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} получен, но панель уже в другом месте. Нажмите на нём Enter ещё раз, чтобы открыть.</sys:String>
 
     <!-- Сохранённые операции, стек файлов и гаджеты (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Сохранённые операции</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">Новый worktree под задачу…</sys:String>
     <sys:String x:Key="Git_WtRemove">Удалить worktree</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Удалить</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">Удалить worktree «{0}» и его каталог?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">Удалить worktree «{0}» и его каталог?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Внимание: незакоммиченных изменений — {0}. Они будут потеряны безвозвратно.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree «{0}» удалён.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">Не удалось удалить worktree: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">Из этого названия нельзя получить имя ветки: в нём нет латинских или русских букв и цифр. Введите ветку и каталог вручную.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">Каталог не пуст: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">Не удалось создать worktree: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree на ветке «{0}» создан: {1}&#x0a;Скопировано файлов: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree на ветке «{0}» создан: {1}&#x0a;Скопировано файлов: {2}</sys:String>
 
     <!-- Git: индекс, коммит, ветки, stash -->
     <sys:String x:Key="Git_CommitTitle">Коммит</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Убрать</sys:String>
     <sys:String x:Key="WsProps_PictureNone">нет</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Найдено в проекте:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Стоит на панели воркспейсов вместо значка и букв. Пока у воркспейса нет ни картинки, ни значка, логотип или фавиконка из его репозитория подставляются сами; когда вы выбрали — картинку, значок или «Убрать», — больше не ищутся.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Стоит вместо значка и букв на панели воркспейсов и перед именем в меню, переключателе и шапке окна. Пока у воркспейса нет ни картинки, ни значка, логотип или фавиконка из его репозитория подставляются сами; когда вы выбрали — картинку, значок или «Убрать», — больше не ищутся.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Картинка воркспейса</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Картинки</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">Этот файл не читается как картинка.</sys:String>
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Закрепление воркспейса</sys:String>
     <sys:String x:Key="Ws_RenameTaken">Воркспейс с именем «{0}» уже существует.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">Не удалось переименовать воркспейс: workspaces.json сейчас недоступен для чтения или записи.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Картинки, не попавшие в файл: {0}. Их здесь нет, или они больше лимита.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Картинки, не принятые из файла: {0}. Принимается PNG 64×64 до 24 КБ.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Воркспейсы</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">Файл workspaces.json был повреждён, поэтому загружена предыдущая копия (workspaces.json.bak). Повреждённый файл сохранён рядом с программой как {0}.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">Этот воркспейс настроен запускать команду ниже в {1}. Она введена не на этом компьютере (возможно, пришла из файла проекта), поэтому проверьте её перед запуском.&#10;&#10;{0}&#10;&#10;Запустить?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">Удалить локальную ветку «{0}»? Удалённые ветки не затрагиваются.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">В ветке «{0}» есть коммиты, которых больше нигде нет. Удаление потеряет их безвозвратно. Всё равно удалить?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Ветка «{0}» удалена.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">Есть незакоммиченные изменения, поэтому git не может перейти на «{0}».&#x0a;&#x0a;Спрятать их в stash (вместе с новыми файлами) и перейти? Вернуть можно командой «Вернуть из stash» ({gesture:GitStashPop}).</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">Есть незакоммиченные изменения, поэтому git не может перейти на «{0}».&#x0a;&#x0a;Спрятать их в stash (вместе с новыми файлами) и перейти? Вернуть можно командой «Вернуть из stash» ({gesture:GitStashPop}).</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">перед переходом на {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Неразрешённый конфликт слияния</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Внутри есть изменения</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Отменить правки</sys:String>
     <sys:String x:Key="Git_DiscardHint">Отбрасывает выбранные правки и возвращает последнюю закоммиченную версию. Отменить нельзя.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Отмена правок</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">Отбросить изменения в {0} {0:plural:файле|файлах|файлах} и вернуть последнюю закоммиченную версию?&#x0a;&#x0a;{1}&#x0a;&#x0a;Отменить это нельзя.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">Отбросить изменения в {0} {0:plural:файле|файлах|файлах} и вернуть последнюю закоммиченную версию?&#x0a;&#x0a;{1}&#x0a;&#x0a;Отменить это нельзя.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} из них есть и в индексе; изменения в индексе тоже будут отброшены.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0:plural:Пропущен|Пропущено|Пропущено} {0} {0:plural:новый файл|новых файла|новых файлов}: у {0:plural:него|них|них} нет закоммиченной версии. Удалите {0:plural:его|их|их} клавишей {gesture:Delete}.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">Новые файлы здесь отменить нельзя (нечего восстанавливать). Удалите их клавишей {gesture:Delete}.</sys:String>
@@ -859,11 +867,11 @@
     <sys:String x:Key="Git_Menu_Diff">_Показать diff</sys:String>
     <sys:String x:Key="Git_Menu_Clone">К_лонировать по ссылке…</sys:String>
     <!-- agents -->
-    <sys:String x:Key="Llm_NotConfigured">Языковая модель не настроена. Укажите адрес и модель в Настройки → Слой для агентов (подойдёт любой OpenAI-совместимый сервер: Ollama, LM Studio, llama.cpp или облачный API).</sys:String>
-    <sys:String x:Key="Llm_NotConfiguredEmbeddings">Модель эмбеддингов не настроена. Укажите её в Настройки → Слой для агентов; это может быть тот же локальный сервер, что и для чата.</sys:String>
+    <sys:String x:Key="Llm_NotConfigured">Языковая модель не настроена. Укажите адрес и модель в Настройки → Агентский слой (подойдёт любой OpenAI-совместимый сервер: Ollama, LM Studio, llama.cpp или облачный API).</sys:String>
+    <sys:String x:Key="Llm_NotConfiguredEmbeddings">Модель эмбеддингов не настроена. Укажите её в Настройки → Агентский слой; это может быть тот же локальный сервер, что и для чата.</sys:String>
     <sys:String x:Key="Llm_EmptyAnswer">Модель вернула пустой ответ.</sys:String>
     <sys:String x:Key="Llm_NotJson">Сервер ответил не JSON — проверьте, что адрес ведёт на OpenAI-совместимый API.</sys:String>
-    <sys:String x:Key="Llm_TimedOut">Сервер не ответил за {0} с. Медленной локальной модели нужен больший тайм-аут: увеличьте «Ждать ответа» в Настройках → Агентский слой.</sys:String>
+    <sys:String x:Key="Llm_TimedOut">Сервер не ответил за {0} с. Медленной локальной модели нужен больший тайм-аут: увеличьте «Ждать ответа» в Настройки → Агентский слой.</sys:String>
 
     <sys:String x:Key="Agent_Yes">Да</sys:String>
     <sys:String x:Key="Agent_No">Нет</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Доступ запрещён.</sys:String>
     <sys:String x:Key="Files_NotFound">Эта папка не существует.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Не удаётся прочитать папку: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">Чтение папки остановлено.</sys:String>
     <sys:String x:Key="Files_Empty">Папка пуста</sys:String>
     <sys:String x:Key="Files_NoMatches">Нет имён, подходящих под фильтр (Esc сбрасывает)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Прошло:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Снять выделение по маске</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Маска для выделения (напр. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Маска для снятия выделения (напр. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">_Шаблон:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Шаблон</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">_Удалить</sys:String>
+    <sys:String x:Key="Sel_Mask">_Маска:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Маски разделяются «;». После «|» — исключения, маска с «\» в конце — папки: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">Включая _папки</sys:String>
+    <sys:String x:Key="Sel_Age">_Возраст:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Возраст</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Количество</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Единица</sys:String>
+    <sys:String x:Key="Sel_AgeAny">любой</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">старше</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">новее</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">минут</sys:String>
+    <sys:String x:Key="Sel_UnitHours">часов</sys:String>
+    <sys:String x:Key="Sel_UnitDays">дней</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Только _изменённые в Git</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Изменённые, добавленные в индекс, новые и с конфликтом. Работает в папке на диске.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Только изменённые _агентом</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">То, что «Правки агента» проекта приписывают агенту. Работает в папке на диске.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Сохранить как шаблон</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">На_звание:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">_Клавиша:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Клавиша</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">Сочетание с Ctrl, Alt или Shift. Клавиша, занятая другой командой, не сработает.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">_Сохранить</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Условия по Git и агенту работают только в папке на диске.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Ничего не подошло.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Поставьте курсор на файл, чтобы выделить по его расширению.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">Нечего восстанавливать: выделение ещё не снималось.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">В этой папке нет ни одного из прежде отмеченных имён.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Выделить: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Исходный код</sys:String>
+    <sys:String x:Key="SelTpl_Config">Конфигурация</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Документы</sys:String>
+    <sys:String x:Key="SelTpl_Images">Картинки</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Архивы</sys:String>
+    <sys:String x:Key="SelTpl_Junk">Временные файлы и логи</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Папки сборки</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">Изменено в Git</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Изменено агентом</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">Изменено за сутки</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Старше 2 дней</sys:String>
     <sys:String x:Key="Log_Title">Журнал операций</sys:String>
     <sys:String x:Key="Log_ColTime">Время</sys:String>
     <sys:String x:Key="Log_ColOperation">Операция</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Удалить весь журнал операций? Это запись действий файлового менеджера и агентов, восстановить её нельзя.</sys:String>
     <sys:String x:Key="Log_ClearButton">Очистить журнал</sys:String>
     <sys:String x:Key="Log_UndoRename">Отменить переименование</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Возвращает файлам выбранного пакета переименования (ИИ-переименование) прежние имена. Сначала проверяет папку и спрашивает.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Возвращает файлам выбранного пакета переименования прежние имена. Сначала проверяет папку и спрашивает.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">Вернуть {0} {0:plural:файлу|файлам|файлам} в {1} имена, которые были до этого переименования?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:файл останется|файла останутся|файлов останутся} как есть: с тех пор {0:plural:его|их|их} переименовали, перенесли или удалили, либо прежнее имя занято другим файлом.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">В {0} нечего возвращать: у файлов уже нет имён, которые дал этот пакет, или их прежние имена заняты.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">Этот пакет переименован на сервере {0}. Подключите панель к этому серверу и повторите.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">Этот пакет переименован внутри архива {0}. Откройте этот архив в панели и повторите.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Корзина</sys:String>
     <sys:String x:Key="Log_KindCopy">Копирование</sys:String>
     <sys:String x:Key="Log_KindMove">Перемещение</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Часть элементов не была перемещена, они остались на месте.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Часть элементов не была добавлена в архив, исходные файлы оставлены на месте.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">Формат архива не поддерживает изменение: файлы извлечены, но остались в архиве.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">Файлы извлечены, но в архиве они остались: он открыт с сервера или из другого архива, и здесь открыта только его временная копия.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Свойства недоступны</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">Распаковка недоступна</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Выберите во второй панели обычную папку на локальном диске.</sys:String>
@@ -1168,6 +1223,11 @@
     <sys:String x:Key="Menu_Delete">_Удалить</sys:String>
     <sys:String x:Key="Menu_SelectByMask">_Выделить по маске…</sys:String>
     <sys:String x:Key="Menu_UnselectByMask">Сн_ять по маске…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">_Выделение</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Выделить то же _расширение</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">_Снять то же расширение</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">В_осстановить выделение</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">_Шаблоны</sys:String>
     <sys:String x:Key="Menu_CopyFullPath">Копировать полный пу_ть</sys:String>
     <sys:String x:Key="Menu_CopyNames">Копировать _имена</sys:String>
     <sys:String x:Key="Menu_CopyReadLink">Копировать сс_ылку</sys:String>
@@ -1183,11 +1243,11 @@
     <sys:String x:Key="Menu_DeletePermanent">Удалить _безвозвратно</sys:String>
     <sys:String x:Key="Menu_NameSearch">Найти файл на _диске…</sys:String>
     <sys:String x:Key="Menu_QuickFilter">Б_ыстрый фильтр</sys:String>
-    <sys:String x:Key="Menu_CompareDirs">Сравнить _каталоги…</sys:String>
-    <sys:String x:Key="Menu_SavedOps">Сохранённые _операции…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">Управле_ние сохранёнными операциями…</sys:String>
-    <sys:String x:Key="Menu_DropStackAdd">Стек: добавить _выделенное</sys:String>
-    <sys:String x:Key="Menu_DropStackShow">Стек _файлов…</sys:String>
+    <sys:String x:Key="Menu_CompareDirs">Срав_нить каталоги…</sys:String>
+    <sys:String x:Key="Menu_SavedOps">Со_хранённые операции…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Управление сохранёнными операциями…</sys:String>
+    <sys:String x:Key="Menu_DropStackAdd">Стек: добавить выделенное</sys:String>
+    <sys:String x:Key="Menu_DropStackShow">Стек фа_йлов…</sys:String>
     <sys:String x:Key="Menu_RunGadget">Запустить _гаджет…</sys:String>
     <sys:String x:Key="Menu_GadgetsManage">Управление г_аджетами…</sys:String>
     <sys:String x:Key="Menu_Agents">_Агенты</sys:String>
@@ -1208,16 +1268,16 @@
     <sys:String x:Key="Menu_MultiRename">_Массовое переименование…</sys:String>
     <sys:String x:Key="Menu_Checksums">Контрольные _суммы…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Журнал операций…</sys:String>
-    <sys:String x:Key="Menu_BackgroundOperations">Фоновые операц_ии</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Фоновые опера_ции</sys:String>
     <sys:String x:Key="Menu_Terminal">Открыть _терминал</sys:String>
-    <sys:String x:Key="Menu_ShellsManage">Обо_лочки командной строки…</sys:String>
+    <sys:String x:Key="Menu_ShellsManage">Оболочки командной строки…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Открыть в _редакторе</sys:String>
     <sys:String x:Key="Menu_OpenInEditorPicker">Открыть в р_едакторе…</sys:String>
     <sys:String x:Key="Menu_RunAgent">Запустить _агента здесь</sys:String>
     <sys:String x:Key="Menu_RunAgentPicker">Запустить аге_нта здесь…</sys:String>
     <sys:String x:Key="Menu_GoRoot">В _корневой каталог</sys:String>
-    <sys:String x:Key="Menu_GoHome">В _домашнюю папку</sys:String>
-    <sys:String x:Key="Menu_GoClipboard">Перейти по пути из _буфера</sys:String>
+    <sys:String x:Key="Menu_GoHome">В дома_шнюю папку</sys:String>
+    <sys:String x:Key="Menu_GoClipboard">Перейти по пути из буфера</sys:String>
     <sys:String x:Key="Menu_EditPath">И_зменить путь</sys:String>
     <sys:String x:Key="Menu_OpenExplorer">Открыть в про_воднике</sys:String>
     <sys:String x:Key="Menu_UserTools">Пользовательские инстр_ументы…</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">Доступна версия {0}.&#10;&#10;{1}&#10;&#10;Установить сейчас? Программа закроется, обновится и откроется снова. Настройки и воркспейсы сохранятся.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">Доступна версия {0}. Установите её из главного окна: оно закроет окна воркспейсов и перезапустится.</sys:String>
     <sys:String x:Key="Update_Busy">Обновление закрывает программу, а сейчас идут операции или передачи. Дождитесь их окончания и повторите.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">Обновление не установлено: правки файлов на сервере не выгружены. Они в сохранности здесь:&#10;{0}&#10;&#10;Сохраните их в редакторе ещё раз и повторите.</sys:String>
     <sys:String x:Key="Update_Downloading">скачиваю обновление… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">Не удалось скачать обновление: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Не все окна воркспейсов закрылись. Закройте их и повторите обновление.</sys:String>
@@ -1307,7 +1368,7 @@
     <sys:String x:Key="Settings_ExtInTerminal">В терминале</sys:String>
     <sys:String x:Key="MR_Title">Массовое переименование</sys:String>
     <sys:String x:Key="MR_Profile">Профиль</sys:String>
-    <sys:String x:Key="MR_ProfileLoad">_Загрузить:</sys:String>
+    <sys:String x:Key="MR_ProfileLoad">За_грузить:</sys:String>
     <sys:String x:Key="MR_ProfileName">_Имя:</sys:String>
     <sys:String x:Key="MR_ProfileNameTip">Имя, под которым текущие настройки сохранятся как профиль</sys:String>
     <sys:String x:Key="MR_ProfileSave">Сохранить</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">Новое имя</sys:String>
     <sys:String x:Key="MR_ColConflict">Проблема</sys:String>
     <sys:String x:Key="MR_Rename">Переименовать</sys:String>
-    <sys:String x:Key="MR_Undo">Откатить</sys:String>
-    <sys:String x:Key="MR_UndoTip">Вернуть прежние имена файлам, которые только что переименованы</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Такое же имя получит другой файл</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Пустое имя</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Недопустимое имя</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Нечего переименовывать. Конфликтов: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Нечего переименовывать: имена не меняются.</sys:String>
     <sys:String x:Key="MR_Error">Ошибка: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Возвращено имён: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">Возвращено {0} из {1}, ошибок: {2}.</sys:String>
-    <sys:String x:Key="MR_UndoError">Не удалось откатить: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">Переименовано файлов: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Пропущено из-за конфликтов: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Не удалось: {0} (например, «{1}»: {2}).</sys:String>
@@ -1381,10 +1437,11 @@
     <sys:String x:Key="Conn_Protocol">_Протокол:</sys:String>
     <sys:String x:Key="Conn_AuthMethod">_Вход по:</sys:String>
     <sys:String x:Key="Conn_KeyFile">_Файл ключа:</sys:String>
-    <sys:String x:Key="Conn_Passphrase">Парол_ьная фраза:</sys:String>
+    <sys:String x:Key="Conn_Passphrase">Па_рольная фраза:</sys:String>
     <sys:String x:Key="Conn_Browse">Обзор…</sys:String>
     <sys:String x:Key="Conn_Test">Проверить соединение</sys:String>
     <sys:String x:Key="Conn_Connecting">Подключение…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Подключение к «{0}»…</sys:String>
     <sys:String x:Key="Conn_TestOk">Соединение установлено.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Проверка отменена.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Ошибка: {0}</sys:String>
@@ -1447,7 +1504,7 @@
     <sys:String x:Key="Conn_QuickTitle">Быстрое подключение</sys:String>
     <sys:String x:Key="Conn_QuickPrompt">Адрес сервера или хранилища: sftp://пользователь@хост:22/путь, ftp://…, davs://…, s3://бакет/префикс</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">«{0}» — не адрес подключения. Например: sftp://user@host/путь, s3://бакет.</sys:String>
-    <sys:String x:Key="Menu_Reconnect">Пере_подключиться</sys:String>
+    <sys:String x:Key="Menu_Reconnect">Переподключитьс_я</sys:String>
     <sys:String x:Key="Menu_QuickConnect">_Быстрое подключение…</sys:String>
     <sys:String x:Key="Conn_Saved">Подключение «{0}» сохранено.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">«{0}»: укажите общую папку — путь вида /share или /share/папка.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">IdentityFile не задан — ключ по умолчанию</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">файла ключа нет на этом компьютере</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">ключа нет — понадобится пароль</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump и ProxyCommand не поддерживаются — подключение напрямую</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Подключается через {0}, а туннели здесь не поддерживаются: если отметить, подключение пойдёт напрямую, в обход</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">Блоки Match здесь не вычисляются, их настройки не применены ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: файла нет.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include не прочитан: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Скачивание</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Отправка</sys:String>
     <sys:String x:Key="Transfer_Empty">Очередь пуста. Выделите файлы на сервере и нажмите {gesture:QueueTransfer}.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Добавление в очередь</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">Найдено: {0} {0:plural:файл|файла|файлов}</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Не поставлено в очередь: {0} {0:plural:элемент|элемента|элементов}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: ссылка, по ней не переходим</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: содержимое то же, что у папки выше, похоже на петлю ссылок</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: слишком большая вложенность</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: не удалось прочитать: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: такого имени не может быть на месте назначения</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: файл и папка получили бы одно имя</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">Откройте подключение к серверу или хранилищу в одной из панелей — очередь работает только с ними.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">Вторая панель должна показывать локальный диск — очередь передаёт файлы между сервером и диском.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">В очередь можно поставить только файлы — папки копируйте через {gesture:Copy}.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">«{0}» уже существует и оставлен без изменений.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">«{0}» уже есть на сервере и оставлен без изменений.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">Передача «{0}» не удалась.</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">Папка для поиска не существует: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Неверный размер «{0}». Укажите байты или число с KB, MB, GB (например, 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">Минимальный размер больше максимального.</sys:String>
-    <sys:String x:Key="Search_BadDate">Неверная дата «{0}». Укажите день, например 2026-10-01 или 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Неверная дата «{0}». Укажите день, например 2026-10-31 или 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">Начальная дата позже конечной.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Авто</sys:String>
     <sys:String x:Key="Search_NameRegex">Имя файла — регулярное выражение</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Байты или число с KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Изменён не раньше</sys:String>
     <sys:String x:Key="Search_DateTo">Изменён не позже</sys:String>
-    <sys:String x:Key="Search_DateHint">День: 2026-10-01 или 01.10.2026. Оба дня входят в диапазон; пусто — без ограничения.</sys:String>
+    <sys:String x:Key="Search_DateHint">День: 2026-10-31 или 31.10.2026. Оба дня входят в диапазон; пусто — без ограничения.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">не удалось прочитать</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">имена различаются только регистром</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Сравнивать содержимое</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">папки не существует</sys:String>
     <sys:String x:Key="Cmp_Failed">Сравнение не удалось: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · папок, которые не удалось прочитать, пропущено: {0}</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">левую сторону нельзя изменить: на неё ничего не копируется</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">правую сторону нельзя изменить: на неё ничего не копируется</sys:String>
     <sys:String x:Key="Cmp_TickRow">Включить строку</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Направление копирования</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Нажмите, чтобы сменить направление: → вправо, ← влево, = не трогать</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">Будут заменены файлы:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… и ещё {0}</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">Заменяемые файлы сначала уходят в корзину, их можно восстановить.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Часть заменяемых файлов лежит на сервере, где нет корзины: их не вернуть.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Часть заменяемых файлов лежит на сервере или в архиве, где нет корзины: их не вернуть.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">ВНИМАНИЕ: {0} из заменяемых файлов НОВЕЕ, чем копия, которая их заменит:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">Пропущено записей: {0} — файл с одной стороны и папка с другой.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Синхронизировать?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: не удалось отправить существующий файл в корзину, он оставлен как есть</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: копирование не завершилось</sys:String>
     <sys:String x:Key="Cmp_Unstamped">{0} скопированным файлам не удалось задать время изменения источника (сервер этого не позволяет). У них время копирования, поэтому при следующем сравнении они будут выглядеть новее — перед обратной синхронизацией включите «Сравнивать содержимое».</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Часть файлов, редактировавшихся на сервере, не была выгружена до закрытия. Ваши правки сохранены в:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Часть файлов, редактировавшихся на сервере, не была выгружена до закрытия. Ваши правки сохранены в:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0}: выгружено на сервер</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">Не удалось выгрузить {0}: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">Не удалось выгрузить {0}: {1}
 
 Ваши правки сохранены в локальной копии, она не удалена:
 {2}
 
 Файл на сервере может быть неполным. Сохраните ещё раз в редакторе, чтобы повторить.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} не выгружен: файл на сервере изменился после открытия, а перезаписывать его вы отказались.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} не выгружен: файл на сервере изменился после открытия, а перезаписывать его вы отказались.
 
 Ваши правки остались здесь:
 {1}
 
 Сохраните ещё раз в редакторе, и вопрос повторится.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} изменился на сервере после того, как вы его открыли.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} изменился на сервере после того, как вы его открыли.
 
 Было при открытии: {1:N0} байт, {2}
 Сейчас: {3:N0} байт, {4}
@@ -1893,8 +1960,11 @@
     <sys:String x:Key="Help_Cmd_SelectAll">Отмечает все видимые файлы и папки (с учётом быстрого фильтра).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Снимает все отметки в активной панели.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Меняет отметки на противоположные: отмеченное снимается, остальное отмечается (папки тоже).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Отмечает элементы по маске имени, например *.cs; *.md. Маски разделяются «;», «,» или пробелом; *.* — всё, включая папки.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Отмечает элементы по маске или шаблону, например *.cs;*.md | *.g.cs. Маски разделяются «;», после «|» идут исключения, маска с «\» в конце — папки. Шаблон может добавить условие по возрасту (старше или новее), изменению в Git или изменению агентом.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Снимает отметку с элементов, подходящих под маску.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Отмечает все файлы с тем же расширением, что у файла под курсором.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Снимает отметку со всех файлов с тем же расширением, что у файла под курсором.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Снова отмечает имена, отмеченные до последнего снятия выделения, удаления или перехода в другую папку, — здесь или в другой папке с теми же именами.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Кладёт отмеченные файлы в буфер обмена: вставить их можно здесь ({gesture:ClipboardPaste}) или в Проводнике. Работает на диске, в архивах (такие файлы вставляются только внутри программы) и в результатах поиска; на серверах — нет, там используйте {gesture:Copy}.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Как «Копировать в буфер», но при вставке файлы перемещаются; оригиналы удаляются только после того, как всё доехало.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Вставляет в текущую папку (или в открытый ZIP) файлы, скопированные или вырезанные здесь или в Проводнике. При совпадении имён спрашивает; копия в ту же папку получает имя «файл (1)».</sys:String>
@@ -1935,7 +2005,7 @@
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Закрепляет вкладку за её папкой (значок замка): её нельзя закрыть, и при возврате на неё она снова открывает эту папку. Повторный вызов снимает закрепление.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Даёт вкладке своё название вместо имени папки (также двойной щелчок по вкладке). Пустое название возвращает имя папки.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">Окно поиска файлов: по маске имени или регулярному выражению, по содержимому, размеру и атрибутам, в том числе внутри архивов и с учётом .gitignore; условия можно сохранить как пресет. «Показать в панели» выводит найденное списком в активную панель, где с ним работают обычные команды. Ищет на локальных дисках.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Пакетное переименование по шаблону ([N] имя, [E] расширение, [C] счётчик, [D] и [T] дата и время, [P] папка) с заменой по регулярному выражению, вставкой и удалением символов и сменой регистра. Предпросмотр сразу показывает конфликты; после «Переименовать» можно нажать «Отменить», пока окно открыто. Внутри ZIP весь пакет — одна перезапись архива, всё или ничего; другие форматы архивов только для чтения.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Пакетное переименование по шаблону ([N] имя, [E] расширение, [C] счётчик, [D] и [T] дата и время, [P] папка) с заменой по регулярному выражению, вставкой и удалением символов и сменой регистра. Предпросмотр сразу показывает конфликты; «Переименовать» закрывает окно, и пакет идёт в фоне; «Отменить переименование» в журнале операций вернёт старые имена (на сервере — когда к нему подключена панель). Внутри ZIP весь пакет — одна перезапись архива, всё или ничего; другие форматы архивов только для чтения.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">История файловых операций — ваших и агентов: копирование, перемещение, удаление, переименование, создание, упаковка и распаковка, скачивание с сервера и отправка на него (очередь передачи и сохранения файла, открытого с сервера), с результатом и ошибками. Строку можно сохранить как повторяемую операцию. Отменить журнал умеет только пакет ИИ-переименования («Отменить переименование»); для остального путь назад — Корзина.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Снова показывает окна прогресса, скрытые кнопкой «В фоне». Копирование, перенос или удаление со скрытым окном продолжаются; строка состояния показывает, сколько операций идёт в фоне и насколько они продвинулись, а щелчок по ней открывает их список: у каждой прогресс или пометка «в очереди», окно можно показать, а операцию — отменить. Операции с сервером идут рядом с операциями на диске, поэтому долгое скачивание не задерживает локальное копирование.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Добавляет текущую папку активной панели в закладки под выбранным именем. Закладки — в меню «Закладки».</sys:String>
@@ -1972,7 +2042,7 @@
     <sys:String x:Key="Help_Cmd_SemanticSearch">Поиск по смыслу: вопрос словами («где проверяется токен?») находит подходящие фрагменты кода. Сначала нажмите «Индексировать» — текст файлов отправляется в модель эмбеддингов, а индекс хранится на этом компьютере. Нужна модель эмбеддингов в «Настройки → Агентский слой».</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Сохранённые подключения: SFTP (по паролю или ключу), FTP и FTPS, WebDAV, S3 и совместимые хранилища (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Диск, Dropbox, OneDrive и общие папки Windows. Слева — список с поиском и отметкой, где подключение открыто; справа — его поля: правка, проверка, цветовая метка, «только чтение». Адрес, вставленный сверху, заполняет поля сам. Пароли, ключи и токены входа хранятся зашифрованными для вашей учётной записи Windows. «Импорт» добавляет хосты из ~/.ssh/config как SFTP-подключения, сначала показав, что добавит; уже сохранённые не берёт.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Закрывает подключение к серверу (в активной панели, а если там его нет — в другой) и возвращает панель в папку на диске, где она была до подключения.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Ставит отмеченные файлы в фоновую очередь передачи между сервером и диском: скачивание, если активна панель сервера, или выгрузка с диска на сервер в другой панели. Передачу можно приостановить и продолжить; только файлы, без папок.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Ставит отмеченные файлы в фоновую очередь передачи между сервером и диском: скачивание, если активна панель сервера, или выгрузка с диска на сервер в другой панели. Папка идёт со всем содержимым; по ссылкам не переходим, а всё, что не вошло, будет названо. Передачу можно приостановить и продолжить.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">Окно очереди передачи: прогресс каждого файла, пауза, продолжение, отмена, повтор после ошибки и очистка завершённых. Не мешает работать в панелях; очередь живёт до закрытия программы.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">Список сохранённых воркспейсов с поиском: введите часть имени и нажмите Enter — обе панели с их вкладками и раскладкой вернутся к состоянию этого проекта. Справа — группа и отметка «закреплён».</sys:String>
     <sys:String x:Key="Help_Cmd_NewWorkspace">Создаёт пустой воркспейс. Сначала окно с именем, значком, цветом и группой, затем обе панели открываются в домашней папке, по одной вкладке. Воркспейс, на котором вы были, сохраняется, как при любом переключении. Новый воркспейс сразу закреплён на панели воркспейсов (галочку в окне можно снять). То же окно открывается, если бросить папку на панель воркспейсов, и тогда обе файловые панели открываются в этой папке. Скопировать текущие панели под новым именем — {gesture:SaveWorkspace}.</sys:String>
@@ -2114,6 +2184,7 @@
     <sys:String x:Key="Shell_ShellBoxTip">Оболочка, в которой выполнится команда. Сменить — щелчок или Alt+↓ в строке</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Настроить оболочки…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">Нет такой папки: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">«{1}» — путь внутри {0}: панель открывает только папки Windows.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">Панели не меняются местами, пока одна из них в архиве, на сервере или в результатах поиска.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:изменение|изменения|изменений}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Все операции завершены</sys:String>
@@ -2150,4 +2221,5 @@
     <sys:String x:Key="Palette_Title">Палитра команд</sys:String>
     <sys:String x:Key="Palette_Placeholder">Введите команду…</sys:String>
     <sys:String x:Key="Palette_UserTools">Пользовательские инструменты</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Шаблоны выделения</sys:String>
 </ResourceDictionary>

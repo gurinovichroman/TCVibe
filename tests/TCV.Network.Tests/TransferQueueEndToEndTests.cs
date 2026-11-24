@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net;
-using System.Net.Sockets;
 using FluentAssertions;
 using TCV.Network;
 
@@ -20,15 +19,20 @@ public sealed partial class TransferQueueEndToEndTests : IDisposable
 
     public void Dispose()
     {
+        // The queue's Dispose only signals its worker. A test that ends with a run still going (a retry
+        // that started again, say) leaves the worker deleting its partial file while Directory.Delete
+        // walks the same folder, and the loser of that race gets UnauthorizedAccessException, not
+        // IOException: «Access to the path is denied», as the test's own failure (TRAP-112).
+        _queue.CancelAllAsync().Wait(TimeSpan.FromSeconds(15));
         _queue.Dispose();
         _server.Dispose();
         try
         {
             Directory.Delete(_dir, recursive: true);
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Best effort cleanup.
+            // Best effort cleanup: a scanner's handle on a file is not this test's failure.
         }
     }
 
@@ -339,23 +343,48 @@ public sealed partial class TransferQueueEndToEndTests : IDisposable
         }
     }
 
+    private TransferItem FolderUpload(string remote) => new()
+    {
+        SourcePath = _dir,
+        DestinationPath = remote,
+        Connection = Connection,
+        Direction = TransferDirection.Upload,
+        IsFolder = true,
+    };
+
+    [Fact]
+    public async Task Enqueue_AFolderNewToADavServer_IsMade()
+    {
+        var item = FolderUpload("/www");
+
+        _queue.Enqueue(item);
+
+        (await WaitFor(() => item.Status == TransferStatus.Complete)).Should().BeTrue(item.ErrorMessage);
+        _server.Folders.Should().ContainKey("/www");
+    }
+
+    [Fact]
+    public async Task Enqueue_AFolderAlreadyOnADavServer_IsFine()
+    {
+        _server.Folders["/www"] = true;
+        var item = FolderUpload("/www");
+
+        _queue.Enqueue(item);
+
+        (await WaitFor(() => item.Status == TransferStatus.Complete)).Should().BeTrue(item.ErrorMessage);
+    }
+
     // ── A WebDAV server just big enough for the queue ────────────────────────
 
     private sealed class MiniDavServer : IDisposable
     {
-        private readonly HttpListener _listener = new();
+        private readonly HttpListener _listener;
         private readonly CancellationTokenSource _stop = new();
         private int _failuresLeft;
 
         public MiniDavServer()
         {
-            var probe = new TcpListener(IPAddress.Loopback, 0);
-            probe.Start();
-            Port = ((IPEndPoint)probe.LocalEndpoint).Port;
-            probe.Stop();
-
-            _listener.Prefixes.Add($"http://127.0.0.1:{Port}/");
-            _listener.Start();
+            (_listener, Port) = LoopbackHttpListener.Start();
             _ = Task.Run(LoopAsync);
         }
 
@@ -364,6 +393,8 @@ public sealed partial class TransferQueueEndToEndTests : IDisposable
         public ConcurrentDictionary<string, byte[]> Files { get; } = new();
 
         public ConcurrentBag<string> RangeRequests { get; } = [];
+
+        public ConcurrentDictionary<string, bool> Folders { get; } = new();
 
         /// <summary>
         /// After this many body bytes a download — or the reading of an upload — stalls (until set to -1).
@@ -415,6 +446,18 @@ public sealed partial class TransferQueueEndToEndTests : IDisposable
                 {
                     case "GET" when Files.TryGetValue(path, out var data):
                         await ServeAsync(request, response, data);
+                        break;
+                    case "MKCOL":
+                        // RFC 4918: only an unmapped address can be made a collection.
+                        response.StatusCode = Folders.TryAdd(path.TrimEnd('/'), true) ? 201 : 405;
+                        response.Close();
+                        break;
+                    case "PROPFIND" when Folders.ContainsKey(path.TrimEnd('/')):
+                        response.StatusCode = 207;
+                        response.ContentType = "application/xml";
+                        await response.OutputStream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(
+                            $"""<D:multistatus xmlns:D="DAV:"><D:response><D:href>{path}</D:href><D:propstat><D:prop><D:resourcetype><D:collection/></D:resourcetype></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>"""));
+                        response.Close();
                         break;
                     case "PUT":
                         if (request.Headers["If-None-Match"] == "*" && Files.ContainsKey(path))

@@ -26,7 +26,7 @@
                   Margin="0,0,0,6">
             <Grid Margin="8">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="Auto" MinWidth="110"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -72,41 +72,44 @@
 
                 <!-- Content -->
                 <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource Search_Content}" Target="{Binding ElementName=ContentBox}"/>
-                <TextBox Grid.Row="4" Grid.Column="1" x:Name="ContentBox"
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="ContentBox" VerticalAlignment="Top"
                          AutomationProperties.Name="{DynamicResource Search_Content}"
                          Text="{Binding ContentText, UpdateSourceTrigger=PropertyChanged}"/>
-                <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"
-                            Orientation="Horizontal" Margin="8,0,0,0">
+                <!-- Wraps, like the row below: on one line the context field fell off the window, in English too. -->
+                <WrapPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Margin="8,0,0,0">
                     <CheckBox Content="RegEx" IsChecked="{Binding ContentIsRegex}" Margin="0,0,12,0"
                               AutomationProperties.Name="{DynamicResource Search_ContentRegex}"
                               VerticalAlignment="Center"/>
                     <CheckBox Content="{DynamicResource Search_WholeWord}" IsChecked="{Binding WholeWord}" Margin="0,0,12,0"
                               VerticalAlignment="Center"/>
                     <CheckBox Content="{DynamicResource Search_SkipBinary}" IsChecked="{Binding SkipBinary}"
-                              VerticalAlignment="Center"/>
-                </StackPanel>
+                              VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{DynamicResource Search_Context}" Target="{Binding ElementName=ContextBox}" VerticalAlignment="Center"/>
+                        <TextBox Width="44" Margin="4,0,0,0" VerticalAlignment="Center" x:Name="ContextBox"
+                                 AutomationProperties.Name="{DynamicResource Search_Context}"
+                                 Text="{Binding ContextLines, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </WrapPanel>
 
                 <!-- Exclusions (gitignore grammar) -->
                 <Label Grid.Row="6" Grid.Column="0" Content="{DynamicResource Search_Exclude}" Target="{Binding ElementName=ExcludeBox}"/>
-                <TextBox Grid.Row="6" Grid.Column="1" x:Name="ExcludeBox"
+                <TextBox Grid.Row="6" Grid.Column="1" x:Name="ExcludeBox" VerticalAlignment="Top"
                          AutomationProperties.Name="{DynamicResource Search_Exclude}"
                          ToolTip="{DynamicResource Search_ExcludeHint}"
                          Text="{Binding ExcludePatterns, UpdateSourceTrigger=PropertyChanged}"/>
-                <StackPanel Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2"
-                            Orientation="Horizontal" Margin="8,0,0,0">
+                <WrapPanel Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2" Margin="8,0,0,0">
                     <CheckBox Content="{DynamicResource Search_Gitignore}" IsChecked="{Binding RespectGitignore}"
                               VerticalAlignment="Center" Margin="0,0,12,0"/>
-                    <Label Content="{DynamicResource Search_Encoding}" Target="{Binding ElementName=EncodingBox}" VerticalAlignment="Center"/>
-                    <ComboBox Width="140" Margin="4,0,12,0" VerticalAlignment="Center" x:Name="EncodingBox"
-                              AutomationProperties.Name="{DynamicResource Search_Encoding}"
-                              ItemsSource="{Binding Encodings}"
-                              SelectedItem="{Binding SelectedEncoding}"
-                              DisplayMemberPath="Name"/>
-                    <Label Content="{DynamicResource Search_Context}" Target="{Binding ElementName=ContextBox}" VerticalAlignment="Center"/>
-                    <TextBox Width="44" Margin="4,0,0,0" VerticalAlignment="Center" x:Name="ContextBox"
-                             AutomationProperties.Name="{DynamicResource Search_Context}"
-                             Text="{Binding ContextLines, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{DynamicResource Search_Encoding}" Target="{Binding ElementName=EncodingBox}" VerticalAlignment="Center"/>
+                        <ComboBox Width="140" Margin="4,0,0,0" VerticalAlignment="Center" x:Name="EncodingBox"
+                                  AutomationProperties.Name="{DynamicResource Search_Encoding}"
+                                  ItemsSource="{Binding Encodings}"
+                                  SelectedItem="{Binding SelectedEncoding}"
+                                  DisplayMemberPath="Name"/>
+                    </StackPanel>
+                </WrapPanel>
 
                 <!-- Size -->
                 <Label Grid.Row="8" Grid.Column="0" Content="{DynamicResource Search_Size}"/>

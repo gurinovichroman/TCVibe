@@ -136,6 +136,52 @@ public class TransferConnectionPoolTests
     }
 
     [Fact]
+    public async Task RentAsync_FirstConnectionRefusedAWhileAgo_AsksAgain()
+    {
+        var server = new Server();
+        server.ThenRefuse(TooManyConnections());
+        using var pool = server.Pool();
+        (await pool.RentAsync(CancellationToken.None)).Should().BeNull();
+
+        server.Now += TransferConnectionPool<Connection>.AskAgainAfter - TimeSpan.FromSeconds(1);
+        (await pool.RentAsync(CancellationToken.None)).Should().BeNull("repeated refusals read as an attack");
+
+        server.Now += TimeSpan.FromSeconds(1);
+        (await pool.RentAsync(CancellationToken.None)).Should().NotBeNull("the login may have been corrected since");
+        pool.HasCeiling.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AskAgain_AfterTheFirstConnectionWasRefused_TheNextRentAsksTheServer()
+    {
+        var server = new Server();
+        server.ThenRefuse(TooManyConnections());
+        using var pool = server.Pool();
+        (await pool.RentAsync(CancellationToken.None)).Should().BeNull();
+
+        pool.AskAgain();
+
+        (await pool.RentAsync(CancellationToken.None)).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task RentAsync_ALimitLearnedFromAServerThatGaveConnections_StaysALimit()
+    {
+        var server = new Server();
+        server.ThenAccept();
+        server.ThenRefuse(TooManyConnections());
+        using var pool = server.Pool();
+        (await pool.RentAsync(CancellationToken.None)).Should().NotBeNull();
+        (await pool.RentAsync(CancellationToken.None)).Should().BeNull();
+
+        server.Now += TransferConnectionPool<Connection>.AskAgainAfter * 2;
+        pool.AskAgain();
+
+        (await pool.RentAsync(CancellationToken.None)).Should().BeNull("one connection is out, and that is what it allows");
+        server.Opened.Should().Be(1);
+    }
+
+    [Fact]
     public async Task RentAsync_ServerRefusesTheSecond_TheFirstStaysInUse()
     {
         var server = new Server();

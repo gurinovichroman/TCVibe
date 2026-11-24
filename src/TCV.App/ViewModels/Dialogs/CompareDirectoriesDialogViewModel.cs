@@ -12,14 +12,36 @@ namespace TCV.App.ViewModels.Dialogs;
 public sealed partial class ComparisonRowViewModel : ObservableObject
 {
     private readonly TimeSpan _tolerance;
+    private readonly bool _leftTakesCopies;
+    private readonly bool _rightTakesCopies;
 
-    public ComparisonRowViewModel(ComparisonRow row, TimeSpan? tolerance = null)
+    /// <param name="row">The verdict.</param>
+    /// <param name="tolerance">When two times count as equal.</param>
+    /// <param name="leftTakesCopies">False when nothing can be copied to the left side: an archive that takes no change, a read-only connection.</param>
+    /// <param name="rightTakesCopies">The same for the right side.</param>
+    public ComparisonRowViewModel(ComparisonRow row, TimeSpan? tolerance = null, bool leftTakesCopies = true, bool rightTakesCopies = true)
     {
         Row = row;
         _tolerance = tolerance ?? new ComparisonOptions().TimeTolerance;
-        _direction = row.DefaultDirection;
-        _isChecked = row.DefaultDirection != SyncDirection.None;
+        _leftTakesCopies = leftTakesCopies;
+        _rightTakesCopies = rightTakesCopies;
+        _direction = DefaultDirection;
+        _isChecked = _direction != SyncDirection.None;
     }
+
+    /// <summary>What the verdict suggests, unless the side it points at takes no copy.</summary>
+    public SyncDirection DefaultDirection => CanPoint(Row.DefaultDirection) ? Row.DefaultDirection : SyncDirection.None;
+
+    /// <summary>
+    /// Whether the row can be pointed that way: a source there, and a side that takes it. An arrow that
+    /// could only fail is not offered (TRAP-58).
+    /// </summary>
+    public bool CanPoint(SyncDirection direction) => Row.CanCopy(direction) && direction switch
+    {
+        SyncDirection.ToRight => _rightTakesCopies,
+        SyncDirection.ToLeft => _leftTakesCopies,
+        _ => true,
+    };
 
     public ComparisonRow Row { get; }
 
@@ -108,12 +130,12 @@ public sealed partial class ComparisonRowViewModel : ObservableObject
     private void CycleDirection()
     {
         var choices = new List<SyncDirection>(3);
-        if (Row.CanCopy(SyncDirection.ToRight))
+        if (CanPoint(SyncDirection.ToRight))
         {
             choices.Add(SyncDirection.ToRight);
         }
 
-        if (Row.CanCopy(SyncDirection.ToLeft))
+        if (CanPoint(SyncDirection.ToLeft))
         {
             choices.Add(SyncDirection.ToLeft);
         }
@@ -143,23 +165,38 @@ public sealed partial class ComparisonRowViewModel : ObservableObject
 /// </summary>
 public sealed partial class CompareDirectoriesDialogViewModel : ObservableObject, IDisposable
 {
+    /// <summary>How long the UI thread takes rows in one go: the panels stay alive under a comparison with many (6.96).</summary>
+    private static readonly TimeSpan RowSliceLength = TimeSpan.FromMilliseconds(30);
+
     private readonly IVirtualFileSystem _leftFs;
     private readonly IVirtualFileSystem _rightFs;
     private readonly string _leftRoot;
     private readonly string _rightRoot;
+    private readonly bool _leftTakesCopies;
+    private readonly bool _rightTakesCopies;
     private CancellationTokenSource? _cts;
 
-    public CompareDirectoriesDialogViewModel(
-        IVirtualFileSystem leftFs, string leftRoot,
-        IVirtualFileSystem rightFs, string rightRoot)
+    /// <summary>
+    /// The two sides, fixed for the life of the window: it is not modal, and the panels may move on, close
+    /// their tab or reconnect while it is open. Its caller holds the leases on these file systems.
+    /// </summary>
+    public CompareDirectoriesDialogViewModel(SyncEndpoint left, SyncEndpoint right)
     {
-        _leftFs = leftFs;
-        _rightFs = rightFs;
-        _leftRoot = leftRoot;
-        _rightRoot = rightRoot;
-        LeftPath = leftRoot;
-        RightPath = rightRoot;
+        Left = left;
+        Right = right;
+        _leftFs = left.Fs;
+        _rightFs = right.Fs;
+        _leftRoot = left.Root;
+        _rightRoot = right.Root;
+        _leftTakesCopies = left.Fs.SupportsOperation(VfsOperation.Copy);
+        _rightTakesCopies = right.Fs.SupportsOperation(VfsOperation.Copy);
+        LeftPath = left.Root;
+        RightPath = right.Root;
     }
+
+    public SyncEndpoint Left { get; }
+
+    public SyncEndpoint Right { get; }
 
     public string LeftPath { get; }
     public string RightPath { get; }
@@ -234,9 +271,17 @@ public sealed partial class CompareDirectoriesDialogViewModel : ObservableObject
 
         try
         {
+            // The rows of a big tree come faster than they can be shown, and an await that completes at
+            // once never gives the thread back: the whole program, not just this window, would stand.
+            var slice = System.Diagnostics.Stopwatch.StartNew();
             await foreach (var row in comparer.CompareAsync(new VfsPath(_leftRoot), new VfsPath(_rightRoot), ct))
             {
-                Rows.Add(new ComparisonRowViewModel(row, options.TimeTolerance));
+                Rows.Add(new ComparisonRowViewModel(row, options.TimeTolerance, _leftTakesCopies, _rightTakesCopies));
+                if (slice.Elapsed >= RowSliceLength)
+                {
+                    await Task.Delay(1, ct);
+                    slice.Restart();
+                }
             }
 
             StatusText = Summarize(comparer.UnreadableFolders);
@@ -287,28 +332,66 @@ public sealed partial class CompareDirectoriesDialogViewModel : ObservableObject
     {
         foreach (var row in Rows)
         {
-            row.Direction = row.Row.DefaultDirection;
+            row.Direction = row.DefaultDirection;
             row.IsChecked = row.Direction != SyncDirection.None;
         }
     }
 
     /// <summary>Available once the comparison has finished — a plan is not final while rows are still arriving.</summary>
     [RelayCommand(CanExecute = nameof(CanSynchronize))]
-    private void Synchronize()
+    private async Task Synchronize()
     {
         // With nothing ticked the window used to close and nothing happened, which looked like
         // a synchronisation that had run. Say what is missing and stay open.
-        if (Plan.Count == 0)
+        var plan = Plan;
+        if (plan.Count == 0)
         {
             StatusText = LocalizationManager.Get("Cmp_NothingTicked");
             return;
+        }
+
+        // The panels were free all this time: what is about to be replaced may not be what was compared.
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+        IsVerifying = true;
+        HasError = false;
+        StatusText = LocalizationManager.Get("Cmp_Verifying");
+        try
+        {
+            var changed = await Task.Run(() => SyncPlanFreshness.FindChangedAsync(plan, Left, Right, ct), ct);
+            if (changed.Count > 0)
+            {
+                HasError = true;
+                StatusText = LocalizationManager.Format("Cmp_ChangedSince", changed.Count, changed[0]);
+                return;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Compare pressed meanwhile is what stopped this, and the status is its own by now.
+            if (!IsComparing)
+            {
+                StatusText = string.Format(LocalizationManager.Get("Cmp_Stopped"), Rows.Count);
+            }
+
+            return;
+        }
+        finally
+        {
+            IsVerifying = false;
         }
 
         Confirmed = true;
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private bool CanSynchronize() => !IsComparing;
+    private bool CanSynchronize() => !IsComparing && !IsVerifying;
+
+    /// <summary>The target folders are being listed once more, just before the synchronisation.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SynchronizeCommand))]
+    private bool _isVerifying;
 
     [RelayCommand]
     private void Cancel()
@@ -330,7 +413,7 @@ public sealed partial class CompareDirectoriesDialogViewModel : ObservableObject
         {
             // A row can only be copied in a direction where a source actually exists, and never
             // when it is unreadable, differs only by case, or is a file against a folder.
-            var possible = row.Row.CanCopy(direction)
+            var possible = row.CanPoint(direction)
                            && (direction == SyncDirection.ToRight ? row.Row.Left is not null : row.Row.Right is not null)
                            && !row.Row.CaseVariant;
             row.Direction = possible ? direction : SyncDirection.None;
@@ -354,6 +437,17 @@ public sealed partial class CompareDirectoriesDialogViewModel : ObservableObject
         {
             text += string.Format(LocalizationManager.Get("Cmp_UnreadableFolders"), unreadable);
             HasError = true;
+        }
+
+        // Why the arrows only point one way.
+        if (!_leftTakesCopies)
+        {
+            text += " · " + LocalizationManager.Get("Cmp_LeftTakesNoCopies");
+        }
+
+        if (!_rightTakesCopies)
+        {
+            text += " · " + LocalizationManager.Get("Cmp_RightTakesNoCopies");
         }
 
         return text;

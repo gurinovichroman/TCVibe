@@ -58,6 +58,9 @@ internal sealed class FakeBlobService : HttpMessageHandler
     /// <summary>Answers a request before the fake does, when it returns a response.</summary>
     public Func<HttpRequestMessage, HttpResponseMessage?>? Intercept { get; set; }
 
+    /// <summary>Holds a request up before it is answered: lets tests see requests side by side.</summary>
+    public Func<HttpRequestMessage, CancellationToken, Task>? BeforeAnswer { get; set; }
+
     public List<Call> Calls { get; } = [];
 
     public SortedDictionary<string, Blob> Container(string name)
@@ -124,6 +127,11 @@ internal sealed class FakeBlobService : HttpMessageHandler
         lock (_sync)
         {
             Calls.Add(new Call(request.Method.Method, uri.AbsolutePath, query, headers, body));
+        }
+
+        if (BeforeAnswer is not null)
+        {
+            await BeforeAnswer(request, ct);
         }
 
         if (Intercept?.Invoke(request) is { } intercepted)

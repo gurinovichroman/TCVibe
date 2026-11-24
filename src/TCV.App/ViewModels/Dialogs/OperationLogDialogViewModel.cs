@@ -150,7 +150,7 @@ public sealed class OperationLogRow
         Entry = entry;
         TimeText = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
         KindText = KindLabel(entry.Kind);
-        Source = entry.Source;
+        Source = entry.SourceWithArchive;
         Destination = DestinationLabel(entry.Destination);
         ItemsText = entry.ItemCount.ToString();
         OutcomeText = OutcomeLabel(entry.Outcome);
@@ -182,6 +182,7 @@ public sealed class OperationLogRow
     /// </summary>
     public bool CanReplay =>
         Entry.Outcome == OperationOutcome.Completed &&
+        Entry.ChangedArchive is null &&   // a replay works on the disk: a folder made inside a ZIP is not one to make there
         Entry.Kind is OperationKind.Copy or OperationKind.Move or OperationKind.CreateFolder;
 
     /// <summary>

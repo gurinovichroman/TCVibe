@@ -48,6 +48,7 @@
         <!-- Progress bar -->
         <ProgressBar Grid.Row="2"
                      Value="{Binding Percentage}"
+                     IsIndeterminate="{Binding IsIndeterminate}"
                      Maximum="100" Height="18"
                      AutomationProperties.Name="{Binding Title}"
                      Foreground="{DynamicResource AccentBrush}" />
@@ -115,12 +116,12 @@
             <Button Content="{DynamicResource Dlg_Progress_Background}" MinWidth="90" Padding="10,0" Margin="0,0,8,0"
                     Command="{Binding SendToBackgroundCommand}"
                     Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVis}, ConverterParameter=inverse}" />
-            <Button Content="{DynamicResource Dlg_Progress_Cancel}" Width="90" Margin="0,0,8,0"
+            <Button Content="{DynamicResource Dlg_Progress_Cancel}" MinWidth="90" Margin="0,0,8,0"
                     Command="{Binding CancelCommand}"
                     IsCancel="True"
                     Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVis}, ConverterParameter=inverse}" />
             <!-- Only one of Cancel/Close is ever visible, so Esc and Enter reach whichever is shown. -->
-            <Button Content="{DynamicResource Close}" Width="90"
+            <Button Content="{DynamicResource Close}" MinWidth="90"
                     Command="{Binding CloseCommand}"
                     IsDefault="True" IsCancel="True"
                     Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVis}}" />

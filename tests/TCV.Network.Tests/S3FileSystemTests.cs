@@ -35,6 +35,7 @@ public sealed class S3FileSystemTests
             MultipartThreshold = multipartThreshold,
             MinPartSize = minPartSize,
             MaxServerSideCopy = maxServerSideCopy,
+            PartRetries = TestRetries.NoPauses,
             MetadataTimeout = timeout ?? TimeSpan.FromSeconds(30),
             Clock = () => Now,
             CredentialsFilePath = credentialsFile,
@@ -469,12 +470,10 @@ public sealed class S3FileSystemTests
         await ((Stream)output).DisposeAsync();
 
         fake.Text(Bucket, "big.bin").Should().Be("abcdefghijk");
-        fake.Requests.Select(r => (r.Method.Method, r.Param("partNumber"), r.Body.Length)).Should().Equal(
-            ("POST", null, 0),
-            ("PUT", "1", 4),
-            ("PUT", "2", 4),
-            ("PUT", "3", 3),
-            ("POST", null, fake.Requests[^1].Body.Length));
+        fake.Requests[0].Method.Should().Be(HttpMethod.Post);
+        fake.Requests[^1].Method.Should().Be(HttpMethod.Post);
+        fake.Requests.Skip(1).SkipLast(1).Select(r => (r.Method.Method, r.Param("partNumber"), r.Body.Length))
+            .Should().BeEquivalentTo(new[] { ("PUT", "1", 4), ("PUT", "2", 4), ("PUT", "3", 3) }, "parts go side by side, in no fixed order");
         fake.Requests[0].Query.Should().ContainKey("uploads");
         fake.Requests[^1].Param("uploadId").Should().Be("upload-1");
         reported.Should().BeInAscendingOrder().And.EndWith(11);
@@ -701,18 +700,6 @@ public sealed class S3FileSystemTests
         fake.Requests.Should().NotContain(r => r.Method == HttpMethod.Get, "the bytes never come down");
         fake.Text(Bucket, "copy.txt").Should().Be("data");
         last!.BytesCopied.Should().Be(4);
-    }
-
-    [Fact]
-    public async Task CopyAsync_SourceOverTheServerSideLimit_StreamsThrough()
-    {
-        var fake = Store(("big.bin", "0123456789"));
-        using var fs = Create(fake, maxServerSideCopy: 5);
-
-        await fs.CopyAsync(new VfsPath("/big.bin"), new VfsPath("/big2.bin"), null, CancellationToken.None);
-
-        fake.Text(Bucket, "big2.bin").Should().Be("0123456789");
-        fake.Requests.Should().NotContain(r => r.Header("x-amz-copy-source") != null);
     }
 
     [Fact]

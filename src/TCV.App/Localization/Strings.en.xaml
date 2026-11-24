@@ -19,10 +19,7 @@
 
     <!-- File list columns -->
     <sys:String x:Key="Col_Name">Name</sys:String>
-    <sys:String x:Key="Col_Ext">Ext</sys:String>
     <sys:String x:Key="Col_Size">Size</sys:String>
-    <sys:String x:Key="Col_Date">Date</sys:String>
-    <sys:String x:Key="Col_Attr">Attr</sys:String>
     <sys:String x:Key="Col_Computed">measured</sys:String>
     <sys:String x:Key="Col_Reset">Reset columns</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Comparing and synchronising directories, editing a remote file (6.23) -->
     <sys:String x:Key="Cmp_Title">Compare directories</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Nothing is ticked to copy. Tick rows or use the arrow on a row to set its direction.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">checking that nothing has changed…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">Changed since the comparison: {0} {0:plural:file|files}, the first is {1}. Nothing was copied. Press Compare to see the folders as they are now.</sys:String>
     <sys:String x:Key="Cmp_Compare">Compare</sys:String>
     <sys:String x:Key="Cmp_Recursive">Include subdirectories</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Show identical</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Synchronise</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">Copy the ticked entries? {0} in total. Existing files will be overwritten.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Edit remote file</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">"{0}" opened as a temporary copy. Every save is uploaded back.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">"{0}" opened as a temporary copy. Every save is uploaded back.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Could not fetch the file, or the source is read-only.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Uploading edits</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Saved edits are on their way to the server. The program closes when they have arrived.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">If you stop waiting, nothing is lost: the edits stay in the local copy, and the program tells you where it is.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Stop and keep the copies</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">An upload did not finish: the file on the server may be incomplete.</sys:String>
+    <sys:String x:Key="Fetch_Title">Fetching the file</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} has been fetched, but the panel has moved on. Press Enter on it again to open it.</sys:String>
 
     <!-- Saved operations, the drop stack and gadgets (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Saved operations</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">New worktree for a task…</sys:String>
     <sys:String x:Key="Git_WtRemove">Remove worktree</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Remove</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">Remove worktree "{0}" and its directory?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">Remove worktree "{0}" and its directory?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Warning: {0} uncommitted {0:plural:change|changes} will be lost for good.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree "{0}" removed.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">Could not remove the worktree: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">No branch name can be derived from this title: it has no Latin or Cyrillic letters or digits. Type the branch and directory by hand.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">Directory is not empty: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">Could not create the worktree: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree on "{0}" created: {1}&#x0a;Files carried over: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree on "{0}" created: {1}&#x0a;Files carried over: {2}</sys:String>
 
     <!-- Git: index, commit, branches, stash -->
     <sys:String x:Key="Git_CommitTitle">Commit</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Remove</sys:String>
     <sys:String x:Key="WsProps_PictureNone">none</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Found in the project:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Shown on the workspace sidebar in place of the icon and the letters. While a workspace has neither a picture nor an icon, the logo or favicon of its repository is put here by itself; once you choose — a picture, an icon or none — it is not looked for again.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Shown in place of the icon and the letters on the workspace sidebar, and before the name in the menu, the switcher and the title bar. While a workspace has neither a picture nor an icon, the logo or favicon of its repository is put here by itself; once you choose — a picture, an icon or none — it is not looked for again.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Picture of the workspace</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Pictures</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">This file cannot be read as a picture.</sys:String>
@@ -550,7 +556,7 @@
 
     <!-- Settings: git and gadgets tabs (6.30) -->
     <!-- User tools (6.29) -->
-    <sys:String x:Key="UserTool_Menu">Run a t_ool</sys:String>
+    <sys:String x:Key="UserTool_Menu">Run _a tool</sys:String>
     <sys:String x:Key="UserTool_MountedRejected">A tool only works on files on disk — this panel shows an archive or a server.</sys:String>
     <sys:String x:Key="UserTool_TargetNotOnDisk">“{0}” uses %T, the other panel's folder, but that panel shows no folder on the disk (an archive, a server or the search results list).</sys:String>
 
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Pin workspace</sys:String>
     <sys:String x:Key="Ws_RenameTaken">A workspace named “{0}” already exists.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">Could not rename the workspace: workspaces.json is not readable or writable right now.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Pictures not written to the file: {0}. Each is missing here or over the size limit.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Pictures not taken from the file: {0}. Accepted: a 64×64 PNG up to 24 KB.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Workspaces</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">workspaces.json was damaged, so the previous copy (workspaces.json.bak) was loaded. The damaged file was kept next to the program as {0}.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">This workspace is set to run the command below in {1}. It was not typed on this machine (it may come from a project file), so check it before it runs.&#10;&#10;{0}&#10;&#10;Run it?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">Delete the local branch &quot;{0}&quot;? Remote branches are not touched.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">The branch &quot;{0}&quot; has commits that exist nowhere else. Deleting it loses them for good. Delete anyway?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Branch &quot;{0}&quot; deleted.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">There are uncommitted changes, so git cannot switch to &quot;{0}&quot;.&#x0a;&#x0a;Stash them (untracked files included) and switch? You can bring them back with Stash pop ({gesture:GitStashPop}).</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">There are uncommitted changes, so git cannot switch to &quot;{0}&quot;.&#x0a;&#x0a;Stash them (untracked files included) and switch? You can bring them back with Stash pop ({gesture:GitStashPop}).</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">before switching to {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Unresolved merge conflict</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Contains changes</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Discard</sys:String>
     <sys:String x:Key="Git_DiscardHint">Throws away the selected working-tree changes and restores the last committed version. Cannot be undone.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Discard changes</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">Discard the changes in {0} {0:plural:file|files} and restore the last committed version?&#x0a;&#x0a;{1}&#x0a;&#x0a;This cannot be undone.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">Discard the changes in {0} {0:plural:file|files} and restore the last committed version?&#x0a;&#x0a;{1}&#x0a;&#x0a;This cannot be undone.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} of them are also staged; their staged changes are discarded too.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0} untracked {0:plural:file is|files are} skipped: {0:plural:it has|they have} no committed version to go back to. Delete {0:plural:it|them} with {gesture:Delete}.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">Untracked files cannot be discarded here (nothing to restore). Delete them with {gesture:Delete}.</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Access denied.</sys:String>
     <sys:String x:Key="Files_NotFound">This folder does not exist.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Cannot read this folder: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">Reading the folder was stopped.</sys:String>
     <sys:String x:Key="Files_Empty">This folder is empty</sys:String>
     <sys:String x:Key="Files_NoMatches">No names match the typed filter (Esc clears it)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Elapsed:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Unselect by mask</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Mask to select (e.g. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Mask to unselect (e.g. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">_Template:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Template</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">_Delete</sys:String>
+    <sys:String x:Key="Sel_Mask">_Mask:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Separate masks with ;. Exclusions follow |, a mask ending in \ names folders: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">Include _folders</sys:String>
+    <sys:String x:Key="Sel_Age">_Age:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Age</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Amount</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Unit</sys:String>
+    <sys:String x:Key="Sel_AgeAny">any</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">older than</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">newer than</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">minutes</sys:String>
+    <sys:String x:Key="Sel_UnitHours">hours</sys:String>
+    <sys:String x:Key="Sel_UnitDays">days</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Only changed in _Git</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Modified, staged, untracked or in conflict. Works in a folder on disk.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Only changed by an age_nt</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">What the project's agent changes attribute to an agent. Works in a folder on disk.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Save as template</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">Nam_e:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">_Key:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Key</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">A combination with Ctrl, Alt or Shift. A key another command already uses is ignored.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">_Save</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Git and agent conditions work only in a folder on disk.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Nothing matches.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Put the cursor on a file to mark by its extension.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">There is no earlier selection to restore.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">None of the previously marked names are in this folder.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Select: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Source code</sys:String>
+    <sys:String x:Key="SelTpl_Config">Config files</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Documents</sys:String>
+    <sys:String x:Key="SelTpl_Images">Images</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Archives</sys:String>
+    <sys:String x:Key="SelTpl_Junk">Temporary files and logs</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Build output folders</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">Changed in Git</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Changed by an agent</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">Changed in the last 24 hours</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Older than 2 days</sys:String>
     <sys:String x:Key="Log_Title">Operation log</sys:String>
     <sys:String x:Key="Log_ColTime">Time</sys:String>
     <sys:String x:Key="Log_ColOperation">Operation</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Delete the whole operation log? It is the record of what the file manager and agents did, and it cannot be restored.</sys:String>
     <sys:String x:Key="Log_ClearButton">Clear the log</sys:String>
     <sys:String x:Key="Log_UndoRename">Undo rename</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Gives the files of the selected rename batch (AI rename) back their previous names. Checks the folder and asks first.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Gives the files of the selected rename batch back their previous names. Checks the folder and asks first.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">Give {0} {0:plural:file|files} in {1} back the {0:plural:name it|names they} had before this rename?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:file stays|files stay} as {0:plural:it is|they are}: renamed, moved or deleted since, or the old name is taken by another file.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">Nothing can be renamed back in {0}: the files no longer carry the names this batch gave them, or their old names are taken.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">This batch was renamed on {0}. Connect a panel to that server and try again.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">This batch was renamed inside {0}. Open that archive in a panel and try again.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Recycle Bin</sys:String>
     <sys:String x:Key="Log_KindCopy">Copy</sys:String>
     <sys:String x:Key="Log_KindMove">Move</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Some items were not moved; they stay where they were.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Some items were not added to the archive; the originals were left in place.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">The archive format cannot be modified: the files were extracted but also stay in the archive.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">The files were extracted, but the archive keeps them: it was opened from a server or from inside another archive, and only a temporary copy of it is open here.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Properties are unavailable</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">Unpacking is unavailable</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Choose an ordinary folder on the local disk in the other panel as the destination.</sys:String>
@@ -1168,6 +1223,11 @@
     <sys:String x:Key="Menu_Delete">_Delete</sys:String>
     <sys:String x:Key="Menu_SelectByMask">_Select by mask…</sys:String>
     <sys:String x:Key="Menu_UnselectByMask">Dese_lect by mask…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">_Selection</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Select same e_xtension</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">_Deselect same extension</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">_Restore selection</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">_Templates</sys:String>
     <sys:String x:Key="Menu_CopyFullPath">Copy full _path</sys:String>
     <sys:String x:Key="Menu_CopyNames">Copy n_ames</sys:String>
     <sys:String x:Key="Menu_CopyReadLink">Copy l_ink</sys:String>
@@ -1181,15 +1241,15 @@
     <sys:String x:Key="Menu_Exit">E_xit</sys:String>
     <sys:String x:Key="Menu_NewFile">New _file…</sys:String>
     <sys:String x:Key="Menu_DeletePermanent">Delete permanen_tly</sys:String>
-    <sys:String x:Key="Menu_NameSearch">Find file _anywhere…</sys:String>
+    <sys:String x:Key="Menu_NameSearch">Find file any_where…</sys:String>
     <sys:String x:Key="Menu_QuickFilter">_Quick filter</sys:String>
     <sys:String x:Key="Menu_CompareDirs">Compare _directories…</sys:String>
     <sys:String x:Key="Menu_SavedOps">Sa_ved operations…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">Manage saved operat_ions…</sys:String>
-    <sys:String x:Key="Menu_DropStackAdd">Drop stack: add _selection</sys:String>
-    <sys:String x:Key="Menu_DropStackShow">Drop stac_k…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Manage saved operations…</sys:String>
+    <sys:String x:Key="Menu_DropStackAdd">Drop stack: add selection</sys:String>
+    <sys:String x:Key="Menu_DropStackShow">Dro_p stack…</sys:String>
     <sys:String x:Key="Menu_RunGadget">Run a _gadget…</sys:String>
-    <sys:String x:Key="Menu_GadgetsManage">Ma_nage gadgets…</sys:String>
+    <sys:String x:Key="Menu_GadgetsManage">Manage gadgets…</sys:String>
     <sys:String x:Key="Menu_Agents">_Agents</sys:String>
     <sys:String x:Key="Menu_AgentChanges">Agent _changes…</sys:String>
     <sys:String x:Key="Menu_AgentLaunch">Run an agent on a _task…</sys:String>
@@ -1203,16 +1263,16 @@
     <sys:String x:Key="Menu_Columns">_Columns…</sys:String>
     <sys:String x:Key="Menu_ExportSettings">_Export settings…</sys:String>
     <sys:String x:Key="Menu_ImportSettings">_Import settings…</sys:String>
-    <sys:String x:Key="Menu_FindInProject">Find file in _project…</sys:String>
+    <sys:String x:Key="Menu_FindInProject">Find file in pro_ject…</sys:String>
     <sys:String x:Key="Menu_FindFiles">_Find files…</sys:String>
     <sys:String x:Key="Menu_MultiRename">_Multi-rename…</sys:String>
     <sys:String x:Key="Menu_Checksums">Chec_ksums…</sys:String>
     <sys:String x:Key="Menu_OperationLog">Operation _log…</sys:String>
     <sys:String x:Key="Menu_BackgroundOperations">Background _operations</sys:String>
     <sys:String x:Key="Menu_Terminal">Open _terminal</sys:String>
-    <sys:String x:Key="Menu_ShellsManage">_Command-line shells…</sys:String>
+    <sys:String x:Key="Menu_ShellsManage">Command-line shells…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Open in _editor</sys:String>
-    <sys:String x:Key="Menu_OpenInEditorPicker">Open in e_ditor…</sys:String>
+    <sys:String x:Key="Menu_OpenInEditorPicker">Open in editor…</sys:String>
     <sys:String x:Key="Menu_RunAgent">Run _agent here</sys:String>
     <sys:String x:Key="Menu_RunAgentPicker">Run a_gent here…</sys:String>
     <sys:String x:Key="Menu_GoRoot">Go to _root</sys:String>
@@ -1220,10 +1280,10 @@
     <sys:String x:Key="Menu_GoClipboard">Go to path from clip_board</sys:String>
     <sys:String x:Key="Menu_EditPath">T_ype a path</sys:String>
     <sys:String x:Key="Menu_OpenExplorer">Open in E_xplorer</sys:String>
-    <sys:String x:Key="Menu_UserTools">_User tools…</sys:String>
+    <sys:String x:Key="Menu_UserTools">User tools…</sys:String>
     <sys:String x:Key="Menu_ConnectionManager">Co_nnection manager…</sys:String>
     <sys:String x:Key="Menu_Disconnect">D_isconnect</sys:String>
-    <sys:String x:Key="Menu_QueueTransfer">Add to transfer _queue</sys:String>
+    <sys:String x:Key="Menu_QueueTransfer">Add to transfer queue</sys:String>
     <sys:String x:Key="Menu_TransferQueue">Tran_sfer queue…</sys:String>
     <sys:String x:Key="Menu_Options">_Settings…</sys:String>
     <sys:String x:Key="Menu_Hotkeys">_Keyboard shortcuts…</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">Version {0} is available.&#10;&#10;{1}&#10;&#10;Install it now? The program closes, updates itself and opens again. Settings and workspaces are kept.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">Version {0} is available. Install it from the main window: it closes the workspace windows and restarts.</sys:String>
     <sys:String x:Key="Update_Busy">Updating closes the program, and operations or transfers are running. Wait for them to finish and try again.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">The update was not installed: edits of files on a server have not been uploaded. They are safe in:&#10;{0}&#10;&#10;Save them again in the editor, then try again.</sys:String>
     <sys:String x:Key="Update_Downloading">downloading the update… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">Could not download the update: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Not every workspace window closed. Close them and try the update again.</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">New name</sys:String>
     <sys:String x:Key="MR_ColConflict">Problem</sys:String>
     <sys:String x:Key="MR_Rename">Rename</sys:String>
-    <sys:String x:Key="MR_Undo">Undo</sys:String>
-    <sys:String x:Key="MR_UndoTip">Give the files just renamed their old names back</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Another file gets the same name</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Empty name</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Invalid name</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Nothing to rename. Conflicts: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Nothing to rename: no name changes.</sys:String>
     <sys:String x:Key="MR_Error">Error: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Names restored: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">Restored {0} of {1}; {2} failed.</sys:String>
-    <sys:String x:Key="MR_UndoError">Undo failed: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">Files renamed: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Skipped because of conflicts: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Failed: {0} (for example "{1}": {2}).</sys:String>
@@ -1381,10 +1437,11 @@
     <sys:String x:Key="Conn_Protocol">_Protocol:</sys:String>
     <sys:String x:Key="Conn_AuthMethod">_Sign in with:</sys:String>
     <sys:String x:Key="Conn_KeyFile">_Key file:</sys:String>
-    <sys:String x:Key="Conn_Passphrase">Pass_phrase:</sys:String>
+    <sys:String x:Key="Conn_Passphrase">Passp_hrase:</sys:String>
     <sys:String x:Key="Conn_Browse">Browse…</sys:String>
     <sys:String x:Key="Conn_Test">Test connection</sys:String>
     <sys:String x:Key="Conn_Connecting">Connecting…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Connecting to “{0}”…</sys:String>
     <sys:String x:Key="Conn_TestOk">Connection successful.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Test cancelled.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Failed: {0}</sys:String>
@@ -1447,8 +1504,8 @@
     <sys:String x:Key="Conn_QuickTitle">Quick connect</sys:String>
     <sys:String x:Key="Conn_QuickPrompt">Address of a server or storage: sftp://user@host:22/path, ftp://…, davs://…, s3://bucket/prefix</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">“{0}” is not a connection address. For example: sftp://user@host/path, s3://bucket.</sys:String>
-    <sys:String x:Key="Menu_Reconnect">_Reconnect</sys:String>
-    <sys:String x:Key="Menu_QuickConnect">_Quick connect…</sys:String>
+    <sys:String x:Key="Menu_Reconnect">Re_connect</sys:String>
+    <sys:String x:Key="Menu_QuickConnect">Q_uick connect…</sys:String>
     <sys:String x:Key="Conn_Saved">Connection “{0}” saved.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">“{0}”: name the share — a path like /share or /share/folder.</sys:String>
     <sys:String x:Key="Conn_ShareInUse">Windows did not close the connection to {0}: {1} Close the files open from that share and try again.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">no IdentityFile: the default key</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">the key file is not on this computer</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">no key: a password will be asked for</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump and ProxyCommand are not supported: connects directly</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Reached through {0}, but tunnels are not supported here: if ticked, it connects directly, bypassing it</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">Match blocks cannot be evaluated here; their settings were not applied ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: no such file.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include not read: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Download</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Upload</sys:String>
     <sys:String x:Key="Transfer_Empty">The queue is empty. Select files on a server and press {gesture:QueueTransfer}.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Adding to the queue</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">{0} {0:plural:file|files} found</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Not queued: {0} {0:plural:item|items}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: a link, not followed</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: lists the same as a folder above it, probably a link loop</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: nested too deep</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: could not be read: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: this name cannot exist on the target</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: a file and a folder would have the same name</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">Open a connection to a server or a storage in one of the panels — the queue only works with those.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">The other panel must show a local disk — the queue moves files between a server and the disk.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">Only files can be queued — copy folders with {gesture:Copy}.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">"{0}" already exists and was left alone.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">"{0}" already exists on the server and was left alone.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">The transfer of "{0}" failed.</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">The folder to search does not exist: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Invalid size "{0}". Enter bytes, or a number with KB, MB or GB (for example 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">The minimum size is larger than the maximum.</sys:String>
-    <sys:String x:Key="Search_BadDate">Invalid date "{0}". Enter a day, for example 2026-10-01 or 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Invalid date "{0}". Enter a day, for example 2026-10-31 or 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">The start date is after the end date.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Auto</sys:String>
     <sys:String x:Key="Search_NameRegex">File name is a regular expression</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Bytes, or a number with KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Modified on or after</sys:String>
     <sys:String x:Key="Search_DateTo">Modified on or before</sys:String>
-    <sys:String x:Key="Search_DateHint">A day: 2026-10-01 or 01.10.2026. Both days are included; leave empty for no limit.</sys:String>
+    <sys:String x:Key="Search_DateHint">A day: 2026-10-31 or 31.10.2026. Both days are included; leave empty for no limit.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">could not be read</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">names differ only by case</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Compare contents</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">the folder does not exist</sys:String>
     <sys:String x:Key="Cmp_Failed">Comparison failed: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · {0} folders could not be read and were left out</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">the left side cannot be changed, so nothing is copied to it</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">the right side cannot be changed, so nothing is copied to it</sys:String>
     <sys:String x:Key="Cmp_TickRow">Include this row</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Copy direction</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Click to change the direction: → copy to the right, ← copy to the left, = leave alone</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">Files that will be replaced:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… and {0} more</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">Replaced files go to the Recycle Bin first, so they can be restored.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Some replaced files are on a server, which has no Recycle Bin: those cannot be recovered.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Some replaced files are on a server or in an archive, which have no Recycle Bin: those cannot be recovered.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">WARNING: {0} of the replaced files are NEWER than the copy that replaces them:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">{0} entries are skipped: a file on one side and a folder on the other.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Synchronise?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: could not move the existing file to the Recycle Bin, left untouched</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: the copy did not complete</sys:String>
     <sys:String x:Key="Cmp_Unstamped">{0} copied files could not be given their source's modification time (the server does not allow it). They carry the time of the copy, so the next comparison will show them as newer — use "Compare contents" before synchronising back.</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Some remotely edited files were not uploaded before closing. Your edits are kept in:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Some remotely edited files were not uploaded before closing. Your edits are kept in:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0} uploaded to the server</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">Could not upload {0}: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">Could not upload {0}: {1}
 
 Your edits are safe in the local copy, which is kept:
 {2}
 
 The server file may be incomplete. Save again in the editor to retry.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} was not uploaded: the server copy changed after you opened it and you chose not to overwrite it.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} was not uploaded: the server copy changed after you opened it and you chose not to overwrite it.
 
 Your edits stay in:
 {1}
 
 Save again in the editor to be asked again.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} changed on the server after you opened it.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} changed on the server after you opened it.
 
 When opened: {1:N0} bytes, {2}
 Now: {3:N0} bytes, {4}
@@ -1893,8 +1960,11 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Help_Cmd_SelectAll">Marks all visible files and folders (respecting the quick filter).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Clears all marks in the active panel.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Inverts the marks: marked items are unmarked and the rest are marked (folders included).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Marks items whose names match a mask, e.g. *.cs; *.md. Separate masks with ;, a comma or a space; *.* matches everything, folders included.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Marks items by a mask or a template, e.g. *.cs;*.md | *.g.cs. Masks are separated by ;, exclusions follow |, a mask ending in \ names folders. A template can also ask for an age (older or newer than), a change in Git or a change by an agent.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Unmarks the items whose names match the mask.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Marks every file with the same extension as the file under the cursor.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Unmarks every file with the same extension as the file under the cursor.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Marks again the names that were marked before the last deselect, delete or folder change — in this folder or in another one with the same names.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Puts the marked files on the clipboard to paste here ({gesture:ClipboardPaste}) or in Explorer. Works on disk, inside archives (those paste only within the app) and in search results; not on servers — use {gesture:Copy} there.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Like Copy to clipboard, but pasting moves the files; the originals are removed only after everything has arrived.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Pastes files copied or cut here or in Explorer into the current folder (or into an open ZIP). Asks when names clash; a copy into the same folder becomes "file (1)".</sys:String>
@@ -1935,7 +2005,7 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Locks the tab to its folder (lock icon): it cannot be closed, and whenever you return to it, it reopens that folder. Run it again to unlock.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Gives the tab a name of its own instead of the folder name (also double-click the tab). An empty name restores the folder name.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">File search: by name mask or regular expression, by content, size and attributes, including inside archives and honouring .gitignore; criteria can be saved as presets. Show in panel lists the hits in the active panel, where the usual commands work on them. Searches local disks.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Batch rename with a template ([N] name, [E] extension, [C] counter, [D] and [T] date and time, [P] folder), regular-expression replace, inserting and deleting characters, and case changes. The preview shows conflicts straight away; after Rename you can press Undo while the window is open. Inside a ZIP archive the whole batch is one rewrite of the archive, all or nothing; other archive formats are read-only.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Batch rename with a template ([N] name, [E] extension, [C] counter, [D] and [T] date and time, [P] folder), regular-expression replace, inserting and deleting characters, and case changes. The preview shows conflicts straight away; Rename closes the window and the batch runs in the background; "Undo rename" in the operation log gives the old names back (on a server, once a panel is connected to it). Inside a ZIP archive the whole batch is one rewrite of the archive, all or nothing; other archive formats are read-only.</sys:String>
     <sys:String x:Key="Help_Cmd_OperationLog">History of file operations, yours and agents': copy, move, delete, rename, create, pack and extract, downloads and uploads (the transfer queue and saves of a file opened from a server), with result and errors. A line can be saved as a reusable operation. The one thing the log can undo is a rename batch of AI rename (Undo rename); for the rest the way back is the Recycle Bin.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Shows again the progress windows hidden with the In background button. A copy, move or delete keeps running while its window is hidden; the status bar shows how many operations run in the background and how far they have got, and a click there lists them, each with its progress or a note that it is queued, to show its window or cancel it. Operations with a server on one side run beside those on the disk, so a long download does not hold up a local copy.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Adds the active panel's current folder to the bookmarks under a name you choose. Bookmarks are in the Bookmarks menu.</sys:String>
@@ -1972,7 +2042,7 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Help_Cmd_SemanticSearch">Search by meaning: a question in words ("where is the token checked?") finds matching code fragments. Press Index first — file text is sent to the embedding model, and the index stays on this machine. Needs an embedding model under Settings → Agent layer.</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Saved connections: SFTP (password or key), FTP and FTPS, WebDAV, S3 and compatible storage (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Drive, Dropbox, OneDrive and Windows shares. On the left, the list with search and a mark where a connection is open; on the right, its fields: edit, test, colour tag, read-only. An address pasted at the top fills the fields. Passwords, keys and sign-in tokens are stored encrypted for your Windows account. Import adds the hosts of ~/.ssh/config as SFTP connections, after showing what it will add; the ones already saved are left out.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Closes the server connection (in the active panel, or in the other one if the active panel has none) and returns the panel to the disk folder it showed before.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Queues the marked files for a background transfer between a server and the disk: a download if the server panel is active, an upload from disk to the server in the other panel otherwise. Transfers can be paused and resumed; files only, not folders.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Queues the marked files for a background transfer between a server and the disk: a download if the server panel is active, an upload from disk to the server in the other panel otherwise. A folder goes in with everything under it; links are not followed, and whatever is left out is named. Transfers can be paused and resumed.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">The transfer queue window: per-file progress, pause, resume, cancel, retry after an error and clearing finished items. It does not block the panels; the queue lasts until you close the program.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">A searchable list of saved workspaces: type part of a name and press Enter, and both panels with their tabs and layout return to that project's state. The group and a "pinned" mark are shown on the right.</sys:String>
     <sys:String x:Key="Help_Cmd_NewWorkspace">Creates an empty workspace. A window asks for the name, icon, colour and group, then both panels open in your home folder with one tab each. The workspace you were on is saved, as on any switch. The new workspace is pinned to the workspace sidebar straight away (untick it in the window if you prefer). Dropping a folder on the workspace sidebar opens the same window, and then both file panels open in that folder. To copy the current panels under a new name, use {gesture:SaveWorkspace}.</sys:String>
@@ -2114,6 +2184,7 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Shell_ShellBoxTip">The shell the command runs in. Change it with a click, or Alt+↓ in the line</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Configure shells…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">No such folder: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">"{1}" is a path inside {0}: the panel only opens Windows folders.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">The panels cannot swap while one of them is in an archive, on a server or in search results.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:change|changes}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">All operations complete</sys:String>
@@ -2150,4 +2221,5 @@ Uploading now replaces those changes on the server. Replace the server copy?</sy
     <sys:String x:Key="Palette_Title">Command Palette</sys:String>
     <sys:String x:Key="Palette_Placeholder">Type a command…</sys:String>
     <sys:String x:Key="Palette_UserTools">User tools</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Selection templates</sys:String>
 </ResourceDictionary>

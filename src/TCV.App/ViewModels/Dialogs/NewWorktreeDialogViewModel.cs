@@ -40,15 +40,21 @@ public partial class NewWorktreeDialogViewModel : ObservableObject
     /// user typing over the derivation.</summary>
     private bool _updatingDerived;
 
+    private readonly Func<string, bool> _folderHasContent;
+
+    /// <param name="folderHasContent">Whether a folder already holds anything. Touches the disk, so it is
+    /// only ever called off the UI thread (see <see cref="TargetProbe"/>); null asks the disk.</param>
     public NewWorktreeDialogViewModel(
         string repositoryRoot,
         string worktreeRoot,
         IReadOnlyList<string> existingBranches,
         string setupCommand,
         bool createWorkspaceByDefault,
-        IReadOnlyCollection<string>? branchesHeldElsewhere = null)
+        IReadOnlyCollection<string>? branchesHeldElsewhere = null,
+        Func<string, bool>? folderHasContent = null)
     {
         _worktreeRoot = worktreeRoot;
+        _folderHasContent = folderHasContent ?? DirectoryHasContent;
         _heldElsewhere = branchesHeldElsewhere ?? Array.Empty<string>();
         RepositoryRoot = repositoryRoot;
         SetupCommand = setupCommand;
@@ -127,18 +133,22 @@ public partial class NewWorktreeDialogViewModel : ObservableObject
 
     partial void OnTargetPathChanged(string value)
     {
-        _ = ProbeTargetAsync();
+        TargetProbe = ProbeTargetAsync();
 
         if (_updatingDerived) return;
         _pathEdited = true;
     }
 
     /// <summary>
-    /// Whether the target already holds files, as last probed. The probe touches the disk — on a
+    /// The latest check of whether the target already holds files. The probe touches the disk — on a
     /// share, for seconds — so it runs off the UI thread (INV-06) rather than inside the properties
     /// the bindings read on every keystroke; the service refuses a non-empty folder again anyway.
     /// </summary>
-    private bool _targetHasContent;
+    public Task TargetProbe { get; private set; } = Task.CompletedTask;
+
+    /// <summary>The path the last finished probe was about, and its verdict.</summary>
+    private string _probedPath = string.Empty;
+    private bool _probedHasContent;
     private int _probeVersion;
 
     private async Task ProbeTargetAsync()
@@ -146,19 +156,28 @@ public partial class NewWorktreeDialogViewModel : ObservableObject
         var version = ++_probeVersion;
         var path = TargetPath.Trim();
         var hasContent = CheckPathShape(path) == PathProblem.None
-                         && await Task.Run(() => DirectoryHasContent(path));
+                         && await Task.Run(() => _folderHasContent(path));
         if (version != _probeVersion) return;   // the box changed while the disk answered
 
-        _targetHasContent = hasContent;
+        _probedPath = path;
+        _probedHasContent = hasContent;
         OnPropertyChanged(nameof(CanConfirm));
         OnPropertyChanged(nameof(ValidationMessage));
     }
+
+    /// <summary>
+    /// The verdict of the last probe, if it was about the path in the box now. Until the probe of a new
+    /// path answers, the folder counts as empty: the button does not flicker while typing, and no
+    /// message names a folder the verdict was not about.
+    /// </summary>
+    private bool TargetHasContent =>
+        _probedHasContent && string.Equals(_probedPath, TargetPath.Trim(), StringComparison.Ordinal);
 
     /// <summary><see cref="CheckPath"/> as the live form sees it: the shape rules now, the
     /// "not empty" verdict from the last background probe.</summary>
     private PathProblem LivePathProblem() =>
         CheckPathShape(TargetPath) is var shape and not PathProblem.None ? shape
-        : _targetHasContent ? PathProblem.NotEmpty
+        : TargetHasContent ? PathProblem.NotEmpty
         : PathProblem.None;
 
     private void SetDerived(Action assign)

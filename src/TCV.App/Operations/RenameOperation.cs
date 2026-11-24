@@ -43,18 +43,29 @@ public sealed class RenameOperation : FileOperationBase
     /// <summary>One line per rename that failed; the rest of the batch still ran.</summary>
     public IReadOnlyList<string> Failures => _failures;
 
-    public override OperationLogDescriptor LogDescriptor =>
-        (_pairs.Count == 1
-            ? new OperationLogDescriptor(OperationKind.Rename, _directory.Combine(_pairs[0].From).Value, _pairs[0].To, 1)
-            : new OperationLogDescriptor(OperationKind.Rename, $"{_directory.Value} ({_pairs.Count})", null, _pairs.Count))
-        with
+    public override OperationLogDescriptor LogDescriptor
+    {
+        get
         {
-            // What actually happened, not what was asked: the log line is how the batch is taken back
-            // once the window that applied it is closed (6.55). Read after the run, by the queue.
-            Renames = _done.Count == 0
-                ? null
-                : new RenameBatchRecord(_directory.Value, _done.Select(d => new RenamedName(d.From, d.To)).ToList()),
-        };
+            var archive = ArchiveEditing.ArchiveBehind(_fs);
+            return (_pairs.Count == 1
+                    ? new OperationLogDescriptor(OperationKind.Rename, _directory.Combine(_pairs[0].From).Value, _pairs[0].To, 1)
+                    : new OperationLogDescriptor(OperationKind.Rename, $"{_directory.Value} ({_pairs.Count})", null, _pairs.Count))
+                with
+                {
+                    ChangedArchive = archive,
+
+                    // What actually happened, not what was asked: the log line is how the batch is taken back
+                    // once the window that applied it is closed (6.55). Read after the run, by the queue.
+                    Renames = _done.Count == 0
+                        ? null
+                        : new RenameBatchRecord(_directory.Value, _done.Select(d => new RenamedName(d.From, d.To)).ToList())
+                        {
+                            Archive = archive,
+                        },
+                };
+        }
+    }
 
     public override async Task ExecuteAsync(CancellationToken ct)
     {

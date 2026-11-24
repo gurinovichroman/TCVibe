@@ -14,7 +14,18 @@ public enum RemoteEditOutcome
     Failed,
     /// <summary>The server copy changed after the file was opened and the user chose not to overwrite it.</summary>
     Declined,
+    /// <summary>
+    /// The user stopped waiting for the upload on exit. The edits are in the local copy, which is kept;
+    /// the server may hold part of the file if the bytes had started to go.
+    /// </summary>
+    Interrupted,
 }
+
+/// <summary>How far the uploads made on exit have got, for the window that waits for them.</summary>
+/// <param name="Done">Files whose upload has ended, however it ended.</param>
+/// <param name="Total">Files to upload.</param>
+/// <param name="Current">A file still on its way; empty once all are done.</param>
+public sealed record RemoteEditFlushProgress(int Done, int Total, string Current);
 
 /// <summary>Outcome of one write-back, for the UI to tell the user about.</summary>
 /// <param name="FileName">The file being edited.</param>
@@ -66,6 +77,9 @@ public sealed class RemoteEditService : IDisposable
     private readonly List<RemoteEditSession> _sessions = new();
     private readonly Lock _gate = new();
 
+    /// <summary>Stops every upload in flight, whoever started it (<see cref="FlushAllAsync"/>); replaced by <see cref="ResumeAfterFlush"/>.</summary>
+    private CancellationTokenSource _abort = new();
+
     public RemoteEditService(ILogger<RemoteEditService> logger, OperationLog operationLog, FileEditorLauncher editor)
         : this(logger, editor.Open, operationLog) { }
 
@@ -76,6 +90,12 @@ public sealed class RemoteEditService : IDisposable
         _launcher = launcher;
         _operationLog = operationLog;
     }
+
+    /// <summary>
+    /// Where the temporary copies go. A copy that was not uploaded is kept on purpose, so it outlives the
+    /// service; tests point this at a folder of their own, and left 400 folders a day in %TEMP% otherwise.
+    /// </summary>
+    public string CopiesRoot { get; init; } = Path.GetTempPath();
 
     /// <summary>Raised after a save was uploaded, failed, or was declined. Carries what the UI should tell the user.</summary>
     public event EventHandler<RemoteEditEventArgs>? Uploaded;
@@ -112,8 +132,12 @@ public sealed class RemoteEditService : IDisposable
     /// </summary>
     /// <param name="lease">Keeps the mounted file system alive for as long as the session lives;
     /// released when the session ends, or right away when it cannot start.</param>
+    /// <param name="ct">Stops the fetch: nothing is left behind, and <see cref="OperationCanceledException"/> says so.</param>
+    /// <param name="progress">How far the fetch has got.</param>
+    /// <param name="knownSize">The size the panel listed, for when the server does not say.</param>
     public async Task<RemoteEditSession?> BeginAsync(
-        IVirtualFileSystem vfs, VfsPath path, string fileName, IDisposable? lease = null, CancellationToken ct = default)
+        IVirtualFileSystem vfs, VfsPath path, string fileName, IDisposable? lease = null, CancellationToken ct = default,
+        IProgress<FileProgress>? progress = null, long knownSize = 0)
     {
         if (!vfs.SupportsOperation(VfsOperation.Write))
         {
@@ -123,6 +147,7 @@ public sealed class RemoteEditService : IDisposable
         }
 
         string temporary;
+        string? directory = null;
         IFileEntry? baseline = null;
         try
         {
@@ -134,22 +159,24 @@ public sealed class RemoteEditService : IDisposable
 
             // A directory per session keeps the original file name, which is what the editor puts
             // in its title bar and what its syntax highlighting keys off.
-            var directory = Path.Combine(Path.GetTempPath(), "tcv-edit-" + Guid.NewGuid().ToString("N")[..8]);
+            directory = Path.Combine(CopiesRoot, "tcv-edit-" + Guid.NewGuid().ToString("N")[..8]);
             Directory.CreateDirectory(directory);
             temporary = Path.Combine(directory, fileName);
 
-            await using var source = await vfs.OpenReadAsync(path, ct);
-            await using var target = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None);
-            await source.CopyToAsync(target, ct);
+            var total = baseline is { Size: > 0 } ? baseline.Size : knownSize;
+            await RemoteFetch.CopyToFileAsync(vfs, path, temporary, total, fileName, progress, ct);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
+            // A stopped fetch is nobody's copy: it holds no edits, and half a file must not linger.
+            RemoteFetch.DeleteFolder(directory);
             lease?.Dispose();
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Remote edit: could not fetch {Path}", path.Value);
+            RemoteFetch.DeleteFolder(directory);
             lease?.Dispose();
             return null;
         }
@@ -171,30 +198,94 @@ public sealed class RemoteEditService : IDisposable
     }
 
     /// <summary>
-    /// Uploads every session whose local copy holds a save that has not reached the server — a save
-    /// made a moment before the application closes is still waiting out its settle delay. Blocks up to
-    /// <paramref name="timeout"/>; meant for shutdown, called off the UI thread's synchronisation context.
+    /// True while some local copy holds a save the server does not have: an upload is under way, a save
+    /// is waiting out its settle delay, or an earlier upload failed. The window waits for these on exit.
     /// </summary>
-    public void FlushAll(TimeSpan timeout)
+    public bool HasPendingUploads
     {
-        // Nobody can answer a question now: the thread that would show it is the one waiting here,
-        // so asking hung the shutdown for the whole timeout. A conflict keeps the local copy instead.
+        get
+        {
+            lock (_gate)
+            {
+                return _sessions.Any(s => s.HasUnuploadedChanges);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Uploads every session whose local copy holds a save that has not reached the server: a save made
+    /// a moment before the application closes is still waiting out its settle delay. Runs off the calling
+    /// thread, so the window that waits for it stays alive (TRAP-105). <paramref name="stop"/> ends the wait
+    /// at once and stops what is in flight; the edits stay in the local copies
+    /// (<see cref="RemoteEditOutcome.Interrupted"/>), which disposing the sessions keeps. Stopping does not
+    /// wait for a stream to close: on a server that does not answer that takes the whole read timeout.
+    /// </summary>
+    /// <returns>False when it was stopped before every upload had ended.</returns>
+    public async Task<bool> FlushAllAsync(IProgress<RemoteEditFlushProgress>? progress = null, CancellationToken stop = default)
+    {
+        // Questions are not put from here on: the window is closing, and one left unanswered behind it
+        // would hold the exit. A conflict keeps the local copy instead, and the exit says where it is.
         _closing = true;
 
         RemoteEditSession[] sessions;
         lock (_gate)
         {
-            sessions = _sessions.ToArray();
+            sessions = _sessions.Where(s => s.HasUnuploadedChanges).ToArray();
         }
 
         if (sessions.Length == 0)
         {
-            return;
+            return true;
         }
+
+        var abort = _abort;
+        var done = 0;
+        var reporting = new Lock();
+        progress?.Report(new RemoteEditFlushProgress(0, sessions.Length, sessions[0].RemoteName));
+        var all = Task.Run(() => Task.WhenAll(sessions.Select(async session =>
+        {
+            await session.FlushAsync().ConfigureAwait(false);
+
+            // Counted and told in one step: two uploads ending together told out of order, and the last
+            // word the window heard was "1 of 2" with a file that had gone up long ago.
+            lock (reporting)
+            {
+                var next = sessions.FirstOrDefault(s => s.HasUnuploadedChanges)?.RemoteName ?? string.Empty;
+                progress?.Report(new RemoteEditFlushProgress(++done, sessions.Length, next));
+            }
+        })), CancellationToken.None);
 
         try
         {
-            Task.Run(() => Task.WhenAll(sessions.Select(s => s.FlushAsync()))).Wait(timeout);
+            await all.WaitAsync(stop).ConfigureAwait(false);
+            return !abort.IsCancellationRequested;
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested)
+        {
+            // Off this thread and not waited for: the cancel runs the uploads' unwinding, and closing
+            // a stream is a network wait. A registration on the token would be no use here: the wait
+            // above hears first, and this method's end would dispose the registration before it ran.
+            _ = abort.CancelAsync();
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Remote edit: flushing on exit failed");
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// <see cref="FlushAllAsync"/> for the one close that cannot be put off (Windows is shutting down: a
+    /// cancelled close would be ignored). Blocks up to <paramref name="timeout"/>; an upload that has not
+    /// ended by then is stopped and its edits stay in the local copy. Everything else uses the async form.
+    /// </summary>
+    public void FlushAll(TimeSpan timeout)
+    {
+        try
+        {
+            using var limit = new CancellationTokenSource(timeout);
+            Task.Run(() => FlushAllAsync(null, limit.Token)).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
@@ -202,12 +293,37 @@ public sealed class RemoteEditService : IDisposable
         }
     }
 
+    /// <summary>
+    /// The flush did not lead to an exit (an update refused because edits stayed behind): saves go up as
+    /// usual again, and conflicts are asked about again.
+    /// </summary>
+    public void ResumeAfterFlush()
+    {
+        _closing = false;
+        if (_abort.IsCancellationRequested)
+        {
+            _abort = new CancellationTokenSource();
+        }
+    }
+
+    /// <summary>The local copies holding edits the server does not have, for a message that names them.</summary>
+    public IReadOnlyList<string> UnuploadedCopies()
+    {
+        lock (_gate)
+        {
+            return _sessions.Where(s => s.HasUnuploadedChanges).Select(s => s.LocalPath).ToList();
+        }
+    }
+
+    /// <summary>What an upload in flight watches: <see cref="FlushAllAsync"/> being told to stop.</summary>
+    internal CancellationToken AbortToken => _abort.Token;
+
     internal void RaiseUploaded(RemoteEditSession session, RemoteEditOutcome outcome, string? error)
     {
         // Journaled here rather than by whoever listens: the window wires its listener on the first F4
         // only, and the record must not depend on a UI being attached (INV-10).
         _operationLog?.Append(Operations.RemoteTransferLog.RemoteSave(
-            session.LocalPath, session.RemotePath.Value, outcome, error, DateTime.Now));
+            session.LocalPath, session.RemotePath.Value, outcome, error, DateTime.Now, session.FileSystem));
         Uploaded?.Invoke(this, new RemoteEditEventArgs(session.RemoteName, outcome, error, session.LocalPath));
     }
 
@@ -230,7 +346,7 @@ public sealed class RemoteEditService : IDisposable
     private volatile bool _closing;
 
     /// <summary>
-    /// True once <see cref="FlushAll"/> has started: the application is closing, questions are no
+    /// True once <see cref="FlushAllAsync"/> has started: the application is closing, questions are no
     /// longer asked, and per-save dialogs would only pile up behind the closing window.
     /// </summary>
     public bool IsClosing => _closing;
@@ -282,6 +398,9 @@ public sealed class RemoteEditSession : IDisposable
     private (long Length, long WriteTicks) _uploadedStamp;
     private bool _keepLocalCopy;
 
+    /// <summary>Where the file is written back: the journal line names its server.</summary>
+    internal IVirtualFileSystem FileSystem => _vfs;
+
     internal RemoteEditSession(
         IVirtualFileSystem vfs, VfsPath remotePath, string localPath, IFileEntry? baseline,
         IDisposable? lease, RemoteEditService owner, ILogger logger)
@@ -328,6 +447,9 @@ public sealed class RemoteEditSession : IDisposable
 
     /// <summary>True while the local copy holds edits the server does not have.</summary>
     public bool HasUnuploadedChanges => !_disposed && StampOf(_localPath) != _uploadedStamp;
+
+    /// <summary>An upload has opened the server file and none has been confirmed since: the copy there may be incomplete.</summary>
+    public bool ServerCopyInDoubt { get; private set; }
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
@@ -377,7 +499,17 @@ public sealed class RemoteEditSession : IDisposable
 
     private async Task UploadAsync()
     {
-        await _uploadGate.WaitAsync();
+        var stop = _owner.AbortToken;
+        try
+        {
+            await _uploadGate.WaitAsync(stop).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            _keepLocalCopy = true;
+            return;
+        }
+
         try
         {
             if (_disposed)
@@ -404,19 +536,24 @@ public sealed class RemoteEditSession : IDisposable
             {
                 if (attempt > 0)
                 {
-                    await Task.Delay(_owner.RetryDelays[attempt - 1]);
+                    await Task.Delay(_owner.RetryDelays[attempt - 1], stop).ConfigureAwait(false);
                 }
 
                 try
                 {
-                    var length = await PutAsync();
-                    await VerifyAsync(length);
+                    var length = await PutAsync(stop).ConfigureAwait(false);
+                    await VerifyAsync(length).ConfigureAwait(false);
+                    ServerCopyInDoubt = false;
                     _uploadedStamp = stamp;
                     _keepLocalCopy = false;
                     UploadCount++;
                     _logger.LogInformation("Remote edit: uploaded {Path}", _remotePath.Value);
                     _owner.RaiseUploaded(this, RemoteEditOutcome.Uploaded, null);
                     return;
+                }
+                catch (OperationCanceledException) when (stop.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -428,6 +565,13 @@ public sealed class RemoteEditSession : IDisposable
             // Whatever is on the server may now be a truncated copy of the file: keep the local one.
             _keepLocalCopy = true;
             _owner.RaiseUploaded(this, RemoteEditOutcome.Failed, failure?.Message);
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested)
+        {
+            // The user chose to leave rather than wait. The edits are all in the local copy.
+            _keepLocalCopy = true;
+            _logger.LogWarning("Remote edit: upload of {Path} stopped on exit, keeping {Local}", _remotePath.Value, _localPath);
+            _owner.RaiseUploaded(this, RemoteEditOutcome.Interrupted, null);
         }
         finally
         {
@@ -469,14 +613,30 @@ public sealed class RemoteEditSession : IDisposable
             RemoteName, _baselineSize, _baselineModified, current.Size, current.LastModified)).ConfigureAwait(false);
     }
 
-    private async Task<long> PutAsync()
+    private async Task<long> PutAsync(CancellationToken ct)
     {
         // Opened with FileShare.ReadWrite|Delete: an editor may still hold its own handle open.
         await using var source = new FileStream(
             _localPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var length = source.Length;
-        await using var target = await _vfs.OpenWriteAsync(_remotePath, overwrite: true);
-        await source.CopyToAsync(target);
+        var target = await _vfs.OpenWriteAsync(_remotePath, overwrite: true, ct).ConfigureAwait(false);
+        try
+        {
+            // Until the caller has seen the server's copy: closing the stream can be what a stop cuts off.
+            ServerCopyInDoubt = true;
+            await source.CopyToAsync(target, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Not published by the close: a stream that commits on disposal would make half a file the server's copy.
+            (target as IAbortableWriteStream)?.Abort();
+            throw;
+        }
+        finally
+        {
+            await target.DisposeAsync().ConfigureAwait(false);
+        }
+
         return length;
     }
 

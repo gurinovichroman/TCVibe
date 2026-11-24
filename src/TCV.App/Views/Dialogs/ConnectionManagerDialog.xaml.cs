@@ -76,6 +76,12 @@ public partial class ConnectionManagerDialog : TcvDialog
         base.OnClosing(e);
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        Vm.Editor?.CancelTest();
+        base.OnClosed(e);
+    }
+
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.Escape && Keyboard.FocusedElement is not ComboBoxItem

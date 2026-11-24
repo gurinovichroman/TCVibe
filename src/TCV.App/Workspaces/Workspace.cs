@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using TCV.App.Settings;
 
 namespace TCV.App.Workspaces;
@@ -55,9 +56,9 @@ public sealed class Workspace
     public string Icon { get; set; } = string.Empty;
 
     /// <summary>
-    /// Optional picture of the project on the rail, in place of the emoji or the letters: the file name
-    /// of a 64 px PNG in <see cref="WorkspaceIconStore"/> (a copy, so moving the repository or editing
-    /// its logo does not change it). Empty — no picture.
+    /// Optional picture of the project, on the rail and in the lists in place of the emoji or the letters:
+    /// the file name of a 64 px PNG in <see cref="WorkspaceIconStore"/> (a copy, so moving the repository or
+    /// editing its logo does not change it). Empty — no picture.
     /// </summary>
     public string IconImage { get; set; } = string.Empty;
 
@@ -201,7 +202,12 @@ public sealed class Workspace
         }
     }
 
-    /// <summary>Name with the icon prefixed, for menus and the switcher.</summary>
+    /// <summary>
+    /// Name with the icon prefixed: the window's caption, which can only hold text, and the lists of a
+    /// workspace with no picture (<see cref="Controls.WorkspaceLabel"/>). Worked out, so it is not written
+    /// to <c>workspaces.json</c>, and reading an old file that has it ignores it: nothing can set it.
+    /// </summary>
+    [JsonIgnore]
     public string DisplayName =>
         string.IsNullOrWhiteSpace(Icon) ? Name : $"{Icon} {Name}";
 

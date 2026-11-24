@@ -105,6 +105,15 @@ public sealed partial class AzureBlobFileSystem : IVirtualFileSystem, IRangeRead
     /// <summary>The block size of a large upload, raised when the file would need more than 50 000 blocks.</summary>
     internal long BlockSize { get; init; } = 8L * 1024 * 1024;
 
+    /// <summary>Blocks of one upload in flight at once.</summary>
+    internal int PartConcurrency { get; init; } = PartedTransfer.DefaultConcurrency;
+
+    /// <summary>The pauses before a block is sent again; their number is the number of new tries.</summary>
+    internal ReconnectPolicy PartRetries { get; init; } = PartedTransfer.DefaultRetries;
+
+    /// <summary>How long an upload's body may stand still (<see cref="PartedTransfer.DefaultStallLimit"/>); tests shorten it.</summary>
+    internal TimeSpan StallLimit { get; init; } = PartedTransfer.DefaultStallLimit;
+
     /// <summary>The first wait before looking at a server-side copy again; it doubles up to five seconds.</summary>
     internal TimeSpan CopyPollInterval { get; init; } = TimeSpan.FromMilliseconds(500);
 
@@ -933,19 +942,22 @@ public sealed partial class AzureBlobFileSystem : IVirtualFileSystem, IRangeRead
 
     // ── Plumbing ─────────────────────────────────────────────────────────────
 
-    private static HttpClient CreateClient()
-    {
-        // No decompression: a blob stored with Content-Encoding: gzip is copied as the bytes it is.
-        var handler = new SocketsHttpHandler
-        {
-            ConnectTimeout = TimeSpan.FromSeconds(15),
-            AutomaticDecompression = DecompressionMethods.None,
-        };
+    // No overall timeout: HttpClient.Timeout limits the whole exchange and would cut off any
+    // transfer longer than it. Metadata calls get their own.
+    private static HttpClient CreateClient() => new(CreateHandler()) { Timeout = Timeout.InfiniteTimeSpan };
 
-        // No overall timeout: HttpClient.Timeout limits the whole exchange and would cut off any
-        // transfer longer than it. Metadata calls get their own.
-        return new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
-    }
+    /// <remarks>
+    /// No decompression: a blob stored with Content-Encoding: gzip is copied as the bytes it is. No
+    /// redirects: a Shared Key signature covers this URL and no other, the service does not redirect, and a
+    /// request sent on by the handler would carry the account's signed headers to wherever an answer points.
+    /// A 3xx is reported as the failure it is here.
+    /// </remarks>
+    internal static SocketsHttpHandler CreateHandler() => new()
+    {
+        ConnectTimeout = TimeSpan.FromSeconds(15),
+        AutomaticDecompression = DecompressionMethods.None,
+        AllowAutoRedirect = false,
+    };
 
     private static byte[] DecodeAccountKey(string secret)
     {
@@ -1023,7 +1035,7 @@ public sealed partial class AzureBlobFileSystem : IVirtualFileSystem, IRangeRead
         new(AzureStorageException.Describe(HttpStatusCode.NotFound, "ContainerNotFound", null, null, container, UsesSasToken),
             HttpStatusCode.NotFound, "ContainerNotFound");
 
-    private static IOException AlreadyExists(string name) => new($"\"{name}\" already exists.");
+    private static ObjectAlreadyExistsException AlreadyExists(string name) => new($"\"{name}\" already exists.");
 
     /// <summary>The answer to a conditional write (<c>If-None-Match: *</c>) whose target was there.</summary>
     private static bool IsAlreadyExists(HttpResponseMessage response) =>

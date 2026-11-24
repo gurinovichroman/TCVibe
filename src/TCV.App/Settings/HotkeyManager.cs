@@ -98,6 +98,9 @@ public sealed class HotkeyManager
     /// </summary>
     private readonly List<HotkeyBinding> _userTools = new();
 
+    /// <summary>The selection templates' own gestures, ranked as the user tools are (<see cref="SetSelectionTemplateBindings"/>).</summary>
+    private readonly List<HotkeyBinding> _selectionTemplates = new();
+
     /// <summary>Single-stroke gesture → command id. Rebuilt whenever bindings change.</summary>
     private readonly Dictionary<KeyStroke, string> _byGesture = new();
 
@@ -182,7 +185,9 @@ public sealed class HotkeyManager
         Register("SelectAll",        Key.Add,      ModifierKeys.Control);   // Ctrl+Num+
         Alias  ("SelectAll",         Key.A,        ModifierKeys.Control);   // the editor habit
         Register("DeselectAll",      Key.Subtract, ModifierKeys.Control);   // Ctrl+Num-
-        Alias  ("DeselectAll",       Key.Divide);                           // Num/ (older default)
+        Register("SelectSameExtension",   Key.Add,      ModifierKeys.Alt);  // Alt+Num+ (TC)
+        Register("UnselectSameExtension", Key.Subtract, ModifierKeys.Alt);  // Alt+Num- (TC)
+        Register("RestoreSelection", Key.Divide);                           // Num/ (TC); was an alias of DeselectAll
 
         // ── Tabs ──────────────────────────────────────────────────────────────
         Register("NewTab",           Key.T,   ModifierKeys.Control);
@@ -311,11 +316,26 @@ public sealed class HotkeyManager
     /// working after someone types "Ctrl+C" into the tools dialog — is worse than a tool that has
     /// to pick a free key. The tool still runs from the menu and the palette either way.
     /// </summary>
-    public void SetUserToolBindings(IEnumerable<(string CommandId, string Gesture)> tools)
+    public void SetUserToolBindings(IEnumerable<(string CommandId, string Gesture)> tools) =>
+        SetExtraBindings(_userTools, tools);
+
+    /// <summary>
+    /// Replaces the gestures of the selection templates (<c>SelectTemplate:&lt;key&gt;</c> ids). They
+    /// rank as the user tools do, after them: a template only gets a gesture nothing else owns.
+    /// </summary>
+    public void SetSelectionTemplateBindings(IEnumerable<(string CommandId, string Gesture)> templates) =>
+        SetExtraBindings(_selectionTemplates, templates);
+
+    private void SetExtraBindings(List<HotkeyBinding> target, IEnumerable<(string CommandId, string Gesture)> bindings)
     {
-        _userTools.Clear();
-        foreach (var (commandId, gesture) in tools)
-            if (TryParseBinding(commandId, gesture, out var binding)) _userTools.Add(binding!);
+        target.Clear();
+        foreach (var (commandId, gesture) in bindings)
+        {
+            if (TryParseBinding(commandId, gesture, out var binding))
+            {
+                target.Add(binding!);
+            }
+        }
 
         Reload();
     }
@@ -393,7 +413,7 @@ public sealed class HotkeyManager
             Index(alias);
 
         // Last tier: a user tool only gets a gesture nothing else claimed (see SetUserToolBindings).
-        foreach (var tool in _userTools)
+        foreach (var tool in _userTools.Concat(_selectionTemplates))
             IndexUserTool(tool);
 
         // A chord's first stroke must not also fire a single-key command, or the second press
@@ -440,7 +460,7 @@ public sealed class HotkeyManager
     {
         if (_bindings.TryGetValue(commandId, out var b)) return b;
 
-        var tool = _userTools.FirstOrDefault(
+        var tool = _userTools.Concat(_selectionTemplates).FirstOrDefault(
             t => string.Equals(t.CommandId, commandId, StringComparison.OrdinalIgnoreCase));
         if (tool is null) return null;
 

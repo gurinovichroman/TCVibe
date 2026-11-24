@@ -3,30 +3,129 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TCV.App.Views.Dialogs"
         Title="{Binding WindowTitle}"
-        Width="420" MinHeight="120" SizeToContent="Height"
+        Width="520" MinHeight="120" SizeToContent="Height"
         ResizeMode="NoResize">
 
     <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />  <!-- 0 template -->
             <RowDefinition Height="8" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />  <!-- 2 mask -->
+            <RowDefinition Height="4" />
+            <RowDefinition Height="Auto" />  <!-- 4 hint -->
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />  <!-- 6 folders -->
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />  <!-- 8 age -->
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />  <!-- 10 git / agent -->
             <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />  <!-- 12 save as template -->
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />  <!-- 14 buttons -->
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="{Binding Prompt}" TextWrapping="Wrap" />
+        <Label Grid.Row="0" Grid.Column="0" Padding="0" VerticalAlignment="Center"
+               Content="{DynamicResource Sel_Template}" Target="{Binding ElementName=TemplateBox}" />
+        <DockPanel Grid.Row="0" Grid.Column="2">
+            <Button DockPanel.Dock="Right" MinWidth="80" Margin="8,0,0,0"
+                    Content="{DynamicResource Sel_DeleteTemplate}"
+                    Command="{Binding DeleteTemplateCommand}" />
+            <ComboBox x:Name="TemplateBox"
+                      ItemsSource="{Binding Templates}"
+                      SelectedItem="{Binding SelectedTemplate}"
+                      DisplayMemberPath="Display"
+                      AutomationProperties.Name="{DynamicResource Sel_TemplateName}" />
+        </DockPanel>
 
-        <TextBox Grid.Row="2"
-                 AutomationProperties.Name="{Binding Prompt}"
-                 x:Name="MaskBox"
-                 Text="{Binding Mask, UpdateSourceTrigger=PropertyChanged}" />
+        <Label Grid.Row="2" Grid.Column="0" Padding="0" VerticalAlignment="Center"
+               Content="{DynamicResource Sel_Mask}" Target="{Binding ElementName=MaskBox}" />
+        <ComboBox Grid.Row="2" Grid.Column="2" x:Name="MaskBox"
+                  IsEditable="True"
+                  ItemsSource="{Binding History}"
+                  Text="{Binding Mask, UpdateSourceTrigger=PropertyChanged}"
+                  AutomationProperties.Name="{Binding Prompt}" />
 
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="{DynamicResource OK}" Width="80" Margin="0,0,8,0"
+        <TextBlock Grid.Row="4" Grid.Column="2" TextWrapping="Wrap"
+                   Foreground="{DynamicResource ForegroundDimBrush}"
+                   Text="{DynamicResource Sel_MaskHint}" />
+
+        <CheckBox Grid.Row="6" Grid.Column="2" HorizontalAlignment="Left"
+                  Content="{DynamicResource Sel_IncludeFolders}"
+                  IsChecked="{Binding IncludeFolders}" />
+
+        <Label Grid.Row="8" Grid.Column="0" Padding="0" VerticalAlignment="Center"
+               Content="{DynamicResource Sel_Age}" Target="{Binding ElementName=AgeBox}" />
+        <StackPanel Grid.Row="8" Grid.Column="2" Orientation="Horizontal">
+            <ComboBox x:Name="AgeBox" MinWidth="120"
+                      ItemsSource="{Binding AgeModes}"
+                      SelectedIndex="{Binding AgeModeIndex}"
+                      AutomationProperties.Name="{DynamicResource Sel_AgeName}" />
+            <TextBox Width="56" Margin="8,0,0,0" VerticalContentAlignment="Center"
+                     Text="{Binding AgeAmountText, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{Binding HasAge}"
+                     AutomationProperties.Name="{DynamicResource Sel_AgeAmount}" />
+            <ComboBox MinWidth="100" Margin="8,0,0,0"
+                      ItemsSource="{Binding AgeUnits}"
+                      SelectedIndex="{Binding AgeUnitIndex}"
+                      IsEnabled="{Binding HasAge}"
+                      AutomationProperties.Name="{DynamicResource Sel_AgeUnit}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="10" Grid.Column="2" Orientation="Vertical">
+            <CheckBox HorizontalAlignment="Left" Margin="0,0,0,4"
+                      Content="{DynamicResource Sel_GitChanged}"
+                      ToolTip="{DynamicResource Sel_GitChangedTip}"
+                      IsChecked="{Binding GitChanged}" />
+            <CheckBox HorizontalAlignment="Left"
+                      Content="{DynamicResource Sel_AgentChanged}"
+                      ToolTip="{DynamicResource Sel_AgentChangedTip}"
+                      IsChecked="{Binding AgentChanged}" />
+        </StackPanel>
+
+        <GroupBox Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3" Padding="8,6"
+                  Header="{DynamicResource Sel_SaveGroup}"
+                  IsEnabled="{Binding CanEditTemplates}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Padding="0" VerticalAlignment="Center"
+                       Content="{DynamicResource Sel_TemplateNameLabel}" Target="{Binding ElementName=NameBox}" />
+                <TextBox Grid.Column="2" x:Name="NameBox" VerticalContentAlignment="Center"
+                         Text="{Binding TemplateName, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{DynamicResource Sel_TemplateName}" />
+                <Label Grid.Column="4" Padding="0" VerticalAlignment="Center"
+                       Content="{DynamicResource Sel_HotkeyLabel}" Target="{Binding ElementName=HotkeyBox}" />
+                <TextBox Grid.Column="6" x:Name="HotkeyBox" VerticalContentAlignment="Center"
+                         Text="{Binding TemplateHotkey, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{DynamicResource Sel_HotkeyTip}"
+                         AutomationProperties.Name="{DynamicResource Sel_Hotkey}" />
+                <Button Grid.Column="8" MinWidth="80"
+                        Content="{DynamicResource Sel_SaveTemplate}"
+                        Command="{Binding SaveTemplateCommand}" />
+            </Grid>
+        </GroupBox>
+
+        <StackPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3"
+                    Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource OK}" MinWidth="80" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"
                     IsDefault="True" />
-            <Button Content="{DynamicResource Cancel}" Width="80"
+            <Button Content="{DynamicResource Cancel}" MinWidth="80"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>

@@ -18,11 +18,8 @@
     <sys:String x:Key="Settings">Налаштування</sys:String>
 
     <!-- File list columns -->
-    <sys:String x:Key="Col_Name">Ім’я</sys:String>
-    <sys:String x:Key="Col_Ext">Розш.</sys:String>
+    <sys:String x:Key="Col_Name">Назва</sys:String>
     <sys:String x:Key="Col_Size">Розмір</sys:String>
-    <sys:String x:Key="Col_Date">Дата</sys:String>
-    <sys:String x:Key="Col_Attr">Атр.</sys:String>
     <sys:String x:Key="Col_Computed">обчислено</sys:String>
     <sys:String x:Key="Col_Reset">Скинути стовпці</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Comparing and synchronising directories, editing a remote file (6.23) -->
     <sys:String x:Key="Cmp_Title">Порівняння папок</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Нічого не позначено для копіювання. Позначте рядки або скористайтеся стрілкою в рядку, щоб задати напрямок.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">перевірка, що нічого не змінилося…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">Змінилося після порівняння: {0} {0:plural:файл|файли|файлів}, перший — {1}. Нічого не скопійовано. Натисніть «Порівняти», щоб побачити папки такими, як вони є зараз.</sys:String>
     <sys:String x:Key="Cmp_Compare">Порівняти</sys:String>
     <sys:String x:Key="Cmp_Recursive">Включно з підпапками</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Показувати однакові</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Синхронізувати</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">Скопіювати позначені елементи? Усього: {0}. Наявні файли буде перезаписано.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Редагування віддаленого файлу</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">"{0}" відкрито як тимчасову копію. Кожне збереження завантажується назад.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">"{0}" відкрито як тимчасову копію. Кожне збереження вивантажується назад.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Не вдалося отримати файл, або джерело доступне лише для читання.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Вивантаження змін</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Збережені зміни прямують на сервер. Програма закриється, коли вони дійдуть.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">Якщо не чекати, нічого не пропаде: зміни залишаться в локальній копії, і програма скаже, де вона.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Перервати й залишити копії</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">Вивантаження не завершилося: файл на сервері може бути неповним.</sys:String>
+    <sys:String x:Key="Fetch_Title">Отримання файлу</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} отримано, але панель уже в іншому місці. Натисніть на ньому Enter ще раз, щоб відкрити.</sys:String>
 
     <!-- Saved operations, the drop stack and gadgets (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Збережені операції</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">Новий worktree для завдання…</sys:String>
     <sys:String x:Key="Git_WtRemove">Видалити worktree</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Видалити</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">Видалити worktree "{0}" і його каталог?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">Видалити worktree "{0}" і його каталог?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Увага: {0} {0:plural:незакомічену зміну|незакомічені зміни|незакомічених змін} буде втрачено назавжди.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree "{0}" видалено.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">Не вдалося видалити worktree: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">З цієї назви не вдається утворити назву гілки: у ній немає латинських чи кириличних літер або цифр. Введіть гілку й каталог вручну.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">Каталог не порожній: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">Не вдалося створити worktree: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree на "{0}" створено: {1}&#x0a;Перенесено файлів: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree на "{0}" створено: {1}&#x0a;Перенесено файлів: {2}</sys:String>
 
     <!-- Git: index, commit, branches, stash -->
     <sys:String x:Key="Git_CommitTitle">Commit</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Прибрати</sys:String>
     <sys:String x:Key="WsProps_PictureNone">немає</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Знайдено в проєкті:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Стоїть на бічній панелі робочих просторів замість піктограми та літер. Поки робочий простір не має ні зображення, ні піктограми, логотип або фавікон із його репозиторію підставляються самі; коли ви вже обрали — зображення, піктограму або «Прибрати», — більше не шукаються.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Стоїть замість піктограми та літер на бічній панелі робочих просторів і перед назвою в меню, перемикачі та заголовку вікна. Поки робочий простір не має ні зображення, ні піктограми, логотип або фавікон із його репозиторію підставляються самі; коли ви вже обрали — зображення, піктограму або «Прибрати», — більше не шукаються.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Зображення робочого простору</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Зображення</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">Цей файл не читається як зображення.</sys:String>
@@ -550,7 +556,7 @@
 
     <!-- Settings: git and gadgets tabs (6.30) -->
     <!-- User tools (6.29) -->
-    <sys:String x:Key="UserTool_Menu">Запустити _інструмент</sys:String>
+    <sys:String x:Key="UserTool_Menu">_Запустити інструмент</sys:String>
     <sys:String x:Key="UserTool_MountedRejected">Інструмент працює лише з файлами на диску — ця панель показує архів або сервер.</sys:String>
     <sys:String x:Key="UserTool_TargetNotOnDisk">“{0}” використовує %T, папку іншої панелі, але ця панель не показує папку на диску (архів, сервер або список результатів пошуку).</sys:String>
 
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Закріпити робочий простір</sys:String>
     <sys:String x:Key="Ws_RenameTaken">Робочий простір “{0}” уже існує.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">Не вдалося перейменувати робочий простір: workspaces.json зараз недоступний для читання чи запису.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Зображення, що не потрапили до файлу: {0}. Їх тут немає, або вони перевищують обмеження розміру.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Зображення, не прийняті з файлу: {0}. Приймається PNG 64×64 до 24 КБ.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Робочі простори</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">workspaces.json було пошкоджено, тому завантажено попередню копію (workspaces.json.bak). Пошкоджений файл збережено поруч із програмою як {0}.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">Для цього робочого простору задано виконання наведеної нижче команди в {1}. Її не вводили на цьому комп’ютері (вона може надходити з файлу проєкту), тому перевірте її перед запуском.&#10;&#10;{0}&#10;&#10;Виконати її?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">Видалити локальну гілку &quot;{0}&quot;? Віддалені гілки не змінюються.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">У гілці &quot;{0}&quot; є commit-и, яких немає більше ніде. Видалення втратить їх назавжди. Усе одно видалити?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Гілку &quot;{0}&quot; видалено.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">Є незакомічені зміни, тому git не може перейти на &quot;{0}&quot;.&#x0a;&#x0a;Відкласти їх у stash (разом з невідстежуваними файлами) і перейти? Повернути їх можна через Stash pop ({gesture:GitStashPop}).</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">Є незакомічені зміни, тому git не може перейти на &quot;{0}&quot;.&#x0a;&#x0a;Відкласти їх у stash (разом з невідстежуваними файлами) і перейти? Повернути їх можна через Stash pop ({gesture:GitStashPop}).</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">перед переходом на {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Нерозв’язаний конфлікт злиття</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Містить зміни</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Відкинути</sys:String>
     <sys:String x:Key="Git_DiscardHint">Відкидає вибрані зміни робочого дерева й відновлює останню закомічену версію. Скасувати це неможливо.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Відкинути зміни</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">Відкинути зміни в {0} {0:plural:файлі|файлах|файлах} і відновити останню закомічену версію?&#x0a;&#x0a;{1}&#x0a;&#x0a;Скасувати це неможливо.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">Відкинути зміни в {0} {0:plural:файлі|файлах|файлах} і відновити останню закомічену версію?&#x0a;&#x0a;{1}&#x0a;&#x0a;Скасувати це неможливо.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} з них також в індексі; їхні зміни в індексі теж буде відкинуто.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0} {0:plural:невідстежуваний файл пропущено|невідстежувані файли пропущено|невідстежуваних файлів пропущено}. У {0:plural:нього|них|них} немає закоміченої версії, до якої можна повернутися. Видаліть {0:plural:його|їх|їх} за допомогою {gesture:Delete}.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">Невідстежувані файли тут не можна відкинути (нема що відновлювати). Видаліть їх за допомогою {gesture:Delete}.</sys:String>
@@ -856,7 +864,7 @@
     <sys:String x:Key="Git_Menu_Unstage">_Прибрати позначене з індексу</sys:String>
     <sys:String x:Key="Git_Menu_Stash">S_tash…</sys:String>
     <sys:String x:Key="Git_Menu_StashPop">Stash _pop</sys:String>
-    <sys:String x:Key="Git_Menu_Diff">Показати _diff</sys:String>
+    <sys:String x:Key="Git_Menu_Diff">Пока_зати diff</sys:String>
     <sys:String x:Key="Git_Menu_Clone">_Клонувати з URL…</sys:String>
     <!-- agents -->
     <sys:String x:Key="Llm_NotConfigured">Мовну модель не налаштовано. Задайте кінцеву точку й модель у Налаштування → Шар агентів (будь-який сервер, сумісний з OpenAI: Ollama, LM Studio, llama.cpp або хмарний API).</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Відмовлено в доступі.</sys:String>
     <sys:String x:Key="Files_NotFound">Цієї папки не існує.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Не вдається прочитати цю папку: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">Читання папки зупинено.</sys:String>
     <sys:String x:Key="Files_Empty">Ця папка порожня</sys:String>
     <sys:String x:Key="Files_NoMatches">Жодне ім’я не відповідає введеному фільтру (Esc очищає його)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Минуло:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Зняти позначення за маскою</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Маска для позначення (напр. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Маска для зняття позначення (напр. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">_Шаблон:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Шаблон</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">В_идалити</sys:String>
+    <sys:String x:Key="Sel_Mask">_Маска:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Маски розділяйте символом ;. Після | ідуть винятки, маска з \ у кінці означає папки: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">Включно з _папками</sys:String>
+    <sys:String x:Key="Sel_Age">_Вік:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Вік</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Кількість</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Одиниця</sys:String>
+    <sys:String x:Key="Sel_AgeAny">будь-який</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">старші за</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">новіші за</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">хвилин</sys:String>
+    <sys:String x:Key="Sel_UnitHours">годин</sys:String>
+    <sys:String x:Key="Sel_UnitDays">днів</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Лише _змінені в Git</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Змінені, додані до індексу, невідстежувані або з конфліктом. Працює в папці на диску.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Лише змінені _агентом</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">Те, що зміни агента в проєкті приписують агентові. Працює в папці на диску.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Зберегти як шаблон</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">_Назва:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">_Клавіша:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Клавіша</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">Комбінація з Ctrl, Alt або Shift. Клавіша, яку вже використовує інша команда, ігнорується.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">З_берегти</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Умови щодо Git і агента працюють лише в папці на диску.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Нічого не підійшло.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Поставте курсор на файл, щоб позначити за його розширенням.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">Немає попереднього позначення для відновлення.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">У цій папці немає жодної з раніше позначених назв.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Позначити: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Вихідний код</sys:String>
+    <sys:String x:Key="SelTpl_Config">Файли конфігурації</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Документи</sys:String>
+    <sys:String x:Key="SelTpl_Images">Зображення</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Архіви</sys:String>
+    <sys:String x:Key="SelTpl_Junk">Тимчасові файли й журнали</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Папки збирання</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">Змінено в Git</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Змінено агентом</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">Змінено за добу</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Старші за 2 дні</sys:String>
     <sys:String x:Key="Log_Title">Журнал операцій</sys:String>
     <sys:String x:Key="Log_ColTime">Час</sys:String>
     <sys:String x:Key="Log_ColOperation">Операція</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Видалити весь журнал операцій? Це запис того, що робили файловий менеджер і агенти, і відновити його не можна.</sys:String>
     <sys:String x:Key="Log_ClearButton">Очистити журнал</sys:String>
     <sys:String x:Key="Log_UndoRename">Скасувати перейменування</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Повертає файлам вибраного пакета перейменування (ШІ-перейменування) їхні попередні імена. Перевіряє папку й спершу запитує.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Повертає файлам вибраного пакета перейменування їхні попередні імена. Перевіряє папку й спершу запитує.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">Повернути {0} {0:plural:файлу|файлам|файлам} у {1} імена, які {0:plural:він мав|вони мали|вони мали} до цього перейменування?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:файл залишається|файли залишаються|файлів залишаються} {0:plural:таким, як є|такими, як є|такими, як є}: відтоді перейменовано, переміщено чи видалено, або старе ім’я зайняв інший файл.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">Нічого повернути з перейменування в {0}: файли вже не мають імен, наданих цим пакетом, або їхні старі імена зайняті.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">Цей пакет перейменовано на сервері {0}. Підключіть панель до цього сервера й повторіть.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">Цей пакет перейменовано всередині архіву {0}. Відкрийте цей архів у панелі й повторіть.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Кошик</sys:String>
     <sys:String x:Key="Log_KindCopy">Копіювання</sys:String>
     <sys:String x:Key="Log_KindMove">Переміщення</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Деякі елементи не переміщено; вони залишилися на місці.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Деякі елементи не додано до архіву; оригінали залишено на місці.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">Формат архіву не можна змінювати: файли розпаковано, але вони також залишаються в архіві.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">Файли видобуто, але в архіві вони залишилися: його відкрито із сервера або з іншого архіву, і тут відкрито лише його тимчасову копію.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Властивості недоступні</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">Розпакування недоступне</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Виберіть призначенням звичайну папку на локальному диску в іншій панелі.</sys:String>
@@ -1165,9 +1220,14 @@
     <sys:String x:Key="Menu_Copy">_Копіювати…</sys:String>
     <sys:String x:Key="Menu_Move">Пере_містити…</sys:String>
     <sys:String x:Key="Menu_NewFolder">_Створити папку…</sys:String>
-    <sys:String x:Key="Menu_Delete">_Видалити</sys:String>
-    <sys:String x:Key="Menu_SelectByMask">По_значити за маскою…</sys:String>
+    <sys:String x:Key="Menu_Delete">Ви_далити</sys:String>
+    <sys:String x:Key="Menu_SelectByMask">Позна_чити за маскою…</sys:String>
     <sys:String x:Key="Menu_UnselectByMask">Зн_яти позначення за маскою…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">Позна_чення</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Позначити те саме _розширення</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">Зняти _те саме розширення</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">_Відновити позначення</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">_Шаблони</sys:String>
     <sys:String x:Key="Menu_CopyFullPath">Копіювати повний _шлях</sys:String>
     <sys:String x:Key="Menu_CopyNames">Копіювати _імена</sys:String>
     <sys:String x:Key="Menu_CopyReadLink">Копіювати п_осилання</sys:String>
@@ -1176,74 +1236,74 @@
     <sys:String x:Key="Link_ForWeek">На 7 днів</sys:String>
     <sys:String x:Key="Menu_Properties">В_ластивості</sys:String>
     <sys:String x:Key="Menu_FolderSizes">Ро_змір папок</sys:String>
-    <sys:String x:Key="Menu_Pack">За_пакувати…</sys:String>
-    <sys:String x:Key="Menu_Unpack">Розпа_кувати…</sys:String>
+    <sys:String x:Key="Menu_Pack">З_апакувати…</sys:String>
+    <sys:String x:Key="Menu_Unpack">Розпакува_ти…</sys:String>
     <sys:String x:Key="Menu_Exit">_Вийти</sys:String>
     <sys:String x:Key="Menu_NewFile">Створити _файл…</sys:String>
     <sys:String x:Key="Menu_DeletePermanent">Видалити _назавжди</sys:String>
     <sys:String x:Key="Menu_NameSearch">Знайти файл _будь-де…</sys:String>
-    <sys:String x:Key="Menu_QuickFilter">Ш_видкий фільтр</sys:String>
-    <sys:String x:Key="Menu_CompareDirs">_Порівняти папки…</sys:String>
-    <sys:String x:Key="Menu_SavedOps">Збережені _операції…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">_Керування збереженими операціями…</sys:String>
+    <sys:String x:Key="Menu_QuickFilter">Шв_идкий фільтр</sys:String>
+    <sys:String x:Key="Menu_CompareDirs">Порівн_яти папки…</sys:String>
+    <sys:String x:Key="Menu_SavedOps">Збережені опера_ції…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Керування збереженими операціями…</sys:String>
     <sys:String x:Key="Menu_DropStackAdd">Стек перенесення: додати _позначене</sys:String>
-    <sys:String x:Key="Menu_DropStackShow">Стек _перенесення…</sys:String>
+    <sys:String x:Key="Menu_DropStackShow">_Стек перенесення…</sys:String>
     <sys:String x:Key="Menu_RunGadget">Запустити _гаджет…</sys:String>
-    <sys:String x:Key="Menu_GadgetsManage">Керування га_джетами…</sys:String>
+    <sys:String x:Key="Menu_GadgetsManage">Керування гаджетами…</sys:String>
     <sys:String x:Key="Menu_Agents">_Агенти</sys:String>
     <sys:String x:Key="Menu_AgentChanges">_Зміни агентів…</sys:String>
     <sys:String x:Key="Menu_AgentLaunch">Запустити агента із за_вданням…</sys:String>
     <sys:String x:Key="Menu_AiRename">ШІ-пере_йменування…</sys:String>
     <sys:String x:Key="Menu_SemanticSearch">_Семантичний пошук…</sys:String>
     <sys:String x:Key="Menu_FolderTree">_Дерево папок</sys:String>
-    <sys:String x:Key="Menu_HideIgnored">_Приховати gitignored-файли</sys:String>
-    <sys:String x:Key="Menu_ShowHidden">Показувати п_риховані файли</sys:String>
+    <sys:String x:Key="Menu_HideIgnored">При_ховати gitignored-файли</sys:String>
+    <sys:String x:Key="Menu_ShowHidden">Показувати приховані _файли</sys:String>
     <sys:String x:Key="Menu_ShowExtensions">Показувати _розширення файлів</sys:String>
     <sys:String x:Key="Menu_FoldersFirst">Спершу _папки</sys:String>
     <sys:String x:Key="Menu_Columns">_Стовпці…</sys:String>
     <sys:String x:Key="Menu_ExportSettings">_Експорт налаштувань…</sys:String>
     <sys:String x:Key="Menu_ImportSettings">_Імпорт налаштувань…</sys:String>
-    <sys:String x:Key="Menu_FindInProject">Знайти файл у _проєкті…</sys:String>
-    <sys:String x:Key="Menu_FindFiles">_Знайти файли…</sys:String>
+    <sys:String x:Key="Menu_FindInProject">Знайти файл у про_єкті…</sys:String>
+    <sys:String x:Key="Menu_FindFiles">Пошук _файлів…</sys:String>
     <sys:String x:Key="Menu_MultiRename">_Масове перейменування…</sys:String>
     <sys:String x:Key="Menu_Checksums">_Контрольні суми…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Журнал операцій…</sys:String>
-    <sys:String x:Key="Menu_BackgroundOperations">_Фонові операції</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Фонові операці_ї</sys:String>
     <sys:String x:Key="Menu_Terminal">Відкрити _термінал</sys:String>
     <sys:String x:Key="Menu_ShellsManage">_Оболонки командного рядка…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">Відкрити в _редакторі</sys:String>
     <sys:String x:Key="Menu_OpenInEditorPicker">Відкрити в р_едакторі…</sys:String>
     <sys:String x:Key="Menu_RunAgent">Запустити _агента тут</sys:String>
     <sys:String x:Key="Menu_RunAgentPicker">Запустити а_гента тут…</sys:String>
-    <sys:String x:Key="Menu_GoRoot">Перейти до _кореня</sys:String>
+    <sys:String x:Key="Menu_GoRoot">Пере_йти до кореня</sys:String>
     <sys:String x:Key="Menu_GoHome">Перейти до _домашньої папки</sys:String>
-    <sys:String x:Key="Menu_GoClipboard">Перейти за шляхом із _буфера обміну</sys:String>
+    <sys:String x:Key="Menu_GoClipboard">Перейти за шля_хом із буфера обміну</sys:String>
     <sys:String x:Key="Menu_EditPath">_Ввести шлях</sys:String>
-    <sys:String x:Key="Menu_OpenExplorer">Відкрити у _Провіднику</sys:String>
+    <sys:String x:Key="Menu_OpenExplorer">Відкрити _у Провіднику</sys:String>
     <sys:String x:Key="Menu_UserTools">_Інструменти користувача…</sys:String>
-    <sys:String x:Key="Menu_ConnectionManager">Менеджер _підключень…</sys:String>
-    <sys:String x:Key="Menu_Disconnect">Від_ключитися</sys:String>
+    <sys:String x:Key="Menu_ConnectionManager">Ме_неджер підключень…</sys:String>
+    <sys:String x:Key="Menu_Disconnect">Відк_лючитися</sys:String>
     <sys:String x:Key="Menu_QueueTransfer">Додати до _черги передавання</sys:String>
-    <sys:String x:Key="Menu_TransferQueue">Черга пере_давання…</sys:String>
+    <sys:String x:Key="Menu_TransferQueue">Черг_а передавання…</sys:String>
     <sys:String x:Key="Menu_Options">_Налаштування…</sys:String>
     <sys:String x:Key="Menu_Hotkeys">_Клавіатурні скорочення…</sys:String>
     <sys:String x:Key="Menu_PluginManager">_Менеджер плагінів…</sys:String>
     <sys:String x:Key="Menu_SplitVertical">Розділити панелі _вертикально</sys:String>
-    <sys:String x:Key="Menu_SwapPanels">Поміняти па_нелі місцями</sys:String>
+    <sys:String x:Key="Menu_SwapPanels">Поміняти пане_лі місцями</sys:String>
     <sys:String x:Key="Menu_ToggleTheme">Світла / темна _тема</sys:String>
     <sys:String x:Key="Menu_ViewMode">Режим пере_гляду</sys:String>
     <sys:String x:Key="Menu_ViewDetails">_Докладно</sys:String>
     <sys:String x:Key="Menu_ViewBrief">_Коротко</sys:String>
     <sys:String x:Key="Menu_ViewThumbnails">_Ескізи</sys:String>
-    <sys:String x:Key="Menu_ViewTree">Д_ерево</sys:String>
+    <sys:String x:Key="Menu_ViewTree">Де_рево</sys:String>
     <sys:String x:Key="Menu_AddBookmark">_Додати поточну папку…</sys:String>
     <sys:String x:Key="Menu_ManageBookmarks">_Керування закладками…</sys:String>
     <sys:String x:Key="Menu_Ws_Save">_Зберегти як робочий простір…</sys:String>
     <sys:String x:Key="Menu_Ws_New">_Новий робочий простір…</sys:String>
     <sys:String x:Key="Menu_Ws_Switch">Пере_йти до робочого простору…</sys:String>
-    <sys:String x:Key="Menu_Ws_Notes">_Нотатки робочого простору…</sys:String>
+    <sys:String x:Key="Menu_Ws_Notes">Нотатки робочого _простору…</sys:String>
     <sys:String x:Key="Menu_Ws_Terminal">Т_ермінал робочого простору</sys:String>
-    <sys:String x:Key="Menu_Ws_NewWindow">Відкрити в _новому вікні</sys:String>
+    <sys:String x:Key="Menu_Ws_NewWindow">Ві_дкрити в новому вікні</sys:String>
     <sys:String x:Key="Menu_Ws_Properties">_Властивості робочого простору…</sys:String>
     <sys:String x:Key="Menu_Ws_Sidebar">_Бічна панель робочих просторів</sys:String>
     <sys:String x:Key="Menu_Ws_RailExpand">_Розгорнути бічну панель робочих просторів</sys:String>
@@ -1251,14 +1311,14 @@
     <sys:String x:Key="Menu_Ws_ExportDefinition">Зберегти ф_айл проєкту (.tcvproj)…</sys:String>
     <sys:String x:Key="Menu_Ws_SwitchTo">_Перейти до</sys:String>
     <sys:String x:Key="Menu_Ws_Pin">_Закріпити на бічній панелі робочих просторів</sys:String>
-    <sys:String x:Key="Menu_Ws_Unpin">_Відкріпити від бічної панелі робочих просторів</sys:String>
+    <sys:String x:Key="Menu_Ws_Unpin">Відкріпити від бічної панелі _робочих просторів</sys:String>
     <sys:String x:Key="Menu_Ws_PropertiesItem">В_ластивості: назва, піктограма, колір, група, термінал…</sys:String>
     <sys:String x:Key="Menu_Ws_NotesItem">_Нотатки…</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalItem">_Термінал</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalNoCommand">Команду не задано — відкриється лише термінал. Задати її можна у властивостях робочого простору.</sys:String>
     <sys:String x:Key="Menu_Ws_SaveProject">З_берегти .tcvproj…</sys:String>
     <sys:String x:Key="Menu_Ws_Delete">_Видалити</sys:String>
-    <sys:String x:Key="Menu_Palette">_Палітра команд…</sys:String>
+    <sys:String x:Key="Menu_Palette">Палітра _команд…</sys:String>
     <sys:String x:Key="Menu_CheckUpdates">Перевірити _оновлення…</sys:String>
     <sys:String x:Key="Menu_ReportBug">_Повідомити про помилку…</sys:String>
     <sys:String x:Key="Menu_Discussions">_Запитання та ідеї…</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">Доступна версія {0}.&#10;&#10;{1}&#10;&#10;Установити її зараз? Програма закриється, оновиться й відкриється знову. Налаштування й робочі простори збережуться.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">Доступна версія {0}. Установіть її з головного вікна: воно закриє вікна робочих просторів і перезапуститься.</sys:String>
     <sys:String x:Key="Update_Busy">Оновлення закриває програму, а операції або передавання ще виконуються. Дочекайтеся їх завершення й повторіть спробу.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">Оновлення не встановлено: зміни файлів на сервері не вивантажено. Вони в безпеці тут:&#10;{0}&#10;&#10;Збережіть їх у редакторі ще раз і повторіть.</sys:String>
     <sys:String x:Key="Update_Downloading">завантаження оновлення… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">Не вдалося завантажити оновлення: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Не всі вікна робочих просторів закрито. Закрийте їх і повторіть оновлення.</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">Нове ім’я</sys:String>
     <sys:String x:Key="MR_ColConflict">Проблема</sys:String>
     <sys:String x:Key="MR_Rename">Перейменувати</sys:String>
-    <sys:String x:Key="MR_Undo">Скасувати</sys:String>
-    <sys:String x:Key="MR_UndoTip">Повернути щойно перейменованим файлам їхні старі імена</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Інший файл отримає таку саму назву</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Порожня назва</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Недопустима назва</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Нічого перейменовувати. Конфліктів: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Нічого перейменовувати: назви не змінюються.</sys:String>
     <sys:String x:Key="MR_Error">Помилка: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Назви відновлено: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">Відновлено {0} із {1}; не вдалося: {2}.</sys:String>
-    <sys:String x:Key="MR_UndoError">Не вдалося скасувати: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">Файлів перейменовано: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Пропущено через конфлікти: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Не вдалося: {0} (наприклад, «{1}»: {2}).</sys:String>
@@ -1385,6 +1441,7 @@
     <sys:String x:Key="Conn_Browse">Огляд…</sys:String>
     <sys:String x:Key="Conn_Test">Перевірити підключення</sys:String>
     <sys:String x:Key="Conn_Connecting">Підключення…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Підключення до «{0}»…</sys:String>
     <sys:String x:Key="Conn_TestOk">Підключення успішне.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Перевірку скасовано.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Помилка: {0}</sys:String>
@@ -1447,7 +1504,7 @@
     <sys:String x:Key="Conn_QuickTitle">Швидке підключення</sys:String>
     <sys:String x:Key="Conn_QuickPrompt">Адреса сервера або сховища: sftp://user@host:22/path, ftp://…, davs://…, s3://bucket/prefix</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">«{0}» не є адресою підключення. Наприклад: sftp://user@host/path, s3://bucket.</sys:String>
-    <sys:String x:Key="Menu_Reconnect">_Перепідключити</sys:String>
+    <sys:String x:Key="Menu_Reconnect">Перепідкл_ючити</sys:String>
     <sys:String x:Key="Menu_QuickConnect">_Швидке підключення…</sys:String>
     <sys:String x:Key="Conn_Saved">Підключення «{0}» збережено.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">«{0}»: вкажіть спільну папку — шлях на кшталт /share або /share/folder.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">IdentityFile не вказано: ключ за замовчуванням</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">файлу ключа на цьому комп’ютері немає</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">ключа немає: буде запитано пароль</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump і ProxyCommand не підтримуються: підключення напряму</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Підключається через {0}, але тунелі тут не підтримуються: якщо позначити, підключення піде напряму, в обхід</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">Блоки Match тут не можна обчислити; їхні параметри не застосовано ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: такого файлу немає.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include не прочитано: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Завантаження</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Вивантаження</sys:String>
     <sys:String x:Key="Transfer_Empty">Черга порожня. Позначте файли на сервері й натисніть {gesture:QueueTransfer}.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Додавання до черги</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">Знайдено: {0} {0:plural:файл|файли|файлів}</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Не поставлено в чергу: {0} {0:plural:елемент|елементи|елементів}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: посилання, за ним не переходимо</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: той самий вміст, що в папки вище, схоже на петлю посилань</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: надто глибока вкладеність</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: не вдалося прочитати: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: такого імені не може бути в місці призначення</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: файл і папка мали б однакове ім’я</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">Відкрийте підключення до сервера або сховища в одній з панелей — черга працює лише з ними.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">Інша панель має показувати локальний диск — черга переміщує файли між сервером і диском.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">У чергу можна ставити лише файли — папки копіюйте через {gesture:Copy}.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">"{0}" уже існує й не змінений.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">"{0}" уже існує на сервері й не змінений.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">Не вдалося передати "{0}".</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">Папки для пошуку не існує: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Недійсний розмір "{0}". Введіть байти або число з KB, MB чи GB (наприклад, 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">Мінімальний розмір більший за максимальний.</sys:String>
-    <sys:String x:Key="Search_BadDate">Недійсна дата "{0}". Введіть день, наприклад 2026-10-01 або 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Недійсна дата "{0}". Введіть день, наприклад 2026-10-31 або 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">Початкова дата пізніша за кінцеву.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Авто</sys:String>
     <sys:String x:Key="Search_NameRegex">Назва файлу — регулярний вираз</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Байти або число з KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Змінено в цей день або пізніше</sys:String>
     <sys:String x:Key="Search_DateTo">Змінено в цей день або раніше</sys:String>
-    <sys:String x:Key="Search_DateHint">День: 2026-10-01 або 01.10.2026. Обидва дні включено; залиште порожнім, щоб не обмежувати.</sys:String>
+    <sys:String x:Key="Search_DateHint">День: 2026-10-31 або 31.10.2026. Обидва дні включено; залиште порожнім, щоб не обмежувати.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">не вдалося прочитати</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">назви різняться лише регістром</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Порівнювати вміст</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">папка не існує</sys:String>
     <sys:String x:Key="Cmp_Failed">Не вдалося порівняти: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · не вдалося прочитати папок: {0}, їх пропущено</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">ліву сторону не можна змінити: на неї нічого не копіюється</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">праву сторону не можна змінити: на неї нічого не копіюється</sys:String>
     <sys:String x:Key="Cmp_TickRow">Включити цей рядок</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Напрямок копіювання</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Клацніть, щоб змінити напрямок: → копіювати праворуч, ← копіювати ліворуч, = не чіпати</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">Файли, які буде замінено:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… і ще {0}</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">Замінені файли спочатку потрапляють до Кошика, тож їх можна відновити.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Деякі замінені файли лежать на сервері, де немає Кошика: їх не можна буде відновити.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Деякі замінені файли лежать на сервері або в архіві, де немає Кошика: їх не можна буде відновити.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">УВАГА: {0} із замінених файлів НОВІШІ за копію, що їх замінює:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">Пропущено записів: {0} — з одного боку файл, а з другого папка.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Синхронізувати?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: не вдалося перемістити наявний файл до Кошика, його не чіпано</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: копіювання не завершено</sys:String>
     <sys:String x:Key="Cmp_Unstamped">Скопійованим файлам ({0}) не вдалося задати час змінення джерела (сервер цього не дозволяє). Вони мають час копіювання, тому наступне порівняння покаже їх як новіші — перш ніж синхронізувати назад, скористайтеся «Порівнювати вміст».</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Деякі файли, відредаговані віддалено, не вивантажено перед закриттям. Ваші зміни збережено в:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Деякі файли, відредаговані віддалено, не вивантажено перед закриттям. Ваші зміни збережено в:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0} вивантажено на сервер</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">Не вдалося вивантажити {0}: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">Не вдалося вивантажити {0}: {1}
 
 Ваші зміни в безпеці в локальній копії, яку збережено:
 {2}
 
 Файл на сервері може бути неповним. Збережіть ще раз у редакторі, щоб повторити.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} не вивантажено: копія на сервері змінилася після того, як ви її відкрили, і ви вирішили не перезаписувати її.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} не вивантажено: копія на сервері змінилася після того, як ви її відкрили, і ви вирішили не перезаписувати її.
 
 Ваші зміни залишаються в:
 {1}
 
 Збережіть ще раз у редакторі, щоб побачити запитання знову.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} змінився на сервері після того, як ви його відкрили.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} змінився на сервері після того, як ви його відкрили.
 
 Під час відкриття: {1:N0} байт, {2}
 Тепер: {3:N0} байт, {4}
@@ -1893,8 +1960,11 @@
     <sys:String x:Key="Help_Cmd_SelectAll">Позначає всі видимі файли й папки (з урахуванням швидкого фільтра).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Знімає всі позначки в активній панелі.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Інвертує позначки: позначені елементи знімаються, а решта позначається (разом із папками).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Позначає елементи, назви яких відповідають масці, наприклад *.cs; *.md. Маски розділяйте символом ;, комою або пропуском; *.* відповідає всьому, папкам теж.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Позначає елементи за маскою або шаблоном, наприклад *.cs;*.md | *.g.cs. Маски розділяються символом ;, після | ідуть винятки, маска з \ у кінці означає папки. Шаблон може також вимагати віку (старші або новіші за), зміни в Git або зміни агентом.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Знімає позначки з елементів, назви яких відповідають масці.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Позначає всі файли з тим самим розширенням, що й файл під курсором.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Знімає позначку з усіх файлів із тим самим розширенням, що й файл під курсором.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Знову позначає назви, позначені до останнього зняття позначення, видалення чи переходу в іншу папку, — тут або в іншій папці з тими самими назвами.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Поміщає позначені файли в буфер обміну, щоб вставити тут ({gesture:ClipboardPaste}) або в Провіднику. Працює на диску, всередині архівів (їх можна вставити лише в межах програми) і в результатах пошуку; не на серверах — там скористайтеся {gesture:Copy}.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Як «Копіювати в буфер», але вставлення переміщує файли; оригінали видаляються лише після того, як усе прибуло.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Вставляє файли, скопійовані чи вирізані тут або в Провіднику, у поточну папку (або у відкритий ZIP). Запитує, коли назви збігаються; копія в ту саму папку стає "file (1)".</sys:String>
@@ -1913,7 +1983,7 @@
     <sys:String x:Key="Help_Cmd_ToggleSplit">Перемикає панелі між розташуванням поруч і одна над одною. Вибір запам’ятовується.</sys:String>
     <sys:String x:Key="Help_Cmd_FindFiles">Миттєвий нечіткий пошук файлу за назвою та шляхом у межах проєкту — від кореня репозиторію git, інакше від поточної папки; також усередині архівів. Усі слова, розділені пропусками, мають збігатися, Tab звужує до виділеної папки, Enter переводить панель до файлу. Файли, які ви часто вибираєте, стоять вище.</sys:String>
     <sys:String x:Key="Help_Cmd_NameSearch">Миттєво знаходить файл або папку за частиною назви на всіх локальних дисках за допомогою попередньо побудованого індексу. Індекс будується у фоні під час першого використання й оновлюється, коли старіший за 6 годин; системні папки, .git і node_modules пропускаються.</sys:String>
-    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Повторно сканує диски для пошуку файлу всюди — використовуйте після змін файлів поза програмою. Працює у фоні; повторний запуск під час перебудови пропонує її скасувати.</sys:String>
+    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Повторно сканує диски для команди «Знайти файл будь-де» — використовуйте після змін файлів поза програмою. Працює у фоні; повторний запуск під час перебудови пропонує її скасувати.</sys:String>
     <sys:String x:Key="Help_Cmd_FolderTree">Показує або ховає дерево дисків і папок ліворуч від панелей. Клацання папки відкриває її в активній панелі; дерево слідує за активною панеллю до її папки. Воно оновлюється саме за тим, що показують панелі; {gesture:RefreshTab} перечитує всі його відкриті папки.</sys:String>
     <sys:String x:Key="Help_Cmd_QuickFilter">Відкриває швидкий фільтр активної панелі без набору першої літери (як клавіша швидкого пошуку Total Commander); якщо він відкритий, повертає йому клавіатуру. Збігову частину кожної назви підсвічено, Enter відкриває елемент під курсором, Esc закриває фільтр. У вигляді «Дерево» фільтра немає: літери переходять до папки, назва якої з них починається.</sys:String>
     <sys:String x:Key="Help_Cmd_ToggleHiddenFiles">Показує приховані й системні файли в активній панелі або знову ховає їх. Налаштування запам’ятовується для кожної панелі. Той самий перемикач — клацання правою кнопкою на кнопках вигляду в рядку стану панелі та в меню заголовка стовпців.</sys:String>
@@ -1935,15 +2005,15 @@
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Блокує вкладку на її папці (значок замка): її не можна закрити, і щоразу, коли ви повертаєтеся до неї, вона знову відкриває цю папку. Виконайте ще раз, щоб розблокувати.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Дає вкладці власну назву замість назви папки (також подвійне клацання вкладки). Порожня назва повертає назву папки.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">Пошук файлів: за маскою назви чи регулярним виразом, за вмістом, розміром і атрибутами, зокрема всередині архівів і з урахуванням .gitignore; критерії можна зберігати як набори. «Показати в панелі» виводить знахідки в активній панелі, де на них діють звичайні команди. Шукає на локальних дисках.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Пакетне перейменування за шаблоном ([N] назва, [E] розширення, [C] лічильник, [D] і [T] дата й час, [P] папка), заміна регулярним виразом, вставлення й видалення символів та зміна регістру. Попередній перегляд одразу показує конфлікти; після «Перейменувати» можна натиснути «Скасувати», поки вікно відкрите. Усередині архіву ZIP увесь пакет — це один перезапис архіву, усе або нічого; інші формати архівів доступні лише для читання.</sys:String>
-    <sys:String x:Key="Help_Cmd_OperationLog">Історія файлових операцій, ваших і агентів: копіювання, переміщення, видалення, перейменування, створення, пакування й розпакування, завантаження й вивантаження (черга передавання та збереження файлу, відкритого із сервера), з результатом і помилками. Рядок можна зберегти як операцію для повторного використання. Журнал може скасувати лише одне: пакет перейменувань або AI-перейменування («Скасувати перейменування»); для решти шлях назад — Кошик.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Пакетне перейменування за шаблоном ([N] назва, [E] розширення, [C] лічильник, [D] і [T] дата й час, [P] папка), заміна регулярним виразом, вставлення й видалення символів та зміна регістру. Попередній перегляд одразу показує конфлікти; «Перейменувати» закриває вікно, і пакет іде у фоні; «Скасувати перейменування» в журналі операцій поверне старі імена (на сервері — коли до нього підключена панель). Усередині архіву ZIP увесь пакет — це один перезапис архіву, усе або нічого; інші формати архівів доступні лише для читання.</sys:String>
+    <sys:String x:Key="Help_Cmd_OperationLog">Історія файлових операцій, ваших і агентів: копіювання, переміщення, видалення, перейменування, створення, пакування й розпакування, завантаження й вивантаження (черга передавання та збереження файлу, відкритого із сервера), з результатом і помилками. Рядок можна зберегти як операцію для повторного використання. Журнал може скасувати лише одне: пакет перейменувань або ШІ-перейменування («Скасувати перейменування»); для решти шлях назад — Кошик.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Знову показує вікна поступу, сховані кнопкою «У фоні». Копіювання, перенесення чи видалення зі схованим вікном триває далі; рядок стану показує, скільки операцій іде у фоні і наскільки вони просунулися, а клацання по ньому відкриває їх список: у кожної поступ або позначка «у черзі», вікно можна показати, а операцію — скасувати. Операції із сервером ідуть поруч з операціями на диску, тож довге завантаження не затримує локальне копіювання.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Додає поточну папку активної панелі до закладок під вибраною вами назвою. Закладки — у меню «Закладки».</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Редактор закладок: назва, шлях, порядок і група (групи стають підменю меню «Закладки»), імпорт і експорт у JSON. Зміни застосовуються після OK.</sys:String>
     <sys:String x:Key="Help_Cmd_Terminal">Відкриває оболонку командного рядка (ту, що вибрана ліворуч від рядка) у папці активної панелі — у Windows Terminal, якщо його встановлено. Якщо у Windows Terminal є профіль цієї оболонки, вкладка відкривається з ним. У «Налаштування → Оболонки» можна відкривати замість неї типовий профіль Windows Terminal. Лише папки диска.</sys:String>
     <sys:String x:Key="Help_Cmd_OpenInEditor">Відкриває поточну папку й позначені файли у вашому типовому редакторі (VS Code, Cursor, Rider, Zed, Sublime Text, Notepad++ та інші знаходяться автоматично). Типовий редактор вибирається в «Налаштування → Зовнішні інструменти» або через «Відкрити в редакторі…».</sys:String>
     <sys:String x:Key="Help_Cmd_OpenInEditorPicker">Як «Відкрити в редакторі», але спершу дає вибрати редактор зі списку; ваш вибір стає типовим.</sys:String>
-    <sys:String x:Key="Help_Cmd_RunAgentHere">Запускає CLI агента (Claude Code, Codex, Gemini, Aider та інші) у новому вікні терміналу в папці активної панелі. Запуск записується як сесія агента, тож його зміни пізніше з’являться в «Зміни агента» ({gesture:AgentChanges}).</sys:String>
+    <sys:String x:Key="Help_Cmd_RunAgentHere">Запускає CLI агента (Claude Code, Codex, Gemini, Aider та інші) у новому вікні терміналу в папці активної панелі. Запуск записується як сесія агента, тож його зміни пізніше з’являться в «Зміни агентів» ({gesture:AgentChanges}).</sys:String>
     <sys:String x:Key="Help_Cmd_RunAgentPicker">Як «Запустити агента тут», але спершу дає вибрати агента; вибір запам’ятовується.</sys:String>
     <sys:String x:Key="Help_Cmd_RunGadget">Гаджет — це збережений іменований командний рядок, наприклад build = dotnet build. Ця команда відкриває список гаджетів із пошуком і виконує вибраний у папці активної панелі. Гаджети додаються, редагуються й видаляються в «Налаштування → Гаджети» («Команди → Керування гаджетами…»); поки їх немає, команда пропонує описати перший в одному рядку.</sys:String>
     <sys:String x:Key="Help_Cmd_GadgetsManager">Відкриває налаштування на вкладці «Гаджети»: додавання, редагування й видалення гаджетів — назва, команда, аргументи з макросами, робоча папка та чи виконується в терміналі. Гаджет вибирається за назвою, тож назви мають бути унікальними.</sys:String>
@@ -1959,7 +2029,7 @@
     <sys:String x:Key="Help_Cmd_GitDiff">Показує зміни файлу під курсором відносно останнього commit, додані до індексу й ні разом. На папці показує все всередині неї, на ".." — поточну папку. Лише для читання; diff можна скопіювати.</sys:String>
     <sys:String x:Key="Help_Cmd_GitWorktrees">Кожен worktree репозиторію: гілка, стан (чистий, має зміни, заблокований, папки немає), випередження/відставання станом на останній fetch і шлях. Звідси можна відкрити worktree, створити або вилучити його — вилучення видаляє папку з незафіксованою роботою (гілка залишається), тому спершу запитує.</sys:String>
     <sys:String x:Key="Help_Cmd_GitNewWorktree">Створює worktree для завдання: назва завдання стає гілкою та папкою поруч із репозиторієм, локальні файли конфігурації (.env і подібні) копіюються, може виконатися команда налаштування (npm install, dotnet restore) і створюється власний робочий простір.</sys:String>
-    <sys:String x:Key="Help_Cmd_GitCommit">Вікно commit: зміни й індекс, кнопки «додати до індексу» й «прибрати з індексу», diff та скасування змін у вибраних файлах до останнього commit (спершу з підтвердженням). Можна зробити commit усіх відстежуваних змін одразу. Якщо налаштовано мовну модель, «AI-чернетка» пише повідомлення за diff.</sys:String>
+    <sys:String x:Key="Help_Cmd_GitCommit">Вікно commit: зміни й індекс, кнопки «додати до індексу» й «прибрати з індексу», diff та скасування змін у вибраних файлах до останнього commit (спершу з підтвердженням). Можна зробити commit усіх відстежуваних змін одразу. Якщо налаштовано мовну модель, «Чернетка ШІ» пише повідомлення за diff.</sys:String>
     <sys:String x:Key="Help_Cmd_GitBranch">Локальні гілки: перемикайтеся, створюйте з поточного commit або видаляйте. За наявності незафіксованих змін перемикання пропонує спершу зробити для них stash.</sys:String>
     <sys:String x:Key="Help_Cmd_GitStage">Додає позначені файли (або той, що під курсором) до індексу git, щоб вони потрапили в наступний commit. Папки додаються цілком.</sys:String>
     <sys:String x:Key="Help_Cmd_GitUnstage">Прибирає позначені файли з індексу; файли на диску не змінюються.</sys:String>
@@ -1967,12 +2037,12 @@
     <sys:String x:Key="Help_Cmd_GitStashPop">Відновлює останній запис stash і відкидає його. Спершу показує, який це запис; у разі конфлікту запис зберігається.</sys:String>
     <sys:String x:Key="Help_Cmd_GitClone">Клонує репозиторій за URL https до поточної папки панелі; URL береться з буфера обміну. Для приватного репозиторію введіть ім’я користувача й токен — токен зберігається лише в пам’яті. SSH не підтримується: посилання SSH на GitHub, GitLab, Bitbucket чи Codeberg клонується через https, а для будь-якого іншого посилання SSH потрібен його URL https.</sys:String>
     <sys:String x:Key="Help_Cmd_AgentChanges">Кожна незафіксована зміна в репозиторії з відомостями, хто її зробив і наскільки це певно: схвалений вами запис агента, операція цієї програми, «ймовірно, агент» або невідомо. Будь-яку зміну можна скасувати одним клацанням (файл спершу копіюється). У тому самому вікні є журнал операцій, сесії агентів, керування сервером MCP і папки, до яких агенти мають доступ.</sys:String>
-    <sys:String x:Key="Help_Cmd_AgentLaunch">Запускає агента із завданням: за бажання створює окремий worktree з власною гілкою та робочим простором, записує сесію (її зміни потім з’являються в «Зміни агента») і відкриває агента в терміналі. Текст завдання потрапляє в буфер обміну — вставте його як перше повідомлення агента.</sys:String>
+    <sys:String x:Key="Help_Cmd_AgentLaunch">Запускає агента із завданням: за бажання створює окремий worktree з власною гілкою та робочим простором, записує сесію (її зміни потім з’являються в «Зміни агентів») і відкриває агента в терміналі. Текст завдання потрапляє в буфер обміну — вставте його як перше повідомлення агента.</sys:String>
     <sys:String x:Key="Help_Cmd_AiRename">Пропонує читабельні назви для «сміттєвих» файлів (скани, завантаження, фото) за їхнім вмістом, використовуючи вашу мовну модель. Нічого не перейменовується до «Застосувати», назви можна редагувати, а «Скасувати» працює у вікні та, після його закриття, у журналі операцій ({gesture:OperationLog}). Не працює всередині репозиторію git і на коді. Потрібна модель у «Налаштування → Шар агентів».</sys:String>
     <sys:String x:Key="Help_Cmd_SemanticSearch">Пошук за змістом: запитання словами ("де перевіряється token?") знаходить відповідні фрагменти коду. Спершу натисніть «Індексувати» — текст файлів надсилається моделі вбудовувань, а індекс залишається на цьому комп’ютері. Потрібна модель вбудовувань у «Налаштування → Шар агентів».</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Збережені підключення: SFTP (пароль або ключ), FTP і FTPS, WebDAV, S3 і сумісні сховища (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Drive, Dropbox, OneDrive і мережеві папки Windows. Ліворуч — список із пошуком і позначкою, де підключення відкрито; праворуч — його поля: редагування, перевірка, кольорова мітка, лише читання. Адреса, вставлена вгорі, заповнює поля. Паролі, ключі й токени входу зберігаються в зашифрованому вигляді для вашого облікового запису Windows. «Імпорт» додає вузли з ~/.ssh/config як підключення SFTP, попередньо показавши, що додасть; уже збережені пропускаються.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Закриває підключення до сервера (в активній панелі, а якщо в ній його немає — в іншій) і повертає панель до папки диска, яку вона показувала раніше.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Ставить позначені файли в чергу фонового передавання між сервером і диском: завантаження, якщо активна панель сервера, інакше — вивантаження з диска на сервер в іншій панелі. Передавання можна призупиняти й відновлювати; лише файли, не папки.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Ставить позначені файли в чергу фонового передавання між сервером і диском: завантаження, якщо активна панель сервера, інакше — вивантаження з диска на сервер в іншій панелі. Папка йде з усім вмістом; за посиланнями не переходимо, а все, що не ввійшло, буде названо. Передавання можна призупиняти й відновлювати.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">Вікно черги передавання: перебіг для кожного файлу, призупинення, відновлення, скасування, повторення після помилки й очищення завершених елементів. Воно не блокує панелі; черга існує, доки ви не закриєте програму.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">Список збережених робочих просторів із пошуком: введіть частину назви й натисніть Enter — обидві панелі з вкладками та розкладкою повернуться до стану цього проєкту. Група й позначка «закріплено» показані праворуч.</sys:String>
     <sys:String x:Key="Help_Cmd_NewWorkspace">Створює порожній робочий простір. Вікно запитує назву, піктограму, колір і групу, після чого обидві панелі відкриваються в домашній папці з однією вкладкою кожна. Робочий простір, на якому ви були, зберігається, як під час будь-якого перемикання. Новий робочий простір одразу закріплюється на бічній панелі (зніміть позначку у вікні, якщо вважаєте за краще інакше). Перетягування папки на бічну панель відкриває те саме вікно, після чого обидві панелі файлів відкриваються в цій папці. Щоб скопіювати поточні панелі під новою назвою, скористайтеся {gesture:SaveWorkspace}.</sys:String>
@@ -2006,13 +2076,13 @@
     <sys:String x:Key="Help_Topic_Panels">Панелі, вкладки та пошук файлів</sys:String>
     <sys:String x:Key="Help_Topic_Panels_Body" xml:space="preserve">## Шлях і диски&#10;• Над кожною панеллю розташовані список дисків і рядок шляху. Клацніть частину шляху, щоб перейти туди; клацніть порожню частину рядка або натисніть {gesture:EditPath}, щоб ввести шлях із підказками. Усередині архіву чи на сервері перша частина — це його назва (archive.zip, sftp://user@host), і вона веде до його кореня.&#10;• На мережевій папці (\\server\share) список дисків показує цю папку замість диска. Список слідкує за дисками, які з’являються й зникають (USB, підключені мережеві диски).&#10;• {gesture:NavigateBack} і {gesture:NavigateForward} рухають історією панелі.&#10;• {gesture:GoToRoot} переходить у корінь диска, {gesture:GoHome} — у папку вашого профілю, {gesture:GoToClipboardPath} — за шляхом із буфера обміну.&#10;## Вкладки&#10;• У кожної панелі свої вкладки: {gesture:NewTab} нова, {gesture:CloseTab} закрити, {gesture:NextTab} наступна. Подвійне клацання вкладки перейменовує її, клацання середньою кнопкою закриває, клацання правою відкриває меню (дублювати, заблокувати, закрити інші). Коли вкладки не вміщуються, колесо миші прокручує їх, а кнопка ▾ праворуч показує їх усі.&#10;• Поточна гілка git показана поруч із назвою вкладки.&#10;## Вигляд&#10;• Кнопки вигляду в рядку стану панелі: Таблиця (стовпці), Стисло, Ескізи, Дерево. Клацніть їх правою кнопкою для прихованих файлів ({gesture:ToggleHiddenFiles}), розширень і папок угорі; ті самі перемикачі є в меню «Налаштування» і в меню заголовка стовпців. У виглядів є й клавіші: {gesture:ViewModeDetails}, {gesture:ViewModeBrief}, {gesture:ViewModeThumbnails}, {gesture:ViewModeTree}.&#10;• Home і End переходять до першого й останнього рядка в кожному вигляді; із Shift вони позначають усе дорогою або знімають позначки, якщо почати з позначеного рядка.&#10;• Сортуйте клацанням заголовка стовпця. Стовпці вибираються через {gesture:ColumnSettings}; стовпець Git показує стан кожного файлу.&#10;• {gesture:ToggleIgnored} ховає файли, виключені через .gitignore (bin, obj, node_modules). {gesture:FolderTree} показує дерево папок ліворуч. {gesture:ToggleSplit} розташовує панелі поруч або одну над одною.&#10;## Як знайти файл&#10;• Літери, набрані у списку, відкривають швидкий фільтр, а {gesture:QuickFilter} відкриває його ще до першої літери: список звужується до назв, що збігаються, збігову частину кожної назви підсвічено, а Enter відкриває ту, що під курсором. «Налаштування → Файли» перетворюють його на перехід: список лишається цілим, курсор іде до збігу, ↑ і ↓ — до наступних. Текст, який нічому не відповідає, червоніє. У вигляді «Дерево» літери переходять до видимої папки, назва якої з них починається.&#10;• {gesture:FindFiles} — за назвою в межах поточного проєкту: нечітко й миттєво.&#10;• {gesture:NameSearch} — за назвою на всіх дисках, з індексу.&#10;• {gesture:Search} — повний пошук: за маскою, вмістом, розміром, усередині архівів; знахідки можна вивести в панель.&#10;• {gesture:SemanticSearch} — за змістом, за допомогою мовної моделі.&#10;## Архіви та результати пошуку&#10;{gesture:OpenFile} на архіві відкриває його як папку. ZIP можна змінювати; інші формати доступні лише для читання. Знахідки пошуку, виведені в панель, — справжні файли: їх можна копіювати, видаляти, перейменовувати, пакувати й редагувати, показувати в Провіднику й запускати на них інструменти, але створити в цьому списку нічого не можна. Інструменти, редактори й агенти, запущені зі списку, працюють у папці, над якою його відкрито. З архіву чи результатів виходьте через {gesture:NavigateUp} у їхньому корені.</sys:String>
     <sys:String x:Key="Help_Topic_Files">Файлові операції та скасування</sys:String>
-    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Копіювання й переміщення&#10;{gesture:Copy} і {gesture:Move} надсилають позначені елементи до папки іншої панелі. У діалозі можна змінити місце призначення й вибрати, що робити, коли назви збігаються. Операції виконуються у фоні з показом перебігу, кнопками «Призупинити» й «Скасувати»; помилка на одному файлі пропонує повторити, пропустити або перервати.&#10;## Видалення&#10;На локальному диску (разом зі знахідками пошуку) {gesture:Delete} надсилає файли до Кошика; в інших місцях (змінні диски, мережа, сервери, архіви) видаляє остаточно — підтвердження завжди каже, який випадок. {gesture:DeletePermanent} завжди оминає Кошик.&#10;## Буфер обміну й перетягування&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} і {gesture:ClipboardPaste} працюють із файлами й сумісні з Провідником.&#10;• {gesture:CopyFullPath} копіює шляхи як текст, {gesture:CopyNames} копіює назви.&#10;• Файли можна перетягувати між панелями та до Провідника й з нього; щоб перемістити, утримуйте Shift або перетягуйте правою кнопкою миші. Файли панелі сервера чи хмари потрапляють до іншої панелі так само. Записи відкритого архіву, скинуті на іншу панель, розпаковуються туди, а скинуті на рядок ".." у корені архіву — у папку, де лежить архів.&#10;## Журнал і що можна скасувати&#10;• Кожна операція — ваша й агентів — записується в журнал ({gesture:OperationLog}).&#10;• Загального скасування немає. Шляхи назад такі: Кошик для видаленого з локального диска; «Скасувати» в масовому перейменуванні, поки його вікно відкрите; «Скасувати» в AI-перейменуванні, а згодом «Скасувати перейменування» в журналі; скасування змін у файлах до останнього commit ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Дії, що повторюються&#10;• {gesture:SavedOperations} — збережені операції, створені з журналу або в «Команди → Керування збереженими операціями…».&#10;• {gesture:DropStackAdd} збирає файли з кількох папок у стек; {gesture:DropStackShow} копіює або переміщує їх усі разом.&#10;• {gesture:MultiRename} перейменовує за шаблоном, {gesture:CompareDirectories} порівнює й синхронізує дві папки.</sys:String>
+    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Копіювання й переміщення&#10;{gesture:Copy} і {gesture:Move} надсилають позначені елементи до папки іншої панелі. У діалозі можна змінити місце призначення й вибрати, що робити, коли назви збігаються. Операції виконуються у фоні з показом перебігу, кнопками «Призупинити» й «Скасувати»; помилка на одному файлі пропонує повторити, пропустити або перервати.&#10;## Видалення&#10;На локальному диску (разом зі знахідками пошуку) {gesture:Delete} надсилає файли до Кошика; в інших місцях (змінні диски, мережа, сервери, архіви) видаляє остаточно — підтвердження завжди каже, який випадок. {gesture:DeletePermanent} завжди оминає Кошик.&#10;## Буфер обміну й перетягування&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} і {gesture:ClipboardPaste} працюють із файлами й сумісні з Провідником.&#10;• {gesture:CopyFullPath} копіює шляхи як текст, {gesture:CopyNames} копіює назви.&#10;• Файли можна перетягувати між панелями та до Провідника й з нього; щоб перемістити, утримуйте Shift або перетягуйте правою кнопкою миші. Файли панелі сервера чи хмари потрапляють до іншої панелі так само. Записи відкритого архіву, скинуті на іншу панель, розпаковуються туди, а скинуті на рядок ".." у корені архіву — у папку, де лежить архів.&#10;## Журнал і що можна скасувати&#10;• Кожна операція — ваша й агентів — записується в журнал ({gesture:OperationLog}).&#10;• Загального скасування немає. Шляхи назад такі: Кошик для видаленого з локального диска; «Скасувати» в масовому перейменуванні, поки його вікно відкрите; «Скасувати» в ШІ-перейменуванні, а згодом «Скасувати перейменування» в журналі; скасування змін у файлах до останнього commit ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Дії, що повторюються&#10;• {gesture:SavedOperations} — збережені операції, створені з журналу або в «Команди → Керування збереженими операціями…».&#10;• {gesture:DropStackAdd} збирає файли з кількох папок у стек; {gesture:DropStackShow} копіює або переміщує їх усі разом.&#10;• {gesture:MultiRename} перейменовує за шаблоном, {gesture:CompareDirectories} порівнює й синхронізує дві папки.</sys:String>
     <sys:String x:Key="Help_Topic_Workspaces">Робочі простори</sys:String>
     <sys:String x:Key="Help_Topic_Workspaces_Body" xml:space="preserve">## Що це&#10;Робочий простір — це збережений стан цілого проєкту: обидві панелі з усіма вкладками й папками, вигляд і розкладка. Перемикання на робочий простір повертає все як було — швидше, ніж вкладки й закладки.&#10;## Створення, збереження, перемикання&#10;• {gesture:NewWorkspace} створює порожній робочий простір: обидві панелі в домашній папці. Той, на якому ви були, зберігається.&#10;• {gesture:SaveWorkspace} зберігає поточний стан під назвою (або оновлює активний робочий простір).&#10;• {gesture:WorkspaceSwitcher} — список робочих просторів із пошуком; {gesture:Workspace1}, {gesture:Workspace2}… переходять одразу на робочий простір із цим номером.&#10;• Коли ви залишаєте робочий простір (перемикаєтеся або закриваєте програму), його поточні вкладки зберігаються автоматично.&#10;## Властивості: назва, піктограма, колір, група&#10;{gesture:WorkspaceProperties} відкриває одне вікно з усіма властивостями активного робочого простору; для будь-якого іншого скористайтеся меню «Робочі простори» → робочий простір → «Властивості».&#10;• Піктограма — це емодзі перед назвою в меню, перемикачі та заголовку вікна; на бічній панелі вона стоїть замість літер.&#10;• Колір — це смужка під меню, рамка активної панелі та крапка на бічній панелі. Виберіть його з набору або натисніть «Інший…». Він допомагає розрізняти вікна різних проєктів.&#10;• Група — це заголовок над закріпленими робочими просторами на бічній панелі та підпис у перемикачі, наприклад "Робота" й "OSS". Робочі простори без групи йдуть першими, потім групи від А до Я. Група має значення, лише коли закріплено багато робочих просторів.&#10;## Бічна панель і закріплення&#10;Бічна панель ліворуч показує закріплені робочі простори та той, що відкритий зараз. Закріплений робочий простір є там завжди й іде першим у списку. Відкріплений показується, лише поки відкритий: він стоїть під рискою після закріплених і зникає з бічної панелі, коли ви перемикаєтеся. Новий робочий простір закріплюється одразу. Щоб закріпити або відкріпити, клацніть робочий простір на бічній панелі правою кнопкою або скористайтеся меню «Робочі простори» → робочий простір; бічна панель вмикається сама, коли ви закріплюєте. Сховати або показати її можна через {gesture:WorkspaceSidebar}.&#10;## Порядок і нова папка&#10;• Порядок задаєте ви: перетягуйте робочий простір угору чи вниз бічною панеллю в межах його групи. Номери {gesture:Workspace1}, {gesture:Workspace2}… відраховуються згори вниз бічною панеллю, а меню й перемикач показують робочі простори в тому самому порядку. Щойно закріплений або переміщений в іншу групу робочий простір потрапляє в її кінець.&#10;• Папка, скинута на бічну панель (зі списку файлів або з Провідника), стає новим робочим простором: відкривається вікно властивостей, після чого обидві панелі файлів відкриваються в цій папці. Якщо папку вже відкрито в панелі якогось робочого простору, ви просто перемикаєтеся на нього.&#10;## Нотатки й термінал&#10;{gesture:WorkspaceNotes} зберігає нотатки до проєкту: над чим працювали й що далі. {gesture:WorkspaceTerminal} відкриває термінал і виконує команду проєкту (npm run dev, dotnet watch…). Команду та її папку задають у властивостях робочого простору ({gesture:WorkspaceProperties}); меню «Робочі простори» показує команду поруч із пунктом.&#10;## Кілька вікон і файл проєкту&#10;• {gesture:WorkspaceNewWindow} відкриває робочий простір в окремому вікні.&#10;• {gesture:WorkspaceExportDefinition} зберігає опис робочого простору як файл .tcvproj, який можна зафіксувати в commit; {gesture:WorkspaceOpenDefinition} відкриває такий файл — наприклад, після clone.</sys:String>
     <sys:String x:Key="Help_Topic_Git">Git</sys:String>
     <sys:String x:Key="Help_Topic_Git_Body" xml:space="preserve">## Перегляд стану&#10;• Поточна гілка показана на вкладці поруч із назвою.&#10;• Стовпець Git ({gesture:ColumnSettings}) показує стан кожного файлу літерами git status --short: червоний — конфлікт, бурштиновий — змінено, зелений — додано до індексу, сірий — не відстежується.&#10;• {gesture:GitDiff} показує diff файлу чи папки під курсором.&#10;## Запис змін&#10;{gesture:GitStage} і {gesture:GitUnstage} додають позначені елементи до індексу й прибирають їх з нього, {gesture:GitCommit} відкриває вікно commit, {gesture:GitBranch} — гілки, {gesture:GitStash} і {gesture:GitStashPop} відкладають зміни й повертають їх. Push і pull навмисно пропущено — для них користуйтеся терміналом.&#10;## Worktree для завдання&#10;Worktree — це друга робоча папка того самого репозиторію на іншій гілці. Це зручний спосіб дати агентові власну копію проєкту: {gesture:GitNewWorktree} створює worktree з гілкою, копіює локальні файли конфігурації та створює робочий простір; {gesture:GitWorktrees} перелічує всі worktree і вилучає непотрібні.&#10;## Клонування&#10;{gesture:GitClone} клонує репозиторій за URL https; якщо в ньому є файл .tcvproj, програма пропонує відкрити його як робочий простір.</sys:String>
     <sys:String x:Key="Help_Topic_Agents">Робота з агентами</sys:String>
-    <sys:String x:Key="Help_Topic_Agents_Body" xml:space="preserve">## Запуск агента&#10;• {gesture:RunAgentHere} запускає агента (Claude Code, Codex, Gemini, Aider та інших) у терміналі в поточній папці; {gesture:RunAgentPicker} дає вибрати агента.&#10;• {gesture:AgentLaunch} запускає агента із завданням, за бажання в окремому worktree з власною гілкою та робочим простором.&#10;• Запуск із програми записується як сесія: усе, що змінюється під її папкою, позначається як "ймовірно, агент". Закрийте сесію, коли агент закінчить, інакше їй буде приписано й ваші власні зміни.&#10;## Перегляд і скасування&#10;{gesture:AgentChanges} показує кожну незафіксовану зміну в репозиторії та хто її зробив. Зміну можна переглянути (diff), додати до індексу або скасувати; перед скасуванням файл копіюється в папку agent-revert-backups поруч із програмою.&#10;## Сервер MCP: агент бачить панелі&#10;• Сервер MCP дає агентові змогу читати те, що відкрито в панелях: вибране, списки файлів, вміст (зокрема всередині архівів), пошук і журнал операцій.&#10;• Увімкніть його в «Налаштування → Шар агентів» або на вкладці «Сервер MCP» вікна «Зміни агента», де також є команда реєстрації для агента. Сервер слухає лише 127.0.0.1 і вимагає token.&#10;• Агент дістається лише до схвалених вами папок. Якщо агентам дозволено пропонувати зміни, кожне копіювання, переміщення чи видалення від агента потрапляє у вікно схвалення, де типовим є «Відхилити».&#10;## Мовна модель&#10;AI-перейменування ({gesture:AiRename}), семантичний пошук ({gesture:SemanticSearch}), чернетка повідомлення commit і стислий виклад у засобі перегляду використовують вашу модель (Ollama, LM Studio або хмарну). Адресу й моделі задайте в «Налаштування → Шар агентів»; поки адреса порожня, програма ні з чим не зв’язується.</sys:String>
+    <sys:String x:Key="Help_Topic_Agents_Body" xml:space="preserve">## Запуск агента&#10;• {gesture:RunAgentHere} запускає агента (Claude Code, Codex, Gemini, Aider та інших) у терміналі в поточній папці; {gesture:RunAgentPicker} дає вибрати агента.&#10;• {gesture:AgentLaunch} запускає агента із завданням, за бажання в окремому worktree з власною гілкою та робочим простором.&#10;• Запуск із програми записується як сесія: усе, що змінюється під її папкою, позначається як "ймовірно, агент". Закрийте сесію, коли агент закінчить, інакше їй буде приписано й ваші власні зміни.&#10;## Перегляд і скасування&#10;{gesture:AgentChanges} показує кожну незафіксовану зміну в репозиторії та хто її зробив. Зміну можна переглянути (diff), додати до індексу або скасувати; перед скасуванням файл копіюється в папку agent-revert-backups поруч із програмою.&#10;## Сервер MCP: агент бачить панелі&#10;• Сервер MCP дає агентові змогу читати те, що відкрито в панелях: вибране, списки файлів, вміст (зокрема всередині архівів), пошук і журнал операцій.&#10;• Увімкніть його в «Налаштування → Шар агентів» або на вкладці «Сервер MCP» вікна «Зміни агентів», де також є команда реєстрації для агента. Сервер слухає лише 127.0.0.1 і вимагає token.&#10;• Агент дістається лише до схвалених вами папок. Якщо агентам дозволено пропонувати зміни, кожне копіювання, переміщення чи видалення від агента потрапляє у вікно схвалення, де типовим є «Відхилити».&#10;## Мовна модель&#10;ШІ-перейменування ({gesture:AiRename}), семантичний пошук ({gesture:SemanticSearch}), чернетка повідомлення commit і стислий виклад у засобі перегляду використовують вашу модель (Ollama, LM Studio або хмарну). Адресу й моделі задайте в «Налаштування → Шар агентів»; поки адреса порожня, програма ні з чим не зв’язується.</sys:String>
     <sys:String x:Key="Help_Topic_Remote">Сервери та хмара</sys:String>
     <sys:String x:Key="Help_Topic_Remote_Body" xml:space="preserve">## Підключення&#10;Кнопка «Підключення» на смузі дисків підключає саме цю панель: її список містить збережені підключення (відкриті позначено), «Швидке підключення» ({gesture:QuickConnect}) і менеджер ({gesture:ConnectionManager}). Адресу на кшталт sftp://user@host/path або s3://bucket можна також ввести прямо в рядку шляху.&#10;Поки панель на підключенні, кнопка показує його назву, кольорову мітку й крапку стану: зелена — сервер відповідає; бурштинова — завантажується список; червона — сервер не відповів (тоді в її меню є «Перепідключити»). Коли підключення обривається, панель перепідключається сама — через 1, 2, 5, 10, 20, а потім 30 секунд, усього вісім спроб, — а список показує зворотний відлік із кнопками «Повторити зараз» і «Припинити перепідключення»; відмова у вході чи змінений ключ сервера не повторюються. Підключення фонових вкладок підтримуються активними, тож вони все ще відкриті, коли ви повертаєтеся. «Відключити» ({gesture:Disconnect}) поруч.&#10;## Вкладки&#10;Підключення живе у вкладці, у якій його відкрито: вкладка отримує його назву, а перехід на іншу вкладку й назад його не закриває. Інший сервер відкривається в новій вкладці; уже відкритий показується там, де він є. Закриття вкладки закриває підключення; перемикання робочих просторів закриває їх усі.&#10;## Файли на сервері&#10;• {gesture:Copy} і {gesture:Move} копіюють між сервером і диском, {gesture:View} показує файл на місці.&#10;• {gesture:Edit} редагує файл через тимчасову копію: кожне збереження вивантажується назад.&#10;• {gesture:QueueTransfer} ставить файли в чергу фонового передавання, яке можна призупиняти й відновлювати; вікно черги — {gesture:TransferQueue}.&#10;• Видалення на сервері остаточне (Google Drive і OneDrive переміщують файл до власного кошика).&#10;• Підключення лише для читання не дозволяє нічого змінювати — ні вам, ні агентові.&#10;## Хмарні сховища&#10;S3 і сумісні сховища (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex Object Storage, Google Cloud Storage із ключами HMAC) підключаються за ключем доступу або профілем AWS; вибір провайдера заповнює кінцеву точку й регіон. Azure Blob використовує ключ облікового запису або токен SAS. Google Drive, Dropbox і OneDrive виконують вхід через браузер і потребують ідентифікатора клієнта застосунку, зареєстрованого в провайдера.&#10;## Безпека&#10;Під час першого підключення SFTP програма показує відбиток ключа сервера й запитує, чи довіряти йому. Якщо ключ пізніше зміниться, підключення відхиляється — це може означати перехоплення; якщо зміна законна, скористайтеся «Забути ключ сервера» в менеджері підключень. Паролі, ключі й токени входу зберігаються в зашифрованому вигляді для вашого облікового запису Windows.&#10;## Мережеві папки Windows&#10;Шляхи на кшталт \\server\share відкриваються, якщо ввести їх у рядку шляху; підключені мережеві диски є у списку дисків. Спільну папку, що потребує окремого входу, збережіть у менеджері як мережеву папку Windows (SMB).</sys:String>
     <sys:String x:Key="Help_Topic_Customize">Налаштування під себе</sys:String>
@@ -2053,7 +2123,7 @@
     <sys:String x:Key="Tool_BranchTip">Гілка активної панелі та кількість змінених файлів у її репозиторії</sys:String>
     <sys:String x:Key="Tool_Commit">Commit</sys:String>
     <sys:String x:Key="Tool_CommitTip">Commit ({gesture:GitCommit})</sys:String>
-    <sys:String x:Key="Tool_AgentChanges">Зміни агента</sys:String>
+    <sys:String x:Key="Tool_AgentChanges">Зміни агентів</sys:String>
     <sys:String x:Key="Tool_AgentChangesTip">Що змінили агенти й хто що змінив ({gesture:AgentChanges})</sys:String>
     <sys:String x:Key="Tool_Theme">Світла або темна тема</sys:String>
     <sys:String x:Key="Tool_ThemeTip">Світла або темна тема</sys:String>
@@ -2114,6 +2184,7 @@
     <sys:String x:Key="Shell_ShellBoxTip">Оболонка, у якій виконується команда. Змінюється клацанням або Alt+↓ у рядку</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Налаштувати оболонки…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">Такої папки немає: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">«{1}» — шлях усередині {0}: панель відкриває лише папки Windows.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">Панелі не можна поміняти місцями, поки одна з них в архіві, на сервері або в результатах пошуку.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:зміна|зміни|змін}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Усі операції завершено</sys:String>
@@ -2150,6 +2221,7 @@
     <sys:String x:Key="Palette_Title">Палітра команд</sys:String>
     <sys:String x:Key="Palette_Placeholder">Введіть команду…</sys:String>
     <sys:String x:Key="Palette_UserTools">Інструменти користувача</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Шаблони позначення</sys:String>
     <!-- Titles of the palette commands, their categories and the file-list columns: English and Russian
          keep them in CommandCatalog / ColumnCatalog, every other language here (Cmd_<Id>, CmdCat_<Category>,
          ColTitle_<Id>). -->
@@ -2170,7 +2242,7 @@
     <sys:String x:Key="Cmd_NewFolder">Створити папку</sys:String>
     <sys:String x:Key="Cmd_NewFile">Створити файл…</sys:String>
     <sys:String x:Key="Cmd_Delete">Видалити</sys:String>
-    <sys:String x:Key="Cmd_DeletePermanent">Видалити остаточно</sys:String>
+    <sys:String x:Key="Cmd_DeletePermanent">Видалити назавжди</sys:String>
     <sys:String x:Key="Cmd_Rename">Перейменувати…</sys:String>
     <sys:String x:Key="Cmd_Pack">Запакувати…</sys:String>
     <sys:String x:Key="Cmd_Unpack">Розпакувати…</sys:String>
@@ -2178,40 +2250,43 @@
     <sys:String x:Key="Cmd_View">Переглянути</sys:String>
     <sys:String x:Key="Cmd_Edit">Редагувати</sys:String>
     <sys:String x:Key="Cmd_Properties">Властивості</sys:String>
-    <sys:String x:Key="Cmd_CalculateFolderSizes">Розміри папок</sys:String>
+    <sys:String x:Key="Cmd_CalculateFolderSizes">Розмір папок</sys:String>
     <sys:String x:Key="Cmd_SelectToggle">Позначити / зняти позначку й перейти нижче</sys:String>
     <sys:String x:Key="Cmd_SelectToggleSize">Позначити / зняти позначку, підрахувати розмір папки й перейти нижче</sys:String>
     <sys:String x:Key="Cmd_SelectAll">Позначити все</sys:String>
     <sys:String x:Key="Cmd_DeselectAll">Зняти всі позначки</sys:String>
     <sys:String x:Key="Cmd_InvertSelection">Інвертувати позначки</sys:String>
     <sys:String x:Key="Cmd_SelectByMask">Позначити за маскою…</sys:String>
-    <sys:String x:Key="Cmd_UnselectByMask">Зняти позначки за маскою…</sys:String>
+    <sys:String x:Key="Cmd_UnselectByMask">Зняти позначення за маскою…</sys:String>
+    <sys:String x:Key="Cmd_SelectSameExtension">Позначити те саме розширення</sys:String>
+    <sys:String x:Key="Cmd_UnselectSameExtension">Зняти те саме розширення</sys:String>
+    <sys:String x:Key="Cmd_RestoreSelection">Відновити позначення</sys:String>
     <sys:String x:Key="Cmd_ClipboardCopy">Копіювати в буфер обміну</sys:String>
     <sys:String x:Key="Cmd_ClipboardCut">Вирізати в буфер обміну</sys:String>
     <sys:String x:Key="Cmd_ClipboardPaste">Вставити з буфера обміну</sys:String>
     <sys:String x:Key="Cmd_CopyFullPath">Копіювати повний шлях</sys:String>
-    <sys:String x:Key="Cmd_CopyNames">Копіювати назви</sys:String>
+    <sys:String x:Key="Cmd_CopyNames">Копіювати імена</sys:String>
     <sys:String x:Key="Cmd_CopyReadLink">Копіювати посилання на файл (1 година)</sys:String>
     <sys:String x:Key="Cmd_NavigateUp">Вгору</sys:String>
     <sys:String x:Key="Cmd_NavigateBack">Назад</sys:String>
     <sys:String x:Key="Cmd_NavigateForward">Вперед</sys:String>
-    <sys:String x:Key="Cmd_GoToRoot">Перейти в корінь</sys:String>
-    <sys:String x:Key="Cmd_GoHome">Перейти в домашню папку</sys:String>
+    <sys:String x:Key="Cmd_GoToRoot">Перейти до кореня</sys:String>
+    <sys:String x:Key="Cmd_GoHome">Перейти до домашньої папки</sys:String>
     <sys:String x:Key="Cmd_GoToClipboardPath">Перейти за шляхом із буфера обміну</sys:String>
     <sys:String x:Key="Cmd_EditPath">Редагувати шлях</sys:String>
-    <sys:String x:Key="Cmd_OpenInExplorer">Відкрити в Провіднику</sys:String>
+    <sys:String x:Key="Cmd_OpenInExplorer">Відкрити у Провіднику</sys:String>
     <sys:String x:Key="Cmd_SwitchPanel">Перемкнути панель</sys:String>
     <sys:String x:Key="Cmd_ToggleSplit">Змінити розташування панелей</sys:String>
     <sys:String x:Key="Cmd_SwapPanels">Поміняти панелі місцями</sys:String>
     <sys:String x:Key="Cmd_FindFiles">Знайти файл у проєкті…</sys:String>
     <sys:String x:Key="Cmd_QuickFilter">Швидкий фільтр</sys:String>
-    <sys:String x:Key="Cmd_NameSearch">Знайти файл усюди…</sys:String>
+    <sys:String x:Key="Cmd_NameSearch">Знайти файл будь-де…</sys:String>
     <sys:String x:Key="Cmd_RebuildNameIndex">Перебудувати індекс назв</sys:String>
     <sys:String x:Key="Cmd_FolderTree">Показати/сховати дерево папок</sys:String>
-    <sys:String x:Key="Cmd_ToggleIgnored">Приховати файли з .gitignore</sys:String>
+    <sys:String x:Key="Cmd_ToggleIgnored">Приховати gitignored-файли</sys:String>
     <sys:String x:Key="Cmd_ToggleHiddenFiles">Показувати приховані файли</sys:String>
     <sys:String x:Key="Cmd_ToggleExtensions">Показувати розширення файлів</sys:String>
-    <sys:String x:Key="Cmd_ToggleFoldersFirst">Спочатку папки</sys:String>
+    <sys:String x:Key="Cmd_ToggleFoldersFirst">Спершу папки</sys:String>
     <sys:String x:Key="Cmd_ColumnSettings">Стовпці…</sys:String>
     <sys:String x:Key="Cmd_ToggleTheme">Перемкнути світлу / темну тему</sys:String>
     <sys:String x:Key="Cmd_ViewModeDetails">Вигляд: таблиця</sys:String>
@@ -2259,17 +2334,17 @@
     <sys:String x:Key="Cmd_GitStash">Git: stash…</sys:String>
     <sys:String x:Key="Cmd_GitStashPop">Git: stash pop</sys:String>
     <sys:String x:Key="Cmd_GitClone">Git: clone за URL…</sys:String>
-    <sys:String x:Key="Cmd_AgentChanges">Зміни агента…</sys:String>
+    <sys:String x:Key="Cmd_AgentChanges">Зміни агентів…</sys:String>
     <sys:String x:Key="Cmd_AgentLaunch">Запустити агента із завданням…</sys:String>
-    <sys:String x:Key="Cmd_AiRename">AI-перейменування…</sys:String>
+    <sys:String x:Key="Cmd_AiRename">ШІ-перейменування…</sys:String>
     <sys:String x:Key="Cmd_SemanticSearch">Семантичний пошук…</sys:String>
     <sys:String x:Key="Cmd_ConnectionManager">Менеджер підключень…</sys:String>
-    <sys:String x:Key="Cmd_Disconnect">Відключити</sys:String>
+    <sys:String x:Key="Cmd_Disconnect">Відключитися</sys:String>
     <sys:String x:Key="Cmd_Reconnect">Перепідключити</sys:String>
     <sys:String x:Key="Cmd_QuickConnect">Швидке підключення за адресою…</sys:String>
     <sys:String x:Key="Cmd_QueueTransfer">Додати до черги передавання</sys:String>
     <sys:String x:Key="Cmd_TransferQueue">Черга передавання…</sys:String>
-    <sys:String x:Key="Cmd_WorkspaceSwitcher">Перемкнути робочий простір…</sys:String>
+    <sys:String x:Key="Cmd_WorkspaceSwitcher">Перейти до робочого простору…</sys:String>
     <sys:String x:Key="Cmd_NewWorkspace">Новий робочий простір…</sys:String>
     <sys:String x:Key="Cmd_SaveWorkspace">Зберегти поточне як робочий простір…</sys:String>
     <sys:String x:Key="Cmd_WorkspaceNotes">Нотатки робочого простору…</sys:String>
@@ -2296,7 +2371,7 @@
     <sys:String x:Key="Cmd_Settings">Налаштування…</sys:String>
     <sys:String x:Key="Cmd_HotkeySettings">Клавіатурні скорочення…</sys:String>
     <sys:String x:Key="Cmd_PluginManager">Менеджер плагінів…</sys:String>
-    <sys:String x:Key="Cmd_CheckForUpdates">Перевірити наявність оновлень…</sys:String>
+    <sys:String x:Key="Cmd_CheckForUpdates">Перевірити оновлення…</sys:String>
     <sys:String x:Key="Cmd_ReportBug">Повідомити про помилку…</sys:String>
     <sys:String x:Key="Cmd_Discussions">Запитання та ідеї…</sys:String>
     <sys:String x:Key="Cmd_OpenLogFolder">Відкрити папку журналів</sys:String>

@@ -225,7 +225,7 @@ public sealed class BookmarksManagerDialogViewModelTests : IDisposable
     {
         var file = Path.Combine(Path.GetTempPath(), $"tcv-bm-{Guid.NewGuid():N}.json");
         _tempFiles.Add(file);
-        _dialogs.Setup(d => d.PickSaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+        _dialogs.Setup(d => d.PickSaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .Returns(file);
         var vm = Create(SettingsWith(("A", @"C:\a", "")));
         vm.SelectedItem = vm.Items[0];

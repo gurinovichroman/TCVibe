@@ -26,6 +26,7 @@ public sealed record AuthMethodOption(SshAuthMethod Value, string Label)
 public partial class ConnectionEditorViewModel : ObservableObject
 {
     private readonly Guid _id;
+    private readonly Services.ShareConnectionTest _shareTest;
     private string? _refreshToken;
     private string _fingerprint = string.Empty;
     private bool _loading;
@@ -42,9 +43,16 @@ public partial class ConnectionEditorViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(existing);
         IsNew = isNew;
         _id = existing.Id;
+        _shareTest = Services.ShareConnectionTest.OnThisComputer(root => ShareIsWanted?.Invoke(root) == true);
         Swatches = Workspaces.WorkspaceColor.Presets.Select(h => new WorkspaceColorSwatch(h)).ToList();
         Load(existing);
     }
+
+    /// <summary>
+    /// Whether a window's panels hold a share, or are opening it, at the moment: the connection test does
+    /// not close such a share, even if it was the one to open it. Null: only the test itself is known.
+    /// </summary>
+    public Func<string, bool>? ShareIsWanted { get; set; }
 
     /// <summary>Not in the book yet: Save adds it.</summary>
     public bool IsNew { get; private set; }
@@ -492,7 +500,7 @@ public partial class ConnectionEditorViewModel : ObservableObject
     [RelayCommand]
     private void PickColor(string? hex) => ColorHex = hex ?? string.Empty;
 
-    [RelayCommand(CanExecute = nameof(CanTest))]
+    [RelayCommand(CanExecute = nameof(CanTest), IncludeCancelCommand = true)]
     private async Task TestConnection(CancellationToken ct)
     {
         IsConnecting = true;
@@ -525,10 +533,14 @@ public partial class ConnectionEditorViewModel : ObservableObject
 
     partial void OnIsConnectingChanged(bool value) => TestConnectionCommand.NotifyCanExecuteChanged();
 
+    /// <summary>The test's answer would reach nobody: the editor is being replaced, or the window closed.</summary>
+    public void CancelTest() => TestConnectionCommand.Cancel();
+
     /// <summary>
     /// Does what Connect does — the same file system, the same host-key and certificate checks, the
     /// browser sign-in of a drive, and the same look at the remote folder — then closes again. A test
     /// that only logged in said "works" about a server whose folder the real connect could not find.
+    /// Cancel works at once: the connect may not hear the token for its whole timeout (TRAP-96).
     /// </summary>
     private async Task PingAsync(CancellationToken ct)
     {
@@ -540,8 +552,7 @@ public partial class ConnectionEditorViewModel : ObservableObject
                 throw new System.IO.DirectoryNotFoundException(LocalizationManager.Get("Conn_NeedShareField"));
             }
 
-            await Task.Run(() => FileSystem.Native.Mpr.Connect(share.Root, conn.Username, conn.Password), ct);
-            if (!await Task.Run(() => System.IO.Directory.Exists(share.Folder), ct))
+            if (!await _shareTest.FolderExistsAsync(share.Root, share.Folder, conn.Username, conn.Password, ct))
             {
                 throw new System.IO.DirectoryNotFoundException(
                     string.Format(LocalizationManager.Get("Conn_DirNotFound"), share.Folder));
@@ -551,11 +562,21 @@ public partial class ConnectionEditorViewModel : ObservableObject
         }
 
         var root = string.IsNullOrEmpty(conn.RemotePath) ? "/" : conn.RemotePath;
+        await ConnectWait.UntilCancelledAsync(ProveFolderAsync(conn, root, ct), ct);
+    }
 
+    /// <summary>
+    /// A file system for the test, and its look at the folder. It owns the file system to the end and closes
+    /// it, also long after the user cancelled (<see cref="ConnectWait"/>).
+    /// </summary>
+    private async Task<bool> ProveFolderAsync(ConnectionInfo conn, string root, CancellationToken ct)
+    {
         // Off the UI thread: an SFTP key file is parsed and decrypted while it is built (INV-06).
         var fs = await Task.Run(() => NetworkPlugin.CreateFileSystem(conn), ct);
         try
         {
+            ct.ThrowIfCancellationRequested();   // nothing waits for this step any more: no browser after a Cancel
+
             if (fs is IInteractiveSignIn { NeedsSignIn: true } signIn)
             {
                 await signIn.SignInAsync(ct);
@@ -574,6 +595,8 @@ public partial class ConnectionEditorViewModel : ObservableObject
                 throw new System.IO.DirectoryNotFoundException(
                     string.Format(LocalizationManager.Get("Conn_DirNotFound"), root));
             }
+
+            return true;
         }
         finally
         {

@@ -132,4 +132,78 @@ public sealed class SshConfigImportDialogTests : IDisposable
         preview.ImportCommand.CanExecute(null).Should().BeFalse();
         preview.Chosen.Should().BeEmpty();
     }
+
+    // ── A host behind a jump host: there is no tunnel here ───────────────────
+
+    private SshImportRowViewModel Row(string? proxyJump, bool proxyCommand)
+    {
+        var host = new SshConfigHost("inner", "10.0.0.5", "u", null, [], proxyJump, proxyCommand);
+        var candidate = SshConfigImport.Plan([host], [], _home, "me", _ => false).Single();
+        return new SshImportRowViewModel(candidate);
+    }
+
+    [Theory]
+    [InlineData("bastion", false)]
+    [InlineData(null, true)]
+    public void Preview_HostBehindAJumpHost_IsNotTickedAndSaysWhy(string? proxyJump, bool proxyCommand)
+    {
+        var row = Row(proxyJump, proxyCommand);
+
+        row.IsSelected.Should().BeFalse("connected directly it goes somewhere else than `ssh inner` does");
+        row.TunnelWarning.Should().Contain(nameof(SshImportNote.ProxyIgnored));
+        row.Notes.Should().NotContain(nameof(SshImportNote.ProxyIgnored), "it is said once, as a warning");
+    }
+
+    [Fact]
+    public void Preview_HostWithoutAJumpHost_IsTickedAndWarnsOfNothing()
+    {
+        var row = Row(null, false);
+
+        row.IsSelected.Should().BeTrue();
+        row.TunnelWarning.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Manager_ImportAll_DoesNotAddTheHostBehindAJumpHostAsADirectOne()
+    {
+        File.WriteAllText(ConfigPath, """
+            Host web
+                HostName web1
+                User deploy
+            Host inner
+                HostName 10.0.0.5
+                User deploy
+                ProxyJump web
+            """);
+        var book = Book();
+
+        Manager(book, preview =>
+        {
+            preview.ImportCommand.Execute(null);
+            return preview.Confirmed;
+        }).ImportSshConfigCommand.Execute(null);
+
+        book.Connections.Select(c => c.Name).Should().Equal("web");
+    }
+
+    [Fact]
+    public void Manager_HostBehindAJumpHostTickedByHand_IsImported()
+    {
+        File.WriteAllText(ConfigPath, """
+            Host inner
+                HostName 10.0.0.5
+                User deploy
+                ProxyJump bastion
+            """);
+        var book = Book();
+
+        Manager(book, preview =>
+        {
+            preview.Rows.Single().IsSelected = true;
+            preview.ImportCommand.Execute(null);
+            return preview.Confirmed;
+        }).ImportSshConfigCommand.Execute(null);
+
+        book.Connections.Select(c => c.Name).Should().Equal("inner");
+    }
 }

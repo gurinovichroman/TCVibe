@@ -43,11 +43,24 @@ public interface IDialogService
     /// <see cref="ShowErrorAsync"/> so a completed action does not arrive wearing an error icon.</summary>
     Task ShowInfoAsync(string title, string message);
 
+    /// <summary>
+    /// Shows a message over the active window and returns when it is dismissed. For a caller on the UI
+    /// thread that cannot wait for a later turn of the dispatcher: a command inside another dialog, the
+    /// way out of the program.
+    /// </summary>
+    void ShowMessage(string title, string message, System.Windows.MessageBoxImage image);
+
     /// <summary>Shows the progress dialog as a non-blocking window and returns its ViewModel.</summary>
     ProgressDialogViewModel ShowProgressDialog(string title);
 
     /// <summary>The progress windows sent to the background, which the status bar counts (ADR-0038).</summary>
     BackgroundProgress BackgroundProgress { get; }
+
+    /// <summary>
+    /// Shows the window that waits for F4 edits on exit, modally: the message loop runs on, and nothing
+    /// new can be started under it (TRAP-105). Returns when <paramref name="viewModel"/> closes it.
+    /// </summary>
+    void ShowRemoteEditFlush(RemoteEditFlushDialogViewModel viewModel);
 
     /// <summary>
     /// Shows the connection manager (saved connections and their editor) until it is closed; what to
@@ -112,13 +125,73 @@ public interface IDialogService
     /// </summary>
     Task<string?> ShowInputAsync(string title, string prompt, string initial = "", bool allowEmpty = false);
 
-    /// <summary>Shows the system "open file" picker. Returns the chosen path, or null if cancelled.</summary>
+    /// <summary>
+    /// Shows the directory comparison window, not modally: the program stays usable while it compares
+    /// (6.96). The task ends when the window has closed; <paramref name="viewModel"/> says how.
+    /// </summary>
+    Task ShowCompareDirectoriesAsync(CompareDirectoriesDialogViewModel viewModel);
+
+    /// <summary>Brings an open comparison window to the front; false when there is none.</summary>
+    bool ActivateCompareDirectories();
+
+    /// <summary>
+    /// Shows the system "open file" picker over the active window, so a dialog that asks stays modal
+    /// under it. Returns the chosen path, or null if cancelled.
+    /// </summary>
     /// <param name="filter">Win32 filter string ("Name (*.ext)|*.ext|All files (*.*)|*.*").</param>
     /// <param name="initialDirectory">Where the picker starts; null lets the system decide.</param>
     string? PickOpenFile(string title, string filter, string? initialDirectory = null);
 
-    /// <summary>Shows the system "save file" picker. Returns the chosen path, or null if cancelled.</summary>
-    string? PickSaveFile(string title, string filter, string fileName, string? initialDirectory = null);
+    /// <summary>
+    /// Shows the system "save file" picker over the active window. Returns the chosen path, or null if cancelled.
+    /// </summary>
+    /// <param name="defaultExtension">Added to a name typed without one even when the filter says "all files".</param>
+    string? PickSaveFile(
+        string title, string filter, string fileName, string? initialDirectory = null, string? defaultExtension = null);
+
+    /// <summary>Shows the system folder picker over the active window. Returns the folder, or null if cancelled.</summary>
+    string? PickFolder(string title, string? initialDirectory = null);
+
+    /// <summary>
+    /// Shows the fuzzy file picker (Ctrl+P): the window walks <paramref name="root"/> itself while it is
+    /// open and stops when it closes. Returns the chosen entry, or null if cancelled.
+    /// </summary>
+    Task<TCV.App.Navigation.FileIndexEntry?> ShowFileFinderAsync(
+        FileFinderViewModel viewModel, IVirtualFileSystem vfs, TCV.Core.Domain.VfsPath root,
+        TCV.App.Navigation.FileIndexOptions options);
+
+    /// <summary>
+    /// Shows the search window, not modally: the search runs on while the user works in the panels, and
+    /// closing the window stops it.
+    /// </summary>
+    /// <param name="openResult">The user opened a hit (double click, Enter); the window stays open.</param>
+    /// <param name="closed">Called as the window closes, once the search has been told to stop: where a
+    /// lease on what it searches ends (INV-09).</param>
+    void ShowSearch(
+        ViewModels.SearchDialogViewModel viewModel,
+        Action<ViewModels.SearchResultViewModel> openResult,
+        Action? closed = null);
+
+    /// <summary>
+    /// Shows the transfer queue, not modally: transfers run on behind it. One at a time: asking again
+    /// brings the open window forward.
+    /// </summary>
+    void ShowTransferQueue(TransferQueue queue);
+
+    /// <summary>Shows the drop stack. True when the user chose what to do; the choice is read back from the model.</summary>
+    Task<bool> ShowDropStackAsync(DropStackDialogViewModel viewModel);
+
+    /// <summary>Shows the column chooser. True when accepted; the columns are read back from the model.</summary>
+    Task<bool> ShowColumnsAsync(ColumnsDialogViewModel viewModel);
+
+    /// <summary>Shows the select/unselect-by-mask prompt. True when accepted; the mask is read back from the model.</summary>
+    Task<bool> ShowSelectByMaskAsync(SelectByMaskDialogViewModel viewModel);
+
+    /// <summary>
+    /// Shows Multi-Rename over a ready view model; returns when the window is closed. The batch to run,
+    /// if any, is read back from the model (<c>Accepted</c>).
+    /// </summary>
+    Task ShowMultiRenameAsync(MultiRenameDialogViewModel viewModel);
 
     /// <summary>
     /// Shows the bookmarks manager over a ready view model (the same shape as the agent dialogs
@@ -185,6 +258,14 @@ public interface IDialogService
 
     /// <summary>Shows a modal yes/no question. True when the user confirmed.</summary>
     Task<bool> ConfirmAsync(string title, string message);
+
+    /// <summary>
+    /// The same question for a caller on the UI thread that needs the answer on the spot (a command or a
+    /// callback inside another dialog), over the active window. <paramref name="confirmText"/> names the
+    /// action; without it the buttons read Yes / No. <paramref name="isWarning"/> shows the warning mark.
+    /// </summary>
+    bool Confirm(
+        string title, string message, string? confirmText = null, string? cancelText = null, bool isWarning = false);
 
     /// <summary>
     /// Shows a modal question with two ways to go ahead and one way back: Cancel, the default button,

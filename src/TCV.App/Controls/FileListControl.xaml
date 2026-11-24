@@ -836,17 +836,48 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
                         Visibility="{Binding IsReconnecting, Converter={StaticResource BoolToVis}}">
                 <Button Content="{DynamicResource Conn_ReconnectNow}" Tag="Reconnect" Click="OnRunConnectionCommand"
+                        IsEnabled="{Binding CanRetryReconnectNow}"
                         Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" />
                 <Button Content="{DynamicResource Conn_ReconnectStop}" Click="OnStopReconnect" />
             </StackPanel>
         </StackPanel>
 
-        <!-- Loading overlay: only over another folder's rows; a refresh of this one keeps them usable -->
+        <!-- Loading overlay: only over another folder's rows; a refresh of this one keeps them usable. It takes
+             the clicks of whatever lies under it, so a reconnect's status and buttons do without it. A folder
+             that keeps it waiting can be given up: a server, a share that stopped answering. Cancel comes after
+             a second, so a folder that opens at once does not flash a button; Hidden, not Collapsed, so the
+             text does not jump when it does. -->
         <Grid
-              Visibility="{Binding IsOpeningFolder, Converter={StaticResource BoolToVis}}">
+              Visibility="{Binding ShowsLoadingOverlay, Converter={StaticResource BoolToVis}}">
             <Border Background="{DynamicResource BackgroundBrush}" Opacity="0.6" />
-            <TextBlock Text="{DynamicResource Files_Loading}" Foreground="{DynamicResource ForegroundBrush}" FontSize="16"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource Files_Loading}" Foreground="{DynamicResource ForegroundBrush}" FontSize="16"
+                           HorizontalAlignment="Center" />
+                <Button Content="{DynamicResource Cancel}" Click="OnStopLoading"
+                        HorizontalAlignment="Center" Margin="0,12,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Visibility" Value="Hidden" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowsLoadingOverlay}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard x:Name="ShowCancel">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:1">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions>
+                                        <StopStoryboard BeginStoryboardName="ShowCancel" />
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

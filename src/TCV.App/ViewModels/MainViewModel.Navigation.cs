@@ -7,7 +7,6 @@ using TCV.App.Commands;
 using TCV.App.Localization;
 using TCV.App.Navigation;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
 using TCV.App.FileSystem;
 using TCV.Archives;
 using TCV.Core.Domain;
@@ -31,7 +30,7 @@ public partial class MainViewModel
     /// the open window, which refreshes itself as entries arrive.
     /// </summary>
     [RelayCommand]
-    private void OpenNameSearch()
+    private async Task OpenNameSearch()
     {
         var lang = LocalizationManager.CurrentLanguage;
         var index = _nameIndex.Index;
@@ -76,9 +75,10 @@ public partial class MainViewModel
             _nameIndex.SetPriorityFolders(NameIndexPriorityFolders());
             _ = _nameIndex.EnsureReadyAsync();
 
-            var dlg = new CommandPaletteDialog(vm) { Owner = Application.Current.MainWindow };
-            if (dlg.ShowDialog() == true && vm.SelectedItem is { } chosen)
+            if (await _dialogs.PickFromPaletteAsync(vm) is { } chosen)
+            {
                 _ = RevealIndexedPathAsync(chosen.Id);
+            }
         }
         finally
         {
@@ -439,12 +439,10 @@ public partial class MainViewModel
         };
 
         var vm = new FileFinderViewModel(root, _fileUsage.LoadIndex(DateTime.UtcNow), FinderStrings());
-        var dlg = new FileFinderDialog(vm, vfs, new VfsPath(root), options)
+        if (await _dialogs.ShowFileFinderAsync(vm, vfs, new VfsPath(root), options) is not { } chosen)
         {
-            Owner = Application.Current.MainWindow,
-        };
-
-        if (dlg.ShowDialog() != true || vm.SelectedItem is not { } chosen) return;
+            return;
+        }
 
         _fileUsage.Record(chosen.FullPath, DateTime.UtcNow);
         RevealIndexEntry(chosen);
@@ -516,10 +514,8 @@ public partial class MainViewModel
         }
 
         var vm = new SearchDialogViewModel(_fs, start.Path, _archivePlugin, _searchPresets);
-        var dlg = new SearchDialog(vm) { Owner = Application.Current.MainWindow };
-        dlg.NavigateRequested += (_, result) => _ = NavigateToSearchResultAsync(result);
         vm.ActionRequested += (_, request) => _ = ApplySearchResultActionAsync(request, vm);
-        dlg.Show(); // non-blocking
+        _dialogs.ShowSearch(vm, result => _ = NavigateToSearchResultAsync(result)); // non-blocking
     }
 
     /// <summary>
@@ -536,11 +532,8 @@ public partial class MainViewModel
         var lease = fileList.LeaseActiveVfs();
 
         var vm = new SearchDialogViewModel(vfs, startPath, archivePlugin: null, _searchPresets) { SearchesMount = true };
-        var dlg = new SearchDialog(vm) { Owner = Application.Current.MainWindow };
-        dlg.NavigateRequested += (_, result) => RevealMountSearchHit(vfs, result, vm);
         vm.ActionRequested += (_, request) => _ = ApplyMountSearchActionAsync(vfs, request, vm);
-        dlg.Closed += (_, _) => lease.Dispose();
-        dlg.Show();
+        _dialogs.ShowSearch(vm, result => RevealMountSearchHit(vfs, result, vm), closed: lease.Dispose);
     }
 
     /// <summary>
@@ -694,9 +687,9 @@ public partial class MainViewModel
         var vfs = new SearchResultsFileSystem(fileList.ActiveVfs, entries);
         fileList.Mount(vfs, SearchResultsFileSystem.RootPath, kind: MountKind.SearchResults);
 
-        // Mount only *starts* a load, and does not start one at all when the path is unchanged —
-        // a caller that goes on to select and copy would otherwise act on the previous listing.
-        // This load supersedes the one Mount kicked off; LoadAsync cancels its predecessor.
+        // Mount only *starts* a load: a caller that goes on to select and copy would otherwise act on
+        // the previous listing. This load supersedes the one Mount kicked off; LoadAsync cancels its
+        // predecessor.
         await fileList.LoadAsync(SearchResultsFileSystem.RootPath);
     }
 
@@ -817,7 +810,7 @@ public partial class MainViewModel
             NavigateActiveToDisk(Path.GetDirectoryName(text)!, Path.GetFileName(text));
         else
             await _dialogs.ShowErrorAsync(
-                LocalizationManager.Get("Menu_GoClipboard"),
+                Controls.MenuHeaderText.Plain(LocalizationManager.Get("Menu_GoClipboard")),
                 string.Format(LocalizationManager.Get("Nav_ClipboardPathMissing"), text));
     }
 
@@ -827,7 +820,8 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task OpenInExplorer()
     {
-        if (await RejectIfNotOnDiskAsync(LocalizationManager.Get("Menu_OpenExplorer")))
+        var title = Controls.MenuHeaderText.Plain(LocalizationManager.Get("Menu_OpenExplorer"));
+        if (await RejectIfNotOnDiskAsync(title))
         {
             return;
         }
@@ -850,7 +844,7 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            await _dialogs.ShowErrorAsync(LocalizationManager.Get("Menu_OpenExplorer"), ex.Message);
+            await _dialogs.ShowErrorAsync(title, ex.Message);
         }
     }
 

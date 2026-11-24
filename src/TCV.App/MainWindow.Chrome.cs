@@ -139,14 +139,11 @@ public partial class MainWindow
         for (var i = 0; i < list.Count; i++)
         {
             var ws = list[i];
-            menu.Items.Add(new System.Windows.Controls.MenuItem
-            {
-                Header           = Controls.MenuHeaderText.Literal(ws.DisplayName),
-                IsChecked        = ws.Name.Equals(commands.ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase),
-                InputGestureText = WorkspaceGesture(i),
-                Command          = commands.SwitchWorkspaceCommand,
-                CommandParameter = ws,
-            });
+            var item = WorkspaceMenuItem(ws, i);
+            item.IsChecked = ws.Name.Equals(commands.ActiveWorkspaceName, StringComparison.OrdinalIgnoreCase);
+            item.Command = commands.SwitchWorkspaceCommand;
+            item.CommandParameter = ws;
+            menu.Items.Add(item);
         }
 
         if (list.Count > 0)

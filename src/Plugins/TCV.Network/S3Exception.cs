@@ -4,6 +4,12 @@ using System.Net;
 namespace TCV.Network;
 
 /// <summary>
+/// A store said the name is taken, answering a write that asked it not to replace anything. A new try
+/// gets the same answer, unlike the other <see cref="IOException"/>s of a transfer.
+/// </summary>
+public sealed class ObjectAlreadyExistsException(string message) : IOException(message);
+
+/// <summary>
 /// A request the S3 server refused. The message is written for the user — what went wrong and what
 /// to check — because the application shows it as it is. An <see cref="IOException"/>, so a file
 /// operation offers to retry or skip the item instead of failing as a whole.
@@ -57,6 +63,10 @@ public sealed class S3Exception : IOException
                 return error?.Region is { Length: > 0 } region
                     ? $"The bucket \"{bucketName}\" is in region {region} ({code}): set this region in the connection."
                     : $"The bucket \"{bucketName}\" is in another region ({code}): check the region and the endpoint.";
+            case "TemporaryRedirect":
+                return $"The server sends requests for the bucket \"{bucketName}\" elsewhere for now and names no address (TemporaryRedirect): try again in a while.";
+            case "PreconditionFailed":
+                return $"{item} was changed on the server meanwhile (412).";
             case "SlowDown" or "ServiceUnavailable":
                 return $"The server is overloaded ({code}): try again in a moment.";
             case "NotImplemented":
@@ -85,6 +95,8 @@ public sealed class S3Exception : IOException
                 "The bucket is in another region (301): check the region and the endpoint.",
             HttpStatusCode.BadRequest =>
                 "The server rejected the request (400): check the region and the addressing style (path-style).",
+            HttpStatusCode.TemporaryRedirect =>
+                $"The server sends requests for the bucket \"{bucketName}\" elsewhere for now and names no address (307): try again in a while.",
             HttpStatusCode.PreconditionFailed => $"{item} was changed on the server meanwhile (412).",
             >= HttpStatusCode.InternalServerError =>
                 $"The S3 server failed ({(int)status} {status}): try again later.",

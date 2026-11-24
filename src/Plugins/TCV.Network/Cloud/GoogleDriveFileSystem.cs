@@ -13,7 +13,8 @@ using TCV.Core.Interfaces;
 namespace TCV.Network.Cloud;
 
 /// <summary>
-/// Google Drive ("My Drive") as a virtual file system, <c>gdrive://</c>, over the Drive API v3.
+/// Google Drive as a virtual file system, <c>gdrive://</c>, over the Drive API v3: "My Drive" at the
+/// root, with the shared drives and "Shared with me" as two virtual folders beside its items.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -35,12 +36,40 @@ namespace TCV.Network.Cloud;
 /// extension of the format they are exported to (<c>.docx</c>, <c>.xlsx</c>, <c>.pptx</c>, <c>.pdf</c>),
 /// with an unknown size (0), and read as that export (Drive caps exports at 10 MB). They can be renamed,
 /// moved, copied and deleted, but never overwritten. Other Google types (Forms, Sites, shortcuts…) are
-/// left out. Shared drives and "Shared with me" are not shown. Deleting moves to the trash.
+/// left out. Deleting moves to the trash.
+/// </para>
+/// <para>
+/// <c>/Shared drives</c> lists the shared drives the account is a member of, and each is a folder from
+/// there on; <c>/Shared with me</c> lists what others shared with it. Both are views, not Drive folders:
+/// they have no id, so they stand as ids of their own that must never reach the API (TRAP-104). Nothing
+/// can be created in them, and neither they nor a shared drive can be renamed, moved or deleted, which is
+/// refused here with <see cref="NotSupportedException"/>. Past that the server decides, item by item,
+/// and a refusal is a <see cref="CloudDriveException"/> that says so: an item shared read-only looks like
+/// any other until it is changed. A path is walked the same way everywhere, so other readers of a path
+/// (the transfer queue with its own file system, a tab restored later) need to know nothing of this.
+/// </para>
+/// <para>
+/// My Drive may hold an item of the same name. It keeps its path, as it always had it: the real item
+/// wins the name, and the virtual folder shows under its second name, <c>Shared drives (Google)</c>. That
+/// second name always works. With both names taken by real items, the virtual folder is not shown.
 /// </para>
 /// </remarks>
 public sealed class GoogleDriveFileSystem : CloudFileSystem
 {
     internal const string FolderMime = "application/vnd.google-apps.folder";
+    internal const string SharedDrivesName = "Shared drives";
+    internal const string SharedWithMeName = "Shared with me";
+    internal const string SecondNameSuffix = " (Google)";
+    private const string RootId = "root";
+    private const string VirtualIdPrefix = "tcv-virtual:";
+    private const string SharedDrivesId = VirtualIdPrefix + "shared-drives";
+    private const string SharedWithMeId = VirtualIdPrefix + "shared-with-me";
+
+    /// <summary>
+    /// On every request about an item: without it Drive answers 404 for anything in a shared drive. Not
+    /// on an export, which does not have the parameter.
+    /// </summary>
+    private const string AllDrives = "supportsAllDrives=true";
     private const string ApiBase = "https://www.googleapis.com/drive/v3/";
     private const string UploadBase = "https://www.googleapis.com/upload/drive/v3/";
     private const string GoogleAppsPrefix = "application/vnd.google-apps.";
@@ -59,7 +88,22 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         ["application/vnd.google-apps.drawing"] = (".pdf", "application/pdf"),
     };
 
+    /// <summary>The virtual folders of the root, each with the name it takes when a real item holds the plain one.</summary>
+    private static readonly (string Id, string Name, string SecondName)[] VirtualFolders =
+    [
+        (SharedDrivesId, SharedDrivesName, SharedDrivesName + SecondNameSuffix),
+        (SharedWithMeId, SharedWithMeName, SharedWithMeName + SecondNameSuffix),
+    ];
+
     private readonly ConcurrentDictionary<string, string> _folderIds = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The shared drive a folder was last seen in, reached through <c>/Shared drives</c>. A listing there
+    /// has to name its drive (<c>corpora=drive</c>). Items that came through "Shared with me" are left
+    /// out on purpose even when they live in a shared drive: the account may not be a member of that drive,
+    /// and Drive answers 404 for a drive named by a non-member.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, string> _driveOfFolder = new(StringComparer.Ordinal);
 
     public GoogleDriveFileSystem(ConnectionInfo connection)
         : this(connection, null)
@@ -70,7 +114,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
     internal GoogleDriveFileSystem(ConnectionInfo connection, HttpClient? client, TimeProvider? time = null)
         : base(connection, OAuthProvider.GoogleDrive, client, time)
     {
-        _folderIds["/"] = "root";
+        _folderIds["/"] = RootId;
     }
 
     public override string Scheme => "gdrive";
@@ -89,7 +133,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         var children = await WithFreshFolderIdsAsync(async () =>
         {
             var folderId = await FindFolderIdAsync(folder, ct) ?? throw FolderNotFound(folder);
-            return await QueryAsync($"{Quote(folderId)} in parents and trashed = false", ct);
+            return folderId == SharedDrivesId ? await ListSharedDrivesAsync(ct) : await ChildrenAsync(folderId, null, ct);
         });
 
         var shown = children
@@ -97,6 +141,11 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
             .GroupBy(i => i.DisplayName, StringComparer.Ordinal)
             .Select(g => Pick(g)!)
             .ToList();
+
+        if (CloudPath.IsRoot(folder))
+        {
+            shown.AddRange(VirtualFoldersBeside(shown));
+        }
 
         // The listing is the freshest word on this folder's subfolders: what it does not show is gone.
         ForgetFolders(folder, keepSelf: true);
@@ -152,7 +201,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
     {
         var url = item.Export is { } export
             ? $"{ApiBase}files/{Uri.EscapeDataString(item.Id)}/export?mimeType={Uri.EscapeDataString(export.ExportMime)}"
-            : $"{ApiBase}files/{Uri.EscapeDataString(item.Id)}?alt=media";
+            : $"{ApiBase}files/{Uri.EscapeDataString(item.Id)}?alt=media&{AllDrives}";
 
         var response = await SendAsync(() =>
         {
@@ -196,6 +245,11 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         var name = CloudPath.Name(target);
         var (parentId, existing) = await FindParentAndChildAsync(target, ct);
         CheckWritable(existing, name, overwrite);
+        if (existing is null)
+        {
+            RejectVirtualParent(parentId, name);
+        }
+
         return await UploadStream((body, progress, token) => UploadAsync(target, parentId, name, overwrite, body, progress, token), ct);
     }
 
@@ -206,6 +260,10 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         // files of one name side by side rather than refuse.
         var existing = await FindChildAsync(parentId, name, ct);
         CheckWritable(existing, name, overwrite);
+        if (existing is null)
+        {
+            RejectVirtualParent(parentId, name);
+        }
 
         if (body.Length <= MultipartLimit)
         {
@@ -233,7 +291,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
             {
                 // Updating keeps the file's id, its sharing and its revision history.
                 return new HttpRequestMessage(HttpMethod.Patch,
-                    $"{UploadBase}files/{Uri.EscapeDataString(existingId)}?uploadType=media&fields=id") { Content = media };
+                    $"{UploadBase}files/{Uri.EscapeDataString(existingId)}?uploadType=media&fields=id&{AllDrives}") { Content = media };
             }
 
             var content = new MultipartContent("related")
@@ -241,7 +299,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
                 new StringContent(metadata, Encoding.UTF8, "application/json"),
                 media,
             };
-            return new HttpRequestMessage(HttpMethod.Post, $"{UploadBase}files?uploadType=multipart&fields=id") { Content = content };
+            return new HttpRequestMessage(HttpMethod.Post, $"{UploadBase}files?uploadType=multipart&fields=id&{AllDrives}") { Content = content };
         }, CloudRequestKind.Upload, ct);
         await EnsureSuccessAsync(response, ct);
     }
@@ -256,8 +314,8 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         var total = body.Length;
         var metadata = existingId is null ? NewFileMetadata(name, parentId) : "{}";
         var openUrl = existingId is null
-            ? $"{UploadBase}files?uploadType=resumable&fields=id"
-            : $"{UploadBase}files/{Uri.EscapeDataString(existingId)}?uploadType=resumable&fields=id";
+            ? $"{UploadBase}files?uploadType=resumable&fields=id&{AllDrives}"
+            : $"{UploadBase}files/{Uri.EscapeDataString(existingId)}?uploadType=resumable&fields=id&{AllDrives}";
 
         Uri session;
         using (var opened = await SendAsync(() =>
@@ -360,9 +418,10 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         }
 
         CheckWritable(existing, name, overwrite: true);
+        RejectVirtualParent(parentId, name);
 
         using (var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post,
-                   $"{ApiBase}files/{Uri.EscapeDataString(item.Id)}/copy?fields=id")
+                   $"{ApiBase}files/{Uri.EscapeDataString(item.Id)}/copy?fields=id&{AllDrives}")
                {
                    Content = JsonBody(new JsonObject { ["name"] = DriveNameFor(item, name), ["parents"] = new JsonArray(parentId) }),
                }, CloudRequestKind.Metadata, ct))
@@ -390,6 +449,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         }
 
         var item = await WithFreshFolderIdsAsync(() => FindAsync(from, ct)) ?? throw NotFound(from);
+        RejectFixedItem(item, from);
         if (item.IsFolder && CloudPath.IsSameOrUnder(to, from, StringComparison.Ordinal))
         {
             throw new IOException($"The folder \"{CloudPath.Name(from)}\" cannot be moved into itself.");
@@ -399,6 +459,17 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         var fromParentId = await WithFreshFolderIdsAsync(() => FindFolderIdAsync(CloudPath.Parent(from), ct))
                            ?? throw FolderNotFound(CloudPath.Parent(from));
         var (toParentId, existing) = await FindParentAndChildAsync(to, ct);
+        if (fromParentId != toParentId)
+        {
+            RejectVirtualParent(toParentId, name);
+            if (IsVirtualId(fromParentId))
+            {
+                // Its real parent is someone else's and unknown here. A copy needs no parent to leave.
+                throw new NotSupportedException(
+                    $"\"{CloudPath.Name(from)}\" cannot be moved out of \"{SharedWithMeName}\": it stays where its owner keeps it. Copy it instead.");
+            }
+        }
+
         if (existing?.Id == item.Id)
         {
             // The item itself, perhaps under another case: only the name may change.
@@ -447,8 +518,9 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         }
 
         var item = await WithFreshFolderIdsAsync(() => FindAsync(target, ct)) ?? throw NotFound(target);
+        RejectFixedItem(item, target);
         if (item.IsFolder && !recursive
-            && (await QueryAsync($"{Quote(item.Id)} in parents and trashed = false", ct, firstPageOnly: true, pageSize: 1)).Count > 0)
+            && (await ChildrenAsync(item.Id, null, ct, firstPageOnly: true, pageSize: 1)).Count > 0)
         {
             throw new IOException($"The folder \"{target}\" is not empty.");
         }
@@ -481,7 +553,8 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
             throw AlreadyExists(name);
         }
 
-        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}files?fields=id")
+        RejectVirtualParent(parentId, name);
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}files?fields=id&{AllDrives}")
         {
             Content = JsonBody(new JsonObject
             {
@@ -509,6 +582,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         }
 
         var item = await WithFreshFolderIdsAsync(() => FindAsync(target, ct)) ?? throw NotFound(target);
+        RejectFixedItem(item, target);
         if (newName == item.DisplayName)
         {
             return;
@@ -527,10 +601,118 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
 
     private async Task PatchAsync(string id, JsonObject changes, string? query, CancellationToken ct)
     {
-        var url = $"{ApiBase}files/{Uri.EscapeDataString(id)}?fields=id" + (query is null ? string.Empty : "&" + query);
+        var url = $"{ApiBase}files/{Uri.EscapeDataString(id)}?fields=id&{AllDrives}" + (query is null ? string.Empty : "&" + query);
         using var response = await SendAsync(
             () => new HttpRequestMessage(HttpMethod.Patch, url) { Content = JsonBody(changes) }, CloudRequestKind.Metadata, ct);
         await EnsureSuccessAsync(response, ct);
+    }
+
+    // ── The virtual folders ──────────────────────────────────────────────────
+
+    private static bool IsVirtualId(string id) => id.StartsWith(VirtualIdPrefix, StringComparison.Ordinal);
+
+    /// <summary>
+    /// What the root shows beside the real items of <paramref name="real"/>. Compared without regard to
+    /// case, as a path is looked up: a real <c>shared drives</c> would answer for <c>/Shared drives</c>.
+    /// </summary>
+    private static List<DriveItem> VirtualFoldersBeside(List<DriveItem> real)
+    {
+        bool Taken(string name) => real.Any(i => string.Equals(i.DisplayName, name, StringComparison.OrdinalIgnoreCase));
+
+        var shown = new List<DriveItem>();
+        foreach (var (id, name, secondName) in VirtualFolders)
+        {
+            if (!Taken(name))
+            {
+                shown.Add(VirtualFolder(id, name));
+            }
+            else if (!Taken(secondName))
+            {
+                shown.Add(VirtualFolder(id, secondName));
+            }
+        }
+
+        return shown;
+    }
+
+    /// <summary>The virtual folder a name at the root means; null for any other name.</summary>
+    private static DriveItem? VirtualFolderNamed(string displayName)
+    {
+        foreach (var (id, name, secondName) in VirtualFolders)
+        {
+            if (string.Equals(displayName, name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(displayName, secondName, StringComparison.OrdinalIgnoreCase))
+            {
+                return VirtualFolder(id, displayName);
+            }
+        }
+
+        return null;
+    }
+
+    private static DriveItem VirtualFolder(string id, string name) =>
+        new(id, name, FolderMime, 0, DateTime.MinValue, DateTimeOffset.MinValue, null);
+
+    /// <summary>The shared drives the account is a member of, as folders; a shared drive's id is the id of its root folder.</summary>
+    private async Task<List<DriveItem>> ListSharedDrivesAsync(CancellationToken ct)
+    {
+        var drives = new List<DriveItem>();
+        var fields = Uri.EscapeDataString("nextPageToken,drives(id,name,createdTime)");
+        string? pageToken = null;
+        do
+        {
+            ct.ThrowIfCancellationRequested();
+            var url = $"{ApiBase}drives?pageSize=100&fields={fields}"
+                      + (pageToken is null ? string.Empty : "&pageToken=" + Uri.EscapeDataString(pageToken));
+            using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, url), CloudRequestKind.Metadata, ct);
+            using var json = await ReadJsonAsync(response, ct);
+            if (json.RootElement.TryGetProperty("drives", out var list) && list.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in list.EnumerateArray())
+                {
+                    if (DriveItem.ParseSharedDrive(element) is { } drive)
+                    {
+                        drives.Add(drive);
+                        _driveOfFolder[drive.Id] = drive.Id;
+                    }
+                }
+            }
+
+            pageToken = CloudJson.String(json.RootElement, "nextPageToken");
+        }
+        while (!string.IsNullOrEmpty(pageToken));
+
+        return drives;
+    }
+
+    /// <summary>A new item cannot be placed in a view: Drive has no such parent, and the id is not one it knows.</summary>
+    private static void RejectVirtualParent(string parentId, string name)
+    {
+        if (parentId == SharedDrivesId)
+        {
+            throw new NotSupportedException(
+                $"\"{name}\" cannot go into \"{SharedDrivesName}\": that lists the shared drives, which are created in Google Drive itself. Open a shared drive first.");
+        }
+
+        if (parentId == SharedWithMeId)
+        {
+            throw new NotSupportedException(
+                $"\"{name}\" cannot go into \"{SharedWithMeName}\": that lists what others shared with this account. Open a shared folder, or use My Drive.");
+        }
+    }
+
+    /// <summary>The virtual folders and the shared drives are there to go through; they are not items to change here.</summary>
+    private static void RejectFixedItem(DriveItem item, string path)
+    {
+        if (IsVirtualId(item.Id))
+        {
+            throw new NotSupportedException($"\"{CloudPath.Name(path)}\" is a view of Google Drive, not a folder. It cannot be renamed, moved or deleted.");
+        }
+
+        if (item.IsSharedDrive)
+        {
+            throw new NotSupportedException($"The shared drive \"{CloudPath.Name(path)}\" is renamed and deleted in Google Drive itself, not from here.");
+        }
     }
 
     // ── Paths to ids ─────────────────────────────────────────────────────────
@@ -587,10 +769,19 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
     /// <summary>
     /// The item a name means in a folder. The query asks for the name as shown, the Drive name it
     /// stands for (separators put back) and, for a name ending in an export extension, the Google
-    /// document it may be; an exact match wins over one that differs only in case.
+    /// document it may be; an exact match wins over one that differs only in case. At the root a real
+    /// item comes first, and a virtual folder is what a name means only when My Drive has nothing of
+    /// that name: the answer has to come from Drive, so a file of that name keeps its path.
     /// </summary>
     private async Task<DriveItem?> FindChildAsync(string parentId, string displayName, CancellationToken ct)
     {
+        if (parentId == SharedDrivesId)
+        {
+            var drives = await ListSharedDrivesAsync(ct);
+            return Pick(drives.Where(d => d.DisplayName == displayName))
+                   ?? Pick(drives.Where(d => string.Equals(d.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)));
+        }
+
         var driveName = CloudNames.FromDisplay(displayName);
         var alternatives = new List<string> { $"name = {Quote(displayName)}" };
         if (driveName != displayName)
@@ -606,12 +797,12 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
             }
         }
 
-        var found = (await QueryAsync(
-                $"{Quote(parentId)} in parents and trashed = false and ({string.Join(" or ", alternatives)})", ct))
+        var found = (await ChildrenAsync(parentId, string.Join(" or ", alternatives), ct))
             .Where(i => i.IsVisible)
             .ToList();
         return Pick(found.Where(i => i.DisplayName == displayName))
-               ?? Pick(found.Where(i => string.Equals(i.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)));
+               ?? Pick(found.Where(i => string.Equals(i.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)))
+               ?? (parentId == RootId ? VirtualFolderNamed(displayName) : null);
     }
 
     /// <summary>The one of several same-named items a path means (see the class remarks).</summary>
@@ -623,14 +814,28 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
             .ThenBy(i => i.Id, StringComparer.Ordinal)
             .FirstOrDefault();
 
-    private async Task<List<DriveItem>> QueryAsync(string query, CancellationToken ct, bool firstPageOnly = false, int pageSize = 1000)
+    /// <summary>
+    /// What a folder holds, narrowed by <paramref name="filter"/> when there is one. "Shared with me" is
+    /// no parent to ask about, so it is a condition instead; a folder in a shared drive is asked in that
+    /// drive, which the default body of items (<c>corpora=user</c>) would not search; anything else keeps
+    /// Drive's default. Nothing here may send the id of a virtual folder.
+    /// </summary>
+    private async Task<List<DriveItem>> ChildrenAsync(
+        string folderId, string? filter, CancellationToken ct, bool firstPageOnly = false, int pageSize = 1000)
     {
+        var drive = _driveOfFolder.GetValueOrDefault(folderId);
+        var (place, corpora) = folderId == SharedWithMeId
+            ? ("sharedWithMe = true", "&corpora=user")
+            : ($"{Quote(folderId)} in parents", drive is null ? string.Empty : $"&corpora=drive&driveId={Uri.EscapeDataString(drive)}");
+
         var items = new List<DriveItem>();
+        var query = $"{place} and trashed = false" + (filter is null ? string.Empty : $" and ({filter})");
         var fields = Uri.EscapeDataString($"nextPageToken,files({ItemFields})");
         string? pageToken = null;
         do
         {
             var url = $"{ApiBase}files?q={Uri.EscapeDataString(query)}&fields={fields}&pageSize={pageSize}&spaces=drive"
+                      + $"&{AllDrives}&includeItemsFromAllDrives=true{corpora}"
                       + (pageToken is null ? string.Empty : "&pageToken=" + Uri.EscapeDataString(pageToken));
             using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, url), CloudRequestKind.Metadata, ct);
             using var json = await ReadJsonAsync(response, ct);
@@ -641,6 +846,7 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
                     if (DriveItem.Parse(file) is { } item)
                     {
                         items.Add(item);
+                        RememberDrive(item, drive);
                     }
                 }
             }
@@ -650,6 +856,24 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         while (!firstPageOnly && !string.IsNullOrEmpty(pageToken));
 
         return items;
+    }
+
+    /// <summary>A folder is in the drive it was just listed from, and in none when listed from elsewhere: it may have moved.</summary>
+    private void RememberDrive(DriveItem item, string? drive)
+    {
+        if (!item.IsFolder)
+        {
+            return;
+        }
+
+        if (drive is null)
+        {
+            _driveOfFolder.TryRemove(item.Id, out _);
+        }
+        else
+        {
+            _driveOfFolder[item.Id] = drive;
+        }
     }
 
     /// <summary>
@@ -723,7 +947,11 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
                 reason = errors.EnumerateArray().Select(e => CloudJson.String(e, "reason")).FirstOrDefault(r => r is not null);
             }
 
-            return (reason ?? CloudJson.String(error, "status"), CloudJson.String(error, "message"));
+            // What an item shared read-only, or a change only its owner may make, comes back as. Drive's own
+            // words ("The user does not have sufficient permissions for this file") do not say why.
+            return reason == "insufficientFilePermissions"
+                ? (reason, "This account may not change this item: it belongs to someone else, or was shared read-only")
+                : (reason ?? CloudJson.String(error, "status"), CloudJson.String(error, "message"));
         }
         catch (JsonException)
         {
@@ -748,6 +976,9 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
         string Id, string Name, string MimeType, long Size, DateTime Modified, DateTimeOffset Created, string? Revision)
     {
         public bool IsFolder => MimeType == FolderMime;
+
+        /// <summary>The root of a shared drive: a folder to go through, not an item to rename, move or delete.</summary>
+        public bool IsSharedDrive { get; init; }
 
         /// <summary>A Google document, sheet, form…: no bytes of its own.</summary>
         public bool IsNative => !IsFolder && MimeType.StartsWith(GoogleAppsPrefix, StringComparison.Ordinal);
@@ -788,6 +1019,21 @@ public sealed class GoogleDriveFileSystem : CloudFileSystem
                 CloudJson.Time(CloudJson.String(element, "modifiedTime")),
                 created,
                 CloudJson.String(element, "headRevisionId") ?? CloudJson.String(element, "md5Checksum"));
+        }
+
+        /// <summary>One entry of <c>drives.list</c>.</summary>
+        public static DriveItem? ParseSharedDrive(JsonElement element)
+        {
+            var id = CloudJson.String(element, "id");
+            var name = CloudJson.String(element, "name");
+            if (id is null || name is null)
+            {
+                return null;
+            }
+
+            var created = DateTimeOffset.TryParse(CloudJson.String(element, "createdTime"), CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal, out var parsed) ? parsed : DateTimeOffset.MinValue;
+            return new DriveItem(id, name, FolderMime, 0, DateTime.MinValue, created, null) { IsSharedDrive = true };
         }
     }
 }

@@ -411,7 +411,7 @@ public sealed class SyncTests : IDisposable
     public async Task ViewModel_Compare_FillsRowsAndTicksTheDefaults()
     {
         Put(Left, "only.txt", "x", Older);
-        var vm = new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right);
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false));
 
         await vm.CompareCommand.ExecuteAsync(null);
 
@@ -425,7 +425,7 @@ public sealed class SyncTests : IDisposable
     {
         Put(Left, "a.txt", "l", Newer);
         Put(Right, "a.txt", "r", Older);
-        var vm = new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right);
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false));
         await vm.CompareCommand.ExecuteAsync(null);
         var row = vm.Rows.Single();
         row.Direction.Should().Be(SyncDirection.ToRight);
@@ -448,7 +448,7 @@ public sealed class SyncTests : IDisposable
     public async Task ViewModel_OneSidedRow_OnlyOffersTheDirectionThatHasASource()
     {
         Put(Left, "only.txt", "x", Older);
-        var vm = new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right);
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false));
         await vm.CompareCommand.ExecuteAsync(null);
         var row = vm.Rows.Single();
 
@@ -463,7 +463,7 @@ public sealed class SyncTests : IDisposable
     {
         Put(Left, "only-left.txt", "x", Older);
         Put(Right, "only-right.txt", "x", Older);
-        var vm = new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right);
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false));
         await vm.CompareCommand.ExecuteAsync(null);
 
         vm.SelectToLeftCommand.Execute(null);
@@ -475,7 +475,7 @@ public sealed class SyncTests : IDisposable
     public async Task ViewModel_UnlistableSide_ReportsAndOffersNothing()
     {
         Directory.Delete(Right, recursive: true);
-        var vm = new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right);
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false));
 
         await vm.CompareCommand.ExecuteAsync(null);
 
@@ -502,7 +502,7 @@ public sealed class SyncTests : IDisposable
                 await release.Task.WaitAsync(ct);
                 return (IReadOnlyList<IFileEntry>)Array.Empty<IFileEntry>();
             });
-        var vm = new CompareDirectoriesDialogViewModel(mock.Object, "/l", mock.Object, "/r");
+        var vm = new CompareDirectoriesDialogViewModel(new SyncEndpoint(mock.Object, "/l", true), new SyncEndpoint(mock.Object, "/r", true));
 
         var running = vm.CompareCommand.ExecuteAsync(null);
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
@@ -519,9 +519,9 @@ public sealed class SyncTests : IDisposable
     {
         var remote = new InMemoryFileSystem("sftp");
 
-        new CompareDirectoriesDialogViewModel(_fs, Left, remote, "/r").TimeTolerance
+        new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(remote, "/r", true)).TimeTolerance
             .Should().Be(ComparisonOptions.RemoteTimeTolerance);
-        new CompareDirectoriesDialogViewModel(_fs, Left, _fs, Right).TimeTolerance
+        new CompareDirectoriesDialogViewModel(new SyncEndpoint(_fs, Left, false), new SyncEndpoint(_fs, Right, false)).TimeTolerance
             .Should().Be(TimeSpan.FromSeconds(2));
     }
 }

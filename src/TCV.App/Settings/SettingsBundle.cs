@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TCV.App.Workspaces;
 using TCV.Search;
 
@@ -31,6 +32,14 @@ public sealed class SettingsBundle
     public AppSettings? Settings { get; set; }
 
     public List<Workspace>? Workspaces { get; set; }
+
+    /// <summary>
+    /// The workspaces' pictures, inline, by the name <see cref="Workspace.IconImage"/> holds (ADR-0044).
+    /// The name is only a key: on import a picture is named by its content
+    /// (<see cref="WorkspaceIconStore.ImportAllAsync"/>). An older version just skips the section.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? WorkspacePictures { get; set; }
 
     public List<SearchPreset>? SearchPresets { get; set; }
 

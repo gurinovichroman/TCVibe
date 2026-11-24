@@ -13,7 +13,11 @@ public sealed partial class SshImportRowViewModel : ObservableObject
     public SshImportRowViewModel(SshImportCandidate candidate)
     {
         Candidate = candidate;
-        _isSelected = !candidate.IsDuplicate;   // what is saved already is not added twice unless asked
+
+        // What is saved already is not added twice unless asked. A host behind a jump host is not added
+        // as a direct one unless asked: there is no tunnel here, and a connection past the bastion goes
+        // somewhere else than `ssh alias` does.
+        _isSelected = !candidate.IsDuplicate && candidate.ReachedThrough is null;
     }
 
     public SshImportCandidate Candidate { get; }
@@ -36,8 +40,15 @@ public sealed partial class SshImportRowViewModel : ObservableObject
         ? string.Format(LocalizationManager.Get("SshImport_Duplicate"), name)
         : string.Empty;
 
-    /// <summary>What the user should know: the gaps filled the way ssh fills them, what is not supported.</summary>
-    public string Notes => string.Join(" · ", Candidate.Notes.Select(n => LocalizationManager.Get("SshImport_Note_" + n)));
+    /// <summary>What the user should know: the gaps filled the way ssh fills them.</summary>
+    public string Notes => string.Join(" · ", Candidate.Notes
+        .Where(n => n != SshImportNote.ProxyIgnored)
+        .Select(n => LocalizationManager.Get("SshImport_Note_" + n)));
+
+    /// <summary>The host needs a tunnel, which there is not: said as a warning, not among the notes. Empty otherwise.</summary>
+    public string TunnelWarning => Candidate.ReachedThrough is { } through
+        ? string.Format(LocalizationManager.Get("SshImport_Note_" + SshImportNote.ProxyIgnored), through)
+        : string.Empty;
 
     [ObservableProperty]
     private bool _isSelected;

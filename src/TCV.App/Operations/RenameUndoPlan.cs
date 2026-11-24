@@ -14,6 +14,20 @@ public sealed record RenamedName(string From, string To);
 public sealed record RenameBatchRecord(string Directory, IReadOnlyList<RenamedName> Pairs)
 {
     /// <summary>
+    /// The address of the server the folder is on (<c>sftp://user@host</c>); absent for a disk folder,
+    /// which keeps old lines readable. Taking such a batch back needs a panel connected there.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Server { get; init; }
+
+    /// <summary>
+    /// The archive file the folder is inside (TRAP-62); absent otherwise. Like a server's, taking such a
+    /// batch back needs a panel with it open: only the panel knows its password.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Archive { get; init; }
+
+    /// <summary>
     /// True when the record names a folder and at least one rename. A hand-edited or truncated log
     /// line can lack either, and such a line offers nothing to take back.
     /// </summary>

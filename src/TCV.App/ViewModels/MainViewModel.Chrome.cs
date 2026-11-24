@@ -37,6 +37,13 @@ public partial class MainViewModel
     [ObservableProperty]
     private string _workspaceTitle = string.Empty;
 
+    /// <summary>
+    /// The picture of the workspace in the title bar, which stands in place of the icon there; the
+    /// window's caption is text and keeps the icon. Pushed with <see cref="WorkspaceTitle"/>.
+    /// </summary>
+    [ObservableProperty]
+    private string _workspaceTitlePicture = string.Empty;
+
     /// <summary>The prompt of the command line: the folder a command typed there runs in.</summary>
     public string CommandPrompt => (ActivePanel.FileList.WorkingFolder ?? ActivePanel.CurrentPath) + ">";
 
@@ -301,11 +308,12 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// Enter in the command line. <c>cd &lt;path&gt;</c> moves the active panel (relative to its folder),
-    /// whatever the shell; anything else runs in the chosen shell in a terminal in the panel's folder. It
-    /// is the user's own text in that shell's syntax, so it is passed on as typed, never rebuilt — only
-    /// quoted for the shell's command line (<see cref="Shells.ShellCommandLine"/>, TRAP-41). An empty line
-    /// opens the shell itself (<see cref="OpenShellAsync"/>).
+    /// Enter in the command line. <c>cd &lt;path&gt;</c> moves the active panel (relative to its folder), read
+    /// by the rules of the chosen shell (<see cref="Shells.ShellChangeDirectory"/>); anything else runs in
+    /// that shell in a terminal in the panel's folder. It is the user's own text in that shell's syntax, so
+    /// it is passed on as typed, never rebuilt — only quoted for the shell's command line
+    /// (<see cref="Shells.ShellCommandLine"/>, TRAP-41). An empty line opens the shell itself
+    /// (<see cref="OpenShellAsync"/>).
     /// </summary>
     [RelayCommand]
     private async Task RunCommandLine()
@@ -317,11 +325,20 @@ public partial class MainViewModel
             return;
         }
 
+        var shell = await _shells.CurrentAsync();
         var fileList = ActivePanel.FileList;
-        if (CommandLine.TryParseChangeDirectory(text, out var target))
+        var move = ReadChangeDirectory(text, shell, fileList.WorkingFolder);
+        if (move.Kind == Shells.ChangeDirectoryKind.NotOnPanel)
         {
             CommandText = string.Empty;
-            var path = CommandLine.ResolveAgainst(fileList.WorkingFolder, target);
+            ShowNotice(LocalizationManager.Format("Shell_CdNotOnPanel", shell.Name, move.Path), TimeSpan.FromSeconds(6));
+            return;
+        }
+
+        if (move.Kind == Shells.ChangeDirectoryKind.Move)
+        {
+            CommandText = string.Empty;
+            var path = CommandLine.ResolveAgainst(fileList.WorkingFolder, move.Path);
             if (!await fileList.TryNavigateToTypedPathAsync(path))
             {
                 ShowNotice(LocalizationManager.Format("Shell_CdNotFound", path), TimeSpan.FromSeconds(4));
@@ -336,13 +353,23 @@ public partial class MainViewModel
             return;
         }
 
-        var shell = await _shells.CurrentAsync();
         CommandText = string.Empty;
         if (!await _shells.RunAsync(shell, folder, text))
         {
             ShowNotice(LocalizationManager.Format("Shell_CommandFailed", shell.Name), TimeSpan.FromSeconds(4));
         }
     }
+
+    // A panel in an archive or on a server has paths of its own: "/var/log" there is the server's, not
+    // the shell's.
+    private static Shells.ChangeDirectory ReadChangeDirectory(string text, ShellProfile shell, string? workingFolder) =>
+        workingFolder is null
+            ? Shells.ShellChangeDirectory.ReadAsCmd(text)
+            : Shells.ShellChangeDirectory.Read(
+                text,
+                Environment.ExpandEnvironmentVariables(shell.Command),
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                Environment.GetEnvironmentVariable("HOME"));
 
     /// <summary>
     /// Opens the command line's shell itself, with no command, in a terminal in the active panel's

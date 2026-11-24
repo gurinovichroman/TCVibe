@@ -40,6 +40,124 @@ public class FileListMountTests
         list.CurrentPath.Should().Be("/pub");
     }
 
+    private static async Task UntilAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 2000 && !condition(); i++)
+        {
+            await Task.Delay(5);
+        }
+
+        condition().Should().BeTrue();
+    }
+
+    private static InMemoryFileSystem ArchiveHolding(string file)
+    {
+        var archive = new InMemoryFileSystem("zip");
+        archive.AddFile("/" + file, [1]);
+        return archive;
+    }
+
+    [Fact]
+    public async Task Mount_ArchiveInsideAnArchive_ListsTheInnerOneOnTheSameRoot()
+    {
+        var list = CreateList(out _);
+        list.Mount(ArchiveHolding("outer.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "outer.txt"));
+
+        list.Mount(ArchiveHolding("inner.txt"), "/", kind: MountKind.Archive);
+
+        await UntilAsync(() => list.Files.Any(f => f.Name == "inner.txt"));
+        list.Files.Should().NotContain(f => f.Name == "outer.txt");
+    }
+
+    [Fact]
+    public async Task Mount_SamePath_ClearsTheFilterTypedInThePlaceLeft()
+    {
+        var list = CreateList(out _);
+        list.Mount(ArchiveHolding("outer.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "outer.txt"));
+        list.QuickSearchText = "outer";
+
+        list.Mount(ArchiveHolding("inner.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "inner.txt"));
+
+        list.QuickSearchText.Should().BeEmpty("a filter belongs to the place it was typed in");
+    }
+
+    [Fact]
+    public async Task Unmount_SamePath_ClearsTheFilterTypedInThePlaceLeft()
+    {
+        var list = CreateList(out _);
+        list.Mount(ArchiveHolding("outer.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "outer.txt"));
+        list.Mount(ArchiveHolding("inner.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "inner.txt"));
+        list.QuickSearchText = "inner";
+
+        list.Unmount();
+        await UntilAsync(() => list.Files.Any(f => f.Name == "outer.txt"));
+
+        list.QuickSearchText.Should().BeEmpty("the filter from the inner root would hide the outer one's files");
+        list.IsFilterOpen.Should().BeFalse();
+    }
+
+    [Fact]
+    public void UnmountAll_BeforeTheCallerNavigates_SaysTheDiskFolder()
+    {
+        var list = CreateList(out _);
+        list.CurrentPath = "/C:/work";
+        list.Mount(new InMemoryFileSystem("ftp"), "/pub");
+        list.Mount(new InMemoryFileSystem("zip"), "/", kind: MountKind.Archive);
+
+        list.UnmountAll();
+
+        list.RootLocalPath.Should().Be("/C:/work", "\"/\" of the archive is no place on the disk");
+        list.DiskFolder.Should().Be("/C:/work");
+    }
+
+    [Fact]
+    public void UnmountAll_ThenMount_ReturnsToTheDiskFolder()
+    {
+        var list = CreateList(out _);
+        list.CurrentPath = "/C:/work";
+        list.Mount(new InMemoryFileSystem("ftp"), "/pub");
+        list.UnmountAll();
+
+        list.Mount(new InMemoryFileSystem("ftp"), "/other");
+        list.Unmount();
+
+        list.CurrentPath.Should().Be("/C:/work");
+    }
+
+    [Fact]
+    public void UnmountAll_ThenNavigating_FollowsThePath()
+    {
+        var list = CreateList(out var local);
+        local.AddDirectory("/C:/next");
+        list.CurrentPath = "/C:/work";
+        list.Mount(new InMemoryFileSystem("ftp"), "/pub");
+        list.UnmountAll();
+
+        list.CurrentPath = "/C:/next";
+
+        list.RootLocalPath.Should().Be("/C:/next");
+        list.DiskFolder.Should().Be("/C:/next");
+    }
+
+    [Fact]
+    public async Task Unmount_FromAnArchiveInsideAnArchive_ListsTheOuterOneAgain()
+    {
+        var list = CreateList(out _);
+        list.Mount(ArchiveHolding("outer.txt"), "/", kind: MountKind.Archive);
+        list.Mount(ArchiveHolding("inner.txt"), "/", kind: MountKind.Archive);
+        await UntilAsync(() => list.Files.Any(f => f.Name == "inner.txt"));
+
+        list.Unmount();
+
+        await UntilAsync(() => list.Files.Any(f => f.Name == "outer.txt"));
+        list.Files.Should().NotContain(f => f.Name == "inner.txt");
+    }
+
     [Fact]
     public void MountedNonArchive_CountsAsRemoteNotArchive()
     {

@@ -32,12 +32,13 @@
         <!-- Conflict mode -->
         <GroupBox Grid.Row="4" Header="{DynamicResource Copy_OnConflict}" Padding="8,4"
                   Foreground="{DynamicResource ForegroundDimBrush}">
-            <StackPanel Orientation="Horizontal">
+            <!-- Wraps: the four words do not fit one line in every language. -->
+            <WrapPanel>
                 <RadioButton Content="{DynamicResource Copy_Ask}"       IsChecked="{Binding ConflictModeAsk}"       Margin="0,0,12,0" />
                 <RadioButton Content="{DynamicResource Copy_Overwrite}" IsChecked="{Binding ConflictModeOverwrite}" Margin="0,0,12,0" />
                 <RadioButton Content="{DynamicResource Copy_Skip}"      IsChecked="{Binding ConflictModeSkip}"      Margin="0,0,12,0" />
                 <RadioButton Content="{DynamicResource Copy_Rename}"    IsChecked="{Binding ConflictModeRename}" />
-            </StackPanel>
+            </WrapPanel>
         </GroupBox>
 
         <!-- Extra options: copying only. A move renames or streams-and-deletes and has no use for them. -->
@@ -87,10 +88,10 @@
 
         <!-- Buttons -->
         <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="{DynamicResource OK}" Width="80" Margin="0,0,8,0"
+            <Button Content="{DynamicResource OK}" MinWidth="80" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"
                     IsDefault="True" />
-            <Button Content="{DynamicResource Cancel}" Width="80"
+            <Button Content="{DynamicResource Cancel}" MinWidth="80"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>

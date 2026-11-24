@@ -33,7 +33,8 @@
             <Setter Property="Margin" Value="0,5,12,0" />
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
-        <Style x:Key="ChipButton" TargetType="Button">
+        <!-- BasedOn: without it the button drops the theme's look for Windows' pale one (TRAP-68). -->
+        <Style x:Key="ChipButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="MinWidth" Value="28" />
             <Setter Property="Height" Value="28" />
             <Setter Property="Margin" Value="0,0,4,0" />
@@ -47,7 +48,7 @@
             <Button Content="{Binding ConfirmText}" MinWidth="90" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"
                     IsDefault="True" />
-            <Button Content="{DynamicResource Cancel}" Width="90"
+            <Button Content="{DynamicResource Cancel}" MinWidth="90"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>

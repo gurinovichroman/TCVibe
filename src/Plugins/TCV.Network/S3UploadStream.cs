@@ -1,5 +1,6 @@
 using System.IO;
 using System.Security.Cryptography;
+using Microsoft.Win32.SafeHandles;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 
@@ -156,21 +157,25 @@ internal sealed class S3UploadStream : Stream, IDeferredUploadStream
 }
 
 /// <summary>
-/// A read-only window onto part of a file — one part of a multipart upload — that a request body can
-/// read and rewind (a region redirect sends it again). Does not own the file.
+/// A read-only window onto part of a file — one part of a multipart upload, one block — that a request
+/// body can read and rewind (a redirect or a new try sends it again). Does not own the file. It reads
+/// by offset, with no shared file position, so windows onto one file can be read side by side.
 /// </summary>
 internal sealed class FileSegmentStream : Stream
 {
-    private readonly FileStream _file;
+    private readonly SafeFileHandle _file;
     private readonly long _start;
     private readonly long _length;
     private long _position;
+    private readonly Action? _onRead;
 
-    public FileSegmentStream(FileStream file, long start, long length)
+    /// <param name="onRead">Told of every read: the socket has taken the last buffer and asks for the next.</param>
+    public FileSegmentStream(SafeFileHandle file, long start, long length, Action? onRead = null)
     {
         _file = file;
         _start = start;
         _length = length;
+        _onRead = onRead;
     }
 
     public override bool CanRead => true;
@@ -194,8 +199,8 @@ internal sealed class FileSegmentStream : Stream
             return 0;
         }
 
-        _file.Position = _start + _position;
-        var read = _file.Read(buffer[..wanted]);
+        _onRead?.Invoke();
+        var read = RandomAccess.Read(_file, buffer[..wanted], _start + _position);
         _position += read;
         return read;
     }
@@ -208,8 +213,8 @@ internal sealed class FileSegmentStream : Stream
             return 0;
         }
 
-        _file.Position = _start + _position;
-        var read = await _file.ReadAsync(buffer[..wanted], cancellationToken);
+        _onRead?.Invoke();
+        var read = await RandomAccess.ReadAsync(_file, buffer[..wanted], _start + _position, cancellationToken);
         _position += read;
         return read;
     }

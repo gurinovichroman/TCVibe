@@ -1078,8 +1078,9 @@ public partial class FileListControl : UserControl
         Add("Op_Copy", files.CopyCommand, "Copy");
         Add("Op_Move", files.MoveCommand, "Move");
 
-        // An archive format the engine cannot write (RAR, 7z, ISO, CAB…), browsed or searched, takes no
-        // rename, delete or new folder: those are left out rather than offered and refused (TRAP-58).
+        // An archive format the engine cannot write (RAR, 7z, ISO, CAB…) or a temporary copy of an archive
+        // (TRAP-98), browsed or searched, takes no rename, delete or new folder: those are left out rather
+        // than offered and refused (TRAP-58).
         var shown = ViewModel!.ActiveVfs is FileSystem.SearchResultsFileSystem results ? results.Inner : ViewModel.ActiveVfs;
         if (shown is not ArchiveFileSystem archive || archive.SupportsOperation(TCV.Core.Domain.VfsOperation.Rename))
         {
@@ -1122,7 +1123,15 @@ public partial class FileListControl : UserControl
         {
             var panel = ReferenceEquals(shell.LeftPanel.FileList, ViewModel) ? shell.LeftPanel : shell.RightPanel;
             shell.Mounts.StopReconnectCommand.Execute(panel);
+            FocusList();   // the pressed button is gone, and the keys must not go with it
         }
+    }
+
+    /// <summary>Cancel under "Loading...": a folder that keeps the listing waiting no longer holds the panel.</summary>
+    private void OnStopLoading(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.StopLoading();
+        FocusList();   // the pressed button is gone, and the keys must not go with it
     }
 
     /// <summary>Reconnect or Disconnect under a server's error: the click activated this panel first.</summary>
@@ -1131,6 +1140,7 @@ public partial class FileListControl : UserControl
         if (sender is FrameworkElement { Tag: string id } && Window.GetWindow(this) is MainWindow window)
         {
             window.RunCommand(id);
+            FocusList();   // the pressed button goes, or Retry now is disabled for the try: the keys must not go with it
         }
     }
 
@@ -1228,10 +1238,16 @@ public partial class FileListControl : UserControl
     // and selecting text, not a click on a row or the start of a file drag.
     private bool _pressedInNameBox;
 
+    // The left button went down on an entry. Only then does moving the mouse drag files: a press on the
+    // scrollbar, a column header or empty space is the list's own gesture, and dragging the thumb with
+    // a file marked started a file drag instead of scrolling.
+    private bool _leftPressedOnEntry;
+
     protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         _pendingSelectItem = null;
         _pendingUnmarkItem = null;
+        _leftPressedOnEntry = e.OriginalSource is DependencyObject pressedSrc && EntryUnder(pressedSrc) is not null;
         _pressedInNameBox = FindAncestor<TextBoxBase>(e.OriginalSource as DependencyObject) is not null;
         if (_pressedInNameBox)
         {
@@ -1370,6 +1386,7 @@ public partial class FileListControl : UserControl
 
         _pendingSelectItem = null;
         _pendingUnmarkItem = null;
+        _leftPressedOnEntry = false;
     }
 
     // Right-button drag (Total Commander): moves instead of copying. The entry the button went down
@@ -1401,7 +1418,7 @@ public partial class FileListControl : UserControl
             return;
         }
 
-        if (rightDrag && _rightPressedItem is null)
+        if (rightDrag ? _rightPressedItem is null : !_leftPressedOnEntry)
         {
             return;
         }

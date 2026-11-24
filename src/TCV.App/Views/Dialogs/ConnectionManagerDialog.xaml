@@ -486,7 +486,11 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="1" Content="{DynamicResource Conn_Test}" Command="{Binding TestConnectionCommand}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Content="{DynamicResource Conn_Test}" Command="{Binding TestConnectionCommand}" />
+                                <Button Content="{DynamicResource Cancel}" Command="{Binding TestConnectionCancelCommand}" Margin="6,0,0,0"
+                                        Visibility="{Binding IsConnecting, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            </StackPanel>
                             <TextBlock Grid.Column="2" Text="{Binding ConnectionStatus}" Margin="10,0,0,0" VerticalAlignment="Center"
                                        TextWrapping="Wrap">
                                 <TextBlock.Style>

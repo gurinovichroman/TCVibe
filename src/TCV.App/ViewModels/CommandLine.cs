@@ -17,22 +17,13 @@ public static class CommandLine
         target = string.Empty;
         var line = text.Trim();
 
-        if (line.Length == 2 && char.IsAsciiLetter(line[0]) && line[1] == ':')
+        if (IsBareDrive(line))
         {
             target = line + "\\";
             return true;
         }
 
-        string rest;
-        if (StartsWithWord(line, "cd"))
-        {
-            rest = line[2..];
-        }
-        else if (StartsWithWord(line, "chdir"))
-        {
-            rest = line[5..];
-        }
-        else
+        if (!TryReadVerb(line, out var rest))
         {
             return false;
         }
@@ -98,6 +89,28 @@ public static class CommandLine
         {
             return target;
         }
+    }
+
+    /// <summary><c>D:</c>: a move in every shell, since it can mean nothing else on this line.</summary>
+    public static bool IsBareDrive(string line) => line.Length == 2 && char.IsAsciiLetter(line[0]) && line[1] == ':';
+
+    /// <summary>True when <paramref name="line"/> starts with <c>cd</c> or <c>chdir</c>; <paramref name="rest"/> is what follows.</summary>
+    public static bool TryReadVerb(string line, out string rest)
+    {
+        if (StartsWithWord(line, "cd"))
+        {
+            rest = line[2..];
+            return true;
+        }
+
+        if (StartsWithWord(line, "chdir"))
+        {
+            rest = line[5..];
+            return true;
+        }
+
+        rest = string.Empty;
+        return false;
     }
 
     // "cd.." is a move too, as cmd reads it.

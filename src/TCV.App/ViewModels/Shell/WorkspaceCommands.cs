@@ -100,6 +100,9 @@ public sealed partial class WorkspaceCommands : ObservableObject
             ShowArranged(arranged);
         }
 
+        // In memory before anyone opens a list of them: a menu reads nothing on the UI thread (INV-06).
+        _ = WorkspaceIconStore.Default.PreloadAsync(Items.Select(w => w.IconImage).ToList());
+
         RebuildPinnedGroups();
         ReportDamagedStoreOnce();
         _ = SearchPicturesAsync();
@@ -167,6 +170,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
                     // The pass goes on over the reloaded list; Refresh's own call sees it running and
                     // returns, so there is never a second pass beside this one.
                     Refresh();
+                    ApplyAppearance();   // it may be the workspace in the title bar
                 }
             }
         }
@@ -970,8 +974,16 @@ public sealed partial class WorkspaceCommands : ObservableObject
 
         try
         {
-            WorkspaceProjectFile.Save(path, WorkspaceProjectFile.FromWorkspace(ws, path));
+            var definition = WorkspaceProjectFile.FromWorkspace(ws, path);
+            var imageName = ws.IconImage;
+            definition.Picture = await Task.Run(() => WorkspaceIconStore.Default.ReadForTransfer(imageName));
+            WorkspaceProjectFile.Save(path, definition);
             _logger.LogInformation("Workspace definition written to {Path}", path);
+            if (definition.Picture is null && !string.IsNullOrWhiteSpace(imageName))
+            {
+                _logger.LogWarning("The picture of workspace {Workspace} did not go into {Path}: missing or over the limit", ws.Name, path);
+                _shell.ShowNotice(string.Format(L("Ws_PicturesLeftOut"), 1), TimeSpan.FromSeconds(6));
+            }
         }
         catch (Exception ex)
         {
@@ -1012,15 +1024,17 @@ public sealed partial class WorkspaceCommands : ObservableObject
             return;
         }
 
-        await ApplyDefinition(WorkspaceProjectFile.ToWorkspace(definition, path));
+        await ApplyDefinition(definition, path);
     }
 
     /// <summary>
     /// Registers a workspace built from a <c>*.tcvproj</c> and switches to it. Shared with the clone
     /// flow, which offers to open the project file a fresh checkout brought with it.
     /// </summary>
-    public async Task ApplyDefinition(Workspace incoming)
+    public async Task ApplyDefinition(WorkspaceDefinition definition, string path)
     {
+        var incoming = WorkspaceProjectFile.ToWorkspace(definition, path);
+
         // The workspace we are on keeps its latest layout before the definition takes over the panels.
         SaveActiveSnapshot();
         Refresh();
@@ -1041,6 +1055,21 @@ public sealed partial class WorkspaceCommands : ObservableObject
                 L("WsProj_Title"), string.Format(L("Ws_DefinitionNameClash"), existing.Name)))
         {
             return;
+        }
+
+        // The file is somebody else's: its picture is checked and named here, and a refused one leaves
+        // the workspace as it would be without it (ADR-0044).
+        if (!string.IsNullOrEmpty(definition.Picture))
+        {
+            if (await WorkspaceIconStore.Default.ImportAsync(definition.Picture) is { } picture)
+            {
+                incoming.IconImage = picture;
+            }
+            else
+            {
+                _logger.LogWarning("The picture in project file {Path} was refused", path);
+                _shell.ShowNotice(string.Format(L("Ws_PicturesRefused"), 1), TimeSpan.FromSeconds(6));
+            }
         }
 
         var ws = existing is null
@@ -1095,6 +1124,7 @@ public sealed partial class WorkspaceCommands : ObservableObject
             ? MainViewModel.ProductName
             : $"{ws.DisplayName} — {MainViewModel.ProductName}";
         _shell.WorkspaceTitle = ws?.DisplayName ?? string.Empty;
+        _shell.WorkspaceTitlePicture = ws?.IconImage ?? string.Empty;
     }
 
     /// <summary>Accent brush of the active workspace, or null when it has no colour set.</summary>

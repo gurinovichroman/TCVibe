@@ -1,6 +1,8 @@
 using System.IO;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using TCV.App.Services;
 using TCV.App.Settings;
 using TCV.App.ViewModels.Dialogs;
 using TCV.App.Workspaces;
@@ -234,7 +236,7 @@ public sealed class PersistenceHardeningTests : IDisposable
     // ── Hotkey dialog ─────────────────────────────────────────────────────────
 
     private HotkeySettingsDialogViewModel HotkeyDialog(AppSettings settings, SettingsSerializer? serializer = null) =>
-        new(new HotkeyManager(settings), settings, serializer ?? Serializer());
+        new(new HotkeyManager(settings), settings, serializer ?? Serializer(), Mock.Of<IDialogService>());
 
     private static HotkeyBindingViewModel Row(HotkeySettingsDialogViewModel vm, string id) =>
         vm.Bindings.Single(b => b.CommandId == id);

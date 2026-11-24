@@ -4,6 +4,7 @@ using TCV.App.FileSystem;
 using TCV.App.Localization;
 using TCV.App.Operations;
 using TCV.App.Operations.Conflict;
+using TCV.Archives;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 
@@ -184,6 +185,34 @@ public sealed class SyncPlanRunner
 
         var runnable = plan.Where(p => !p.KindMismatch && p.Source is not null).ToList();
 
+        // Every file about to be read from an archive comes from one pass over it, not from a decoding
+        // of its solid block per file (6.42). Held to the end of the run.
+        using var fromLeft = ReadAhead(runnable, SyncDirection.ToRight, left);
+        using var fromRight = ReadAhead(runnable, SyncDirection.ToLeft, right);
+
+        // An archive takes what it gets in one rewrite: it has no way to take a single file (6.91).
+        foreach (var (direction, source, target) in new[] { (SyncDirection.ToRight, left, right), (SyncDirection.ToLeft, right, left) })
+        {
+            var items = runnable.Where(p => p.Direction == direction).ToList();
+            if (items.Count == 0 || target.Fs is not ArchiveFileSystem archive)
+            {
+                continue;
+            }
+
+            runnable.RemoveAll(p => p.Direction == direction);
+            var batch = new SyncIntoArchive(archive, items, source, target);
+            if (await execute(new DelegateOperation(batch.Describe(), (_, opCt) => batch.RunAsync(opCt))).ConfigureAwait(false))
+            {
+                foldersCreated += batch.NewFolders;
+                filesCopied += batch.Files;
+                filesReplaced += batch.Replaced;
+            }
+            else
+            {
+                failures.Add(string.Format(LocalizationManager.Get("Cmp_FailCopy"), archive.DisplayName));
+            }
+        }
+
         // Folders first: their contents are separate rows, and a file cannot land in a folder that is not there.
         foreach (var item in runnable.Where(p => p.Row.IsDirectory))
         {
@@ -277,6 +306,11 @@ public sealed class SyncPlanRunner
 
     private static SyncEndpoint TargetOf(SyncPlanItem item, SyncEndpoint left, SyncEndpoint right) =>
         item.Direction == SyncDirection.ToRight ? right : left;
+
+    private static IDisposable? ReadAhead(IReadOnlyList<SyncPlanItem> items, SyncDirection direction, SyncEndpoint source) =>
+        FileSystem.FileSystemIdentity.ReadAheadOf(source.Fs) is { } readAhead
+            ? readAhead.ReadAhead(items.Where(i => i.Direction == direction && !i.Row.IsDirectory).Select(i => i.Source!.Path).ToList())
+            : null;
 
     /// <summary>
     /// Gives each copied file its source's modification time, wherever the target can take it.

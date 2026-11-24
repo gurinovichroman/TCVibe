@@ -1,12 +1,10 @@
 using System.IO;
-using System.Windows;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using TCV.App.Columns;
 using TCV.App.Localization;
 using TCV.App.Settings;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
+using TCV.App.Workspaces;
 
 namespace TCV.App.ViewModels;
 
@@ -22,13 +20,15 @@ public partial class MainViewModel
 
     /// <summary>Ctrl+K Ctrl+C — choose which columns the active panel's details view shows.</summary>
     [RelayCommand]
-    private void OpenColumnSettings()
+    private async Task OpenColumnSettings()
     {
         var fileList = ActivePanel.FileList;
         var vm = new ColumnsDialogViewModel(fileList.Columns);
-        var dlg = new ColumnsDialog(vm) { Owner = Application.Current.MainWindow };
 
-        if (dlg.ShowDialog() != true) return;
+        if (!await _dialogs.ShowColumnsAsync(vm))
+        {
+            return;
+        }
 
         // Both panels share one layout: two file lists showing different columns reads as a bug,
         // and every other view setting in this app is per panel only because it has to be.
@@ -140,15 +140,15 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task ExportSettings()
     {
-        var dialog = new SaveFileDialog
+        var path = _dialogs.PickSaveFile(
+            LocalizationManager.Get("Bundle_ExportTitle"),
+            LocalizationManager.Get("Bundle_Filter"),
+            "tcv-settings" + BundleExtension,
+            defaultExtension: BundleExtension);
+        if (path is null)
         {
-            Title = LocalizationManager.Get("Bundle_ExportTitle"),
-            Filter = LocalizationManager.Get("Bundle_Filter"),
-            FileName = "tcv-settings" + BundleExtension,
-            DefaultExt = BundleExtension,
-            AddExtension = true,
-        };
-        if (dialog.ShowDialog() != true) return;
+            return;
+        }
 
         // The in-memory settings are the source of truth mid-session: panel paths, columns and
         // the sidebar flag are only written to settings.json on exit. PersistState, not SaveState —
@@ -164,26 +164,36 @@ public partial class MainViewModel
         // bundle carried an empty list and an import restored none of them.
         exported.UserTools = Services.UserToolsForExport();
 
+        var workspaces = Workspaces.Store.LoadAll().ToList();
+
+        // In the rail's order: when the limit leaves pictures out, it leaves the least used ones.
+        var pictureNames = WorkspaceOrder.Arrange(workspaces).Select(w => w.IconImage).ToList();
+        var pictures = await Task.Run(() => WorkspaceIconStore.Default.ReadAllForTransfer(pictureNames));
+
         var bundle = new SettingsBundle
         {
             ExportedUtc = DateTime.UtcNow,
             WrittenBy = typeof(MainViewModel).Assembly.GetName().Version?.ToString() ?? string.Empty,
             Settings = exported,
-            Workspaces = Workspaces.Store.LoadAll().ToList(),
+            Workspaces = workspaces,
+            WorkspacePictures = pictures.Pictures.Count > 0 ? pictures.Pictures : null,
             SearchPresets = _searchPresets.LoadAll().ToList(),
         };
 
-        if (bundle.Write(dialog.FileName))
+        if (bundle.Write(path))
         {
+            var written = string.Format(LocalizationManager.Get("Bundle_Exported"), path);
             await _dialogs.ShowInfoAsync(
                 LocalizationManager.Get("Bundle_ExportTitle"),
-                string.Format(LocalizationManager.Get("Bundle_Exported"), dialog.FileName));
+                pictures.LeftOut == 0
+                    ? written
+                    : $"{written}\n\n{string.Format(LocalizationManager.Get("Ws_PicturesLeftOut"), pictures.LeftOut)}");
         }
         else
         {
             await _dialogs.ShowErrorAsync(
                 LocalizationManager.Get("Bundle_ExportTitle"),
-                string.Format(LocalizationManager.Get("Bundle_WriteFailed"), dialog.FileName));
+                string.Format(LocalizationManager.Get("Bundle_WriteFailed"), path));
         }
     }
 
@@ -191,20 +201,20 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task ImportSettings()
     {
-        var dialog = new OpenFileDialog
+        var path = _dialogs.PickOpenFile(
+            LocalizationManager.Get("Bundle_ImportTitle"),
+            LocalizationManager.Get("Bundle_Filter"));
+        if (path is null)
         {
-            Title = LocalizationManager.Get("Bundle_ImportTitle"),
-            Filter = LocalizationManager.Get("Bundle_Filter"),
-            CheckFileExists = true,
-        };
-        if (dialog.ShowDialog() != true) return;
+            return;
+        }
 
-        var bundle = SettingsBundle.Read(dialog.FileName);
+        var bundle = SettingsBundle.Read(path);
         if (bundle is null)
         {
             await _dialogs.ShowErrorAsync(
                 LocalizationManager.Get("Bundle_ImportTitle"),
-                string.Format(LocalizationManager.Get("Bundle_NotABundle"), Path.GetFileName(dialog.FileName)));
+                string.Format(LocalizationManager.Get("Bundle_NotABundle"), Path.GetFileName(path)));
             return;
         }
 
@@ -215,11 +225,21 @@ public partial class MainViewModel
             string.Format(LocalizationManager.Get("Bundle_ImportConfirm"), DescribeBundle(bundle)));
         if (!confirmed) return;
 
+        // Before the workspaces are saved: each comes out naming what is really in the store, and the
+        // names in the file reach no path. A guest window takes them too: the store is shared and named
+        // by content, and the entries go in one at a time (TRAP-22).
+        var refused = bundle.Workspaces is { } incoming
+            ? await WorkspaceIconStore.Default.ImportAllAsync(incoming, bundle.WorkspacePictures)
+            : 0;
+
         ApplyBundle(bundle);
 
+        var applied = LocalizationManager.Get("Bundle_Imported");
         await _dialogs.ShowInfoAsync(
             LocalizationManager.Get("Bundle_ImportTitle"),
-            LocalizationManager.Get("Bundle_Imported"));
+            refused == 0
+                ? applied
+                : $"{applied}\n\n{string.Format(LocalizationManager.Get("Ws_PicturesRefused"), refused)}");
     }
 
     /// <summary>

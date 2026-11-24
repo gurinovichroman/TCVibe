@@ -17,6 +17,15 @@ public partial class PanelView : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    /// <summary>Cancel above the list while a connection opens: the panel stays where it is.</summary>
+    private void OnCancelConnectClick(object sender, RoutedEventArgs e)
+    {
+        if (Window.GetWindow(this) is MainWindow { DataContext: MainViewModel shell })
+        {
+            shell.Mounts.CancelConnectCommand.Execute(null);
+        }
+    }
+
     // ── Tab strip overflow (6.52) ────────────────────────────────────────────
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TCV.App.Workspaces;
 
@@ -16,6 +17,15 @@ public sealed class WorkspaceDefinition
     public string Icon { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
     public string Group { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The project's picture, inline (<see cref="WorkspacePictureData"/>): a file from a clone is somebody
+    /// else's, so it carries bytes that are checked and named here, and no name or path of its own.
+    /// Absent says nothing: a workspace without a picture writes no such field, and opening a file without
+    /// one leaves the local picture alone.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Picture { get; set; }
 
     /// <summary>Left panel root, relative to the project file.</summary>
     public string LeftRoot { get; set; } = string.Empty;
@@ -131,6 +141,11 @@ public static class WorkspaceProjectFile
         ArgumentNullException.ThrowIfNull(session);
 
         session.Icon = fromDefinition.Icon;
+        if (!string.IsNullOrEmpty(fromDefinition.IconImage))
+        {
+            session.IconImage = fromDefinition.IconImage;   // a file without a picture leaves the local one
+        }
+
         session.Color = fromDefinition.Color;
         session.Group = fromDefinition.Group;
         session.SplitVertical = fromDefinition.SplitVertical;

@@ -9,7 +9,7 @@ namespace TCV.App.Tests;
 /// key the code and the XAML ask for exists, and the windows that were moved onto the dictionaries
 /// do not slip back to typed-in text or typed-in colours.
 /// </summary>
-public class LocalizationGuardTests
+public partial class LocalizationGuardTests
 {
     private static readonly string Repo = SourceTree.Root;
     private static readonly string AppDir = SourceTree.AppDirectory;
@@ -123,11 +123,12 @@ public class LocalizationGuardTests
     {
         // XAML folds whitespace in element text, a &#10; included: without xml:space="preserve"
         // every paragraph break in a message (and every line of a help article) became a space.
+        // A typed line break and &#x0a; fold the same way.
         foreach (var language in Languages)
         {
             var text = File.ReadAllText(Path.Combine(AppDir, "Localization", $"Strings.{language}.xaml"));
             Regex.Matches(text, @"<sys:String x:Key=""([^""]+)""([^>]*)>([^<]*)</sys:String>")
-                .Where(m => m.Groups[3].Value.Contains("&#10;") && !m.Groups[2].Value.Contains("xml:space=\"preserve\""))
+                .Where(m => Regex.IsMatch(m.Groups[3].Value, @"\n|&#(10|x0*[aA]);") && !m.Groups[2].Value.Contains("xml:space=\"preserve\""))
                 .Select(m => m.Groups[1].Value)
                 .Should().BeEmpty($"Strings.{language}.xaml: a line break needs xml:space=\"preserve\"");
         }
@@ -397,6 +398,7 @@ public class LocalizationGuardTests
         var expected = new List<string>();
         expected.AddRange(Enum.GetNames<TCV.Network.TransferStatus>().Select(n => "Transfer_Status_" + n));
         expected.AddRange(Enum.GetNames<TCV.Network.TransferDirection>().Select(n => "Transfer_Dir_" + n));
+        expected.AddRange(Enum.GetNames<TCV.App.Services.TransferSkipReason>().Select(n => "Transfer_Skip_" + n));
         expected.AddRange(Enum.GetNames<TCV.MultiRename.ConflictKind>().Where(n => n != "None").Select(n => "MR_Conflict_" + n));
         expected.AddRange(new[] { "OK", "FAILED", "Missing", "Error" }.Select(n => "CS_Status_" + n));
         expected.AddRange(new[] { "View", "Edit", "Copy", "Move", "NewFolder", "Delete", "Terminal", "Quit" }
@@ -454,6 +456,7 @@ public class LocalizationGuardTests
         Path.Combine("Views", "Dialogs", "MultiRenameDialog.xaml"),
         Path.Combine("Views", "Dialogs", "ChecksumDialog.xaml"),
         Path.Combine("Views", "Dialogs", "TransferQueueDialog.xaml"),
+        Path.Combine("Views", "Dialogs", "RemoteEditFlushDialog.xaml"),
         Path.Combine("Views", "Dialogs", "PluginManagerDialog.xaml"),
         Path.Combine("Views", "Dialogs", "PackDialog.xaml"),
         Path.Combine("Views", "Dialogs", "UnpackDialog.xaml"),

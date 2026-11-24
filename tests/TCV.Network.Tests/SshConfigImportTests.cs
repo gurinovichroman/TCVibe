@@ -86,6 +86,24 @@ public class SshConfigImportTests
         var plan = Plan([Host("inner", proxyJump: "bastion")]);
 
         plan.Single().Notes.Should().Contain(SshImportNote.ProxyIgnored);
+        plan.Single().ReachedThrough.Should().Be("bastion");
+    }
+
+    [Fact]
+    public void Plan_AProxyCommand_NamesIt()
+    {
+        var host = new SshConfigHost("inner", null, "u", null, [], null, true);
+
+        var plan = Plan([host]);
+
+        plan.Single().Notes.Should().Contain(SshImportNote.ProxyIgnored);
+        plan.Single().ReachedThrough.Should().Be("ProxyCommand");
+    }
+
+    [Fact]
+    public void Plan_NoJumpHost_ReachedDirectly()
+    {
+        Plan([Host("web")]).Single().ReachedThrough.Should().BeNull();
     }
 
     [Fact]

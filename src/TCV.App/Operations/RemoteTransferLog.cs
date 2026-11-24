@@ -1,4 +1,6 @@
+using TCV.App.FileSystem;
 using TCV.App.Services;
+using TCV.Core.Interfaces;
 using TCV.Network;
 
 namespace TCV.App.Operations;
@@ -40,7 +42,12 @@ public static class RemoteTransferLog
     /// <param name="server">The connection the transfer runs over; its address is written before the
     /// server-side path. Null (or one without a host) writes the path alone.</param>
     public static OperationLogDescriptor Describe(
-        TransferDirection direction, string sourcePath, string destinationPath, ConnectionInfo? server = null)
+        TransferDirection direction, string sourcePath, string destinationPath, ConnectionInfo? server = null) =>
+        Describe(direction, sourcePath, destinationPath,
+            server is { Host.Length: > 0 } ? path => OnServer(server, path) : null);
+
+    private static OperationLogDescriptor Describe(
+        TransferDirection direction, string sourcePath, string destinationPath, Func<string, string>? onServer)
     {
         var download = direction == TransferDirection.Download;
         var source = download ? sourcePath : Local(sourcePath);
@@ -50,16 +57,16 @@ public static class RemoteTransferLog
         // in the server's root would otherwise lose the root's «/».
         var target = TargetOf(Leaf(source), destination);
         var arrivedIn = FolderOf(destination);
-        if (server is { Host.Length: > 0 })
+        if (onServer is not null)
         {
             if (download)
             {
-                source = OnServer(server, source);
+                source = onServer(source);
             }
             else
             {
-                target = OnServer(server, target);
-                arrivedIn = OnServer(server, arrivedIn);
+                target = onServer(target);
+                arrivedIn = onServer(arrivedIn);
             }
         }
 
@@ -76,6 +83,34 @@ public static class RemoteTransferLog
     /// </summary>
     public static string OnServer(ConnectionInfo server, string path) => server.DescribeAddress(path);
 
+    /// <summary>
+    /// A server path behind what the file system says of its server, in the same shape as
+    /// <see cref="OnServer"/>: all a remote edit holds is the file system, whose
+    /// <see cref="IVirtualFileSystem.DisplayName"/> differs by kind («bob@host» on FTP, «sftp://bob@host» on
+    /// SFTP, «@host» for an anonymous login). The port is written only where the name has it. Null for what
+    /// is not a server (a disk, an archive).
+    /// </summary>
+    private static Func<string, string>? OnServerOf(IVirtualFileSystem? fileSystem)
+    {
+        if (fileSystem is null)
+        {
+            return null;
+        }
+
+        // A find in a server's list of search results is on that server.
+        var server = FileSystemIdentity.Underlying(fileSystem);
+        if (!FileOperationBase.IsRemoteServer(server) && !FileOperationBase.IsCloudStorage(server))
+        {
+            return null;
+        }
+
+        var name = server.DisplayName.Trim();
+        var schemeEnd = name.IndexOf("://", StringComparison.Ordinal);
+        name = (schemeEnd < 0 ? name : name[(schemeEnd + 3)..]).TrimStart('@').TrimEnd('/');
+        var scheme = server.Scheme.ToLowerInvariant();
+        return path => $"{scheme}://{name}{(path.StartsWith('/') ? path : "/" + path)}";
+    }
+
     /// <summary>The log line for a run of the transfer queue that ended; null for a state that is not an end.</summary>
     public static OperationLogEntry? Entry(TransferFinishedEventArgs e, DateTime timestamp)
     {
@@ -88,9 +123,20 @@ public static class RemoteTransferLog
         };
 
         return outcome is { } ended
-            ? Create(Describe(e.Item.Direction, e.Item.SourcePath, e.Item.DestinationPath, e.Item.Connection), ended, e.Error, timestamp)
+            ? Create(e.Item.IsFolder
+                    ? DescribeFolder(e.Item)
+                    : Describe(e.Item.Direction, e.Item.SourcePath, e.Item.DestinationPath, e.Item.Connection),
+                ended, e.Error, timestamp)
             : null;
     }
+
+    /// <summary>A folder made for a transfer: the same line a new folder gets anywhere else.</summary>
+    private static OperationLogDescriptor DescribeFolder(TransferItem item) =>
+        new(OperationKind.CreateFolder,
+            item.Direction == TransferDirection.Download
+                ? Local(item.DestinationPath)
+                : OnServer(item.Connection, item.DestinationPath),
+            null, 1);
 
     /// <summary>
     /// The log line for one write-back of a remote edit. The source is the temporary copy: after a
@@ -98,9 +144,10 @@ public static class RemoteTransferLog
     /// A declined write-back (the server copy changed, the user kept it) did not happen: Cancelled.
     /// </summary>
     public static OperationLogEntry RemoteSave(
-        string localCopy, string remotePath, RemoteEditOutcome outcome, string? error, DateTime timestamp)
+        string localCopy, string remotePath, RemoteEditOutcome outcome, string? error, DateTime timestamp,
+        IVirtualFileSystem? server = null)
     {
-        var descriptor = Describe(TransferDirection.Upload, localCopy, remotePath);
+        var descriptor = Describe(TransferDirection.Upload, localCopy, remotePath, OnServerOf(server));
         var logged = outcome switch
         {
             RemoteEditOutcome.Uploaded => OperationOutcome.Completed,

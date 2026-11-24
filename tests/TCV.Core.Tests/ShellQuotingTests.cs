@@ -66,6 +66,14 @@ public class ShellQuotingTests
         quoted.Should().StartWith(Quote).And.EndWith(Quote);
     }
 
+    [Theory]
+    [InlineData("a\nb")]
+    [InlineData("a\r\nb")]
+    public void QuoteIfNeeded_ALineBreak_IsQuoted_ACygwinProgramSplitsAtIt(string value)
+    {
+        ShellQuoting.QuoteIfNeeded(value).Should().Be(Quote + value + Quote);
+    }
+
     [Fact]
     public void QuoteIfNeeded_EmptyValue_BecomesAnEmptyArgument()
     {

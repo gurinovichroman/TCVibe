@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Win32.SafeHandles;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 
@@ -39,6 +40,9 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     private const string BucketRegionHeader = "x-amz-bucket-region";
     private const int MaxParts = 10_000;
 
+    /// <summary>How many 307s one request follows. More than a hop or two is a loop, not a move.</summary>
+    private const int MaxRedirects = 3;
+
     /// <summary>DeleteObjects takes at most this many keys.</summary>
     private const int DeleteBatchSize = 1000;
 
@@ -64,6 +68,7 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     private bool _credentialsResolved;
     private string _region;
     private volatile bool _bulkDeleteUnsupported;
+    private volatile bool _partCopyUnsupported;
     private bool _disposed;
 
     /// <summary>Connects to <paramref name="connection"/>: endpoint, bucket, region, keys or an AWS profile.</summary>
@@ -113,8 +118,23 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     /// <summary>The smallest part; S3 refuses parts under 5 MiB except the last.</summary>
     internal long MinPartSize { get; init; } = 8L * 1024 * 1024;
 
-    /// <summary>CopyObject refuses sources over 5 GiB; larger objects are streamed through instead.</summary>
+    /// <summary>CopyObject refuses sources over 5 GiB; larger objects are copied in parts instead.</summary>
     internal long MaxServerSideCopy { get; init; } = 5L * 1024 * 1024 * 1024;
+
+    /// <summary>The smallest part of a copy in parts: no byte moves here, so a part may be large.</summary>
+    internal long CopyPartSize { get; init; } = 512L * 1024 * 1024;
+
+    /// <summary>Parts of one upload or copy in flight at once.</summary>
+    internal int PartConcurrency { get; init; } = PartedTransfer.DefaultConcurrency;
+
+    /// <summary>The pauses before a part is sent again; their number is the number of new tries.</summary>
+    internal ReconnectPolicy PartRetries { get; init; } = PartedTransfer.DefaultRetries;
+
+    /// <summary>How long an upload's body may stand still (<see cref="PartedTransfer.DefaultStallLimit"/>); tests shorten it.</summary>
+    internal TimeSpan StallLimit { get; init; } = PartedTransfer.DefaultStallLimit;
+
+    /// <summary>How long a store may take over one UploadPartCopy, which has no body to watch: it copies gigabytes before it answers.</summary>
+    internal TimeSpan CopyPartStallLimit { get; init; } = TimeSpan.FromMinutes(15);
 
     /// <summary>The time requests are signed with.</summary>
     internal Func<DateTimeOffset> Clock { get; init; } = () => DateTimeOffset.UtcNow;
@@ -341,85 +361,78 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         Changed?.Invoke(this, new VfsChangedEventArgs(path, WatcherChangeTypes.Created));
     }
 
+    /// <summary>
+    /// One PUT, tried again when the line failed, like a part: a file under the threshold deserves no
+    /// less. A new try reads the temporary file from its start, so it carries the same bytes under the same hash.
+    /// </summary>
     private async Task PutObjectAsync(
         FileStream body, string sha256, string bucket, string key, bool overwrite, string name,
         IProgress<long>? progress, CancellationToken ct)
     {
-        var call = new S3Call(HttpMethod.Put, bucket, key)
+        var file = body.SafeFileHandle;
+        var length = body.Length;
+        var sent = new PartProgress(progress, 1);
+        await PartedTransfer.WithRetriesAsync(PartRetries, attempt => PartedTransfer.WithStallLimitAsync(StallLimit, async watch =>
         {
-            Headers = overwrite ? [] : [IfNoneMatchAny],
-            Body = () =>
+            var call = new S3Call(HttpMethod.Put, bucket, key)
             {
-                body.Position = 0;
-                var content = new ProgressStreamContent(body, progress);
-                content.Headers.ContentType = ContentTypeFor(key);
-                content.Headers.ContentLength = body.Length;
-                return content;
-            },
-            PayloadHash = sha256,
-            Kind = CallKind.Upload,
-        };
-        using var response = await SendConditionalAsync(call, name, ct);
+                Headers = overwrite ? [] : [IfNoneMatchAny],
+                Body = () =>
+                {
+                    var content = new ProgressStreamContent(new FileSegmentStream(file, 0, length, watch.Alive), sent.For(0));
+                    content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypes.ForName(key));
+                    content.Headers.ContentLength = length;
+                    return content;
+                },
+                PayloadHash = sha256,
+                Kind = CallKind.Upload,
+            };
+            using var response = await SendConditionalAsync(call, name, watch.Token);
+            return true;
+        }, attempt), ct);
     }
 
+    /// <summary>
+    /// Uploads a body in parts, <see cref="PartConcurrency"/> at a time, each part tried again when the
+    /// line failed (<see cref="PartedTransfer"/>). Every part reads the temporary file by offset, from its
+    /// start on each try, so a part sent again carries the same bytes under the same hash, and only
+    /// a buffer per part is in memory. The parts are named in number order at the end, however they
+    /// finished; the object appears only then.
+    /// </summary>
     private async Task PutMultipartAsync(
         FileStream body, string bucket, string key, bool overwrite, string name,
         IProgress<long>? progress, CancellationToken ct)
     {
-        var initiate = new S3Call(HttpMethod.Post, bucket, key)
-        {
-            Query = [new("uploads", string.Empty)],
-            Body = () => new ByteArrayContent([]) { Headers = { ContentType = ContentTypeFor(key) } },
-        };
-        string uploadId;
-        using (var response = await SendAsync(initiate, ct))
-        {
-            await EnsureSuccessAsync(response, initiate, ct);
-            uploadId = S3Response.ParseUploadId(await response.Content.ReadAsStringAsync(ct));
-        }
-
+        var uploadId = await InitiateMultipartAsync(bucket, key, [new("Content-Type", ContentTypes.ForName(key))], ct);
         try
         {
-            var parts = new List<(int Number, string ETag)>();
-            var partSize = PartSize(body.Length, MinPartSize);
-            var number = 0;
-            for (long offset = 0; offset < body.Length; offset += partSize)
+            var file = body.SafeFileHandle;
+            var length = body.Length;
+            var partSize = PartSize(length, MinPartSize);
+            var count = PartCount(length, partSize);
+            var sent = new PartProgress(progress, count);
+            var etags = await PartedTransfer.RunAsync(count, PartConcurrency, PartRetries, (index, attempt) => PartedTransfer.WithStallLimitAsync(StallLimit, async watch =>
             {
-                ct.ThrowIfCancellationRequested();
-                number++;
-                var start = offset;
-                var size = Math.Min(partSize, body.Length - offset);
-                var hash = await HashRangeAsync(body, start, size, ct);
-                var sent = progress is null ? null : new InlineProgress<long>(bytes => progress.Report(start + bytes));
+                var (start, size) = PartAt(index, partSize, length);
+                var hash = await HashRangeAsync(file, start, size, watch.Token);
+                watch.Alive();
                 var call = new S3Call(HttpMethod.Put, bucket, key)
                 {
-                    Query = [new("partNumber", number.ToString(CultureInfo.InvariantCulture)), new("uploadId", uploadId)],
-                    Body = () => new ProgressStreamContent(new FileSegmentStream(body, start, size), sent)
+                    Query = PartQuery(index, uploadId),
+                    Body = () => new ProgressStreamContent(new FileSegmentStream(file, start, size, watch.Alive), sent.For(index))
                     {
                         Headers = { ContentLength = size },
                     },
                     PayloadHash = hash,
                     Kind = CallKind.Upload,
                 };
-                using var response = await SendAsync(call, ct);
-                await EnsureSuccessAsync(response, call, ct);
-                parts.Add((number, ETagOf(response) ?? throw new S3Exception(
-                    $"The server did not confirm part {number} of \"{name}\" (no ETag).", response.StatusCode, null)));
-            }
+                using var response = await SendAsync(call, watch.Token);
+                await EnsureSuccessAsync(response, call, watch.Token);
+                return ETagOf(response) ?? throw new S3Exception(
+                    $"The server did not confirm part {index + 1} of \"{name}\" (no ETag).", response.StatusCode, null);
+            }, attempt), ct);
 
-            var xml = Encoding.UTF8.GetBytes(S3Response.BuildCompleteBody(parts));
-            var complete = new S3Call(HttpMethod.Post, bucket, key)
-            {
-                Query = [new("uploadId", uploadId)],
-                Headers = overwrite ? [] : [IfNoneMatchAny],
-                Body = () => new ByteArrayContent(xml) { Headers = { ContentType = new MediaTypeHeaderValue("application/xml") } },
-                PayloadHash = S3Signer.Sha256Hex(xml),
-
-                // Assembling gigabytes of parts takes the server a while; the metadata timeout would cut it off.
-                Kind = CallKind.Upload,
-            };
-            using var done = await SendConditionalAsync(complete, name, ct);
-            await ThrowIfErrorBodyAsync(done, bucket, key, ct);
+            await CompleteMultipartAsync(bucket, key, uploadId, etags, overwrite, name, ct);
         }
         catch
         {
@@ -429,12 +442,72 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         }
     }
 
+    /// <summary>
+    /// CreateMultipartUpload. <paramref name="stored"/> is what the finished object is to be stored
+    /// with: its type and other content headers, its <c>x-amz-meta-*</c>.
+    /// </summary>
+    private async Task<string> InitiateMultipartAsync(
+        string bucket, string key, IReadOnlyList<KeyValuePair<string, string>> stored, CancellationToken ct)
+    {
+        var call = new S3Call(HttpMethod.Post, bucket, key)
+        {
+            Query = [new("uploads", string.Empty)],
+            Headers = stored.Where(h => !IsContentHeader(h.Key)).ToList(),
+            Body = () =>
+            {
+                var content = new ByteArrayContent([]);
+                foreach (var (name, value) in stored.Where(h => IsContentHeader(h.Key)))
+                {
+                    content.Headers.TryAddWithoutValidation(name, value);
+                }
+
+                return content;
+            },
+        };
+        using var response = await SendAsync(call, ct);
+        await EnsureSuccessAsync(response, call, ct);
+        return S3Response.ParseUploadId(await response.Content.ReadAsStringAsync(ct));
+    }
+
+    /// <summary>CompleteMultipartUpload: the parts by number, <paramref name="etags"/>[0] being part 1.</summary>
+    private async Task CompleteMultipartAsync(
+        string bucket, string key, string uploadId, IReadOnlyList<string> etags, bool overwrite, string name, CancellationToken ct)
+    {
+        var xml = Encoding.UTF8.GetBytes(S3Response.BuildCompleteBody(etags.Select((etag, index) => (index + 1, etag))));
+        var complete = new S3Call(HttpMethod.Post, bucket, key)
+        {
+            Query = [new("uploadId", uploadId)],
+            Headers = overwrite ? [] : [IfNoneMatchAny],
+            Body = () => new ByteArrayContent(xml) { Headers = { ContentType = new MediaTypeHeaderValue("application/xml") } },
+            PayloadHash = S3Signer.Sha256Hex(xml),
+
+            // Assembling gigabytes of parts takes the server a while; the metadata timeout would cut it off.
+            Kind = CallKind.Upload,
+        };
+        using var done = await SendConditionalAsync(complete, name, ct);
+        await ThrowIfErrorBodyAsync(done, bucket, key, ct);
+    }
+
+    /// <summary>
+    /// AbortMultipartUpload, after every part in flight has finished: a part still going up could survive
+    /// it. A server in trouble is asked once more, since the trouble may be what led here and may pass in
+    /// a second; a dead line is not, since a cancelled copy is waiting for this.
+    /// </summary>
     private async Task AbortMultipartAsync(string bucket, string key, string uploadId)
     {
         try
         {
             var call = new S3Call(HttpMethod.Delete, bucket, key) { Query = [new("uploadId", uploadId)] };
-            using var response = await SendAsync(call, CancellationToken.None);
+            using (var response = await SendAsync(call, CancellationToken.None))
+            {
+                if ((int)response.StatusCode < 500)
+                {
+                    return;
+                }
+            }
+
+            await Task.Delay(PartRetries.DelayBefore(1) ?? TimeSpan.Zero);
+            using var again = await SendAsync(call, CancellationToken.None);
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or TimeoutException or InvalidOperationException)
         {
@@ -449,6 +522,20 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     /// </summary>
     internal static long PartSize(long length, long minPartSize) =>
         Math.Max(minPartSize, (length + MaxParts - 1) / MaxParts);
+
+    private static int PartCount(long length, long partSize) => (int)((length + partSize - 1) / partSize);
+
+    private static (long Start, long Size) PartAt(int index, long partSize, long length)
+    {
+        var start = index * partSize;
+        return (start, Math.Min(partSize, length - start));
+    }
+
+    private static List<KeyValuePair<string, string>> PartQuery(int index, string uploadId) =>
+        [new("partNumber", (index + 1).ToString(CultureInfo.InvariantCulture)), new("uploadId", uploadId)];
+
+    private static bool IsContentHeader(string name) =>
+        name.StartsWith("Content-", StringComparison.OrdinalIgnoreCase) || name.Equals("Expires", StringComparison.OrdinalIgnoreCase);
 
     public async Task CreateDirectoryAsync(VfsPath path, CancellationToken ct)
     {
@@ -468,8 +555,9 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     // ── Copy, move, rename ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Copies within this store: server-side (CopyObject), so the bytes never come down; a source over
-    /// 5 GiB, which CopyObject refuses, is streamed through. A folder copies every object under it.
+    /// Copies within this store: server-side, so the bytes never come down. CopyObject takes a source up
+    /// to 5 GiB; a larger one is copied in parts (UploadPartCopy), and only a store without that is
+    /// streamed through. A folder copies every object under it.
     /// </summary>
     public async Task CopyAsync(VfsPath source, VfsPath destination, IProgress<FileProgress>? progress, CancellationToken ct)
     {
@@ -597,15 +685,15 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         string srcBucket, string srcKey, string dstBucket, string dstKey, long size,
         IProgress<FileProgress>? progress, string name, Stopwatch started, CancellationToken ct)
     {
-        if (size > MaxServerSideCopy)
+        if (size > MaxServerSideCopy
+            && await CopyLargeObjectAsync(srcBucket, srcKey, dstBucket, dstKey, size, progress, name, started, ct))
         {
-            await StreamCopyAsync(srcBucket, srcKey, dstBucket, dstKey, size, progress, name, started, ct);
             return;
         }
 
         var call = new S3Call(HttpMethod.Put, dstBucket, dstKey)
         {
-            Headers = [new("x-amz-copy-source", "/" + S3Signer.UriEncode(srcBucket) + "/" + S3Endpoint.EncodeKey(srcKey))],
+            Headers = [new("x-amz-copy-source", CopySource(srcBucket, srcKey))],
             Body = () => new ByteArrayContent([]),
 
             // A server-side copy of gigabytes takes minutes; the metadata timeout would call it failed.
@@ -617,7 +705,180 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         progress?.Report(new FileProgress(size, size, name, started.Elapsed));
     }
 
-    /// <summary>Down and up again, for what CopyObject refuses. Every byte travels twice; each pass counts for half.</summary>
+    /// <summary>
+    /// Copies what CopyObject refuses. False when the object, looked at again, is small enough for it
+    /// after all: it was replaced since it was listed.
+    /// </summary>
+    private async Task<bool> CopyLargeObjectAsync(
+        string srcBucket, string srcKey, string dstBucket, string dstKey, long size,
+        IProgress<FileProgress>? progress, string name, Stopwatch started, CancellationToken ct)
+    {
+        var wrongObjectLeft = false;
+        if (!_partCopyUnsupported)
+        {
+            var source = await HeadObjectAsync(srcBucket, srcKey, ct)
+                         ?? throw new FileNotFoundException($"\"{srcKey}\" does not exist.");
+            if (source.Size <= MaxServerSideCopy)
+            {
+                return false;
+            }
+
+            var outcome = await TryCopyInPartsAsync(srcBucket, srcKey, source, dstBucket, dstKey, progress, name, started, ct);
+            if (outcome == PartCopyOutcome.Copied)
+            {
+                return true;
+            }
+
+            wrongObjectLeft = outcome == PartCopyOutcome.WrongObjectLeft;
+        }
+
+        try
+        {
+            await StreamCopyAsync(srcBucket, srcKey, dstBucket, dstKey, size, progress, name, started, ct);
+        }
+        catch when (wrongObjectLeft)
+        {
+            await DeleteQuietlyAsync(dstBucket, dstKey);
+            throw;
+        }
+
+        return true;
+    }
+
+    /// <summary>How a copy in parts ended, when it did not end the whole copy by throwing.</summary>
+    private enum PartCopyOutcome
+    {
+        Copied,
+
+        /// <summary>The store does not do this; nothing has reached the destination.</summary>
+        NotDone,
+
+        /// <summary>The store does not do this, and said so only with a finished object of the wrong size.</summary>
+        WrongObjectLeft,
+    }
+
+    /// <summary>
+    /// Takes away an object known to be wrong, when nothing is going to replace it: at the right name it
+    /// passes for a good copy. Best effort and under no token, since the copy may be failing because
+    /// it was cancelled; the error that follows is the one to report.
+    /// </summary>
+    private async Task DeleteQuietlyAsync(string bucket, string key)
+    {
+        try
+        {
+            await DeleteObjectAsync(bucket, key, CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException or TimeoutException)
+        {
+            // The copy has failed, and says so; the wrong object is then still there to be seen.
+        }
+    }
+
+    /// <summary>
+    /// A multipart upload whose parts the server copies from the source (UploadPartCopy), so no byte
+    /// comes down. What differs from CopyObject (TRAP-103): the type and metadata of the source are not
+    /// carried over by themselves, so they are stated here (its tags are not carried over at all). Each
+    /// part is pinned to the ETag the source had (<c>x-amz-copy-source-if-match</c>): a source replaced
+    /// midway fails the copy instead of splicing two versions. False when the store does not do this; the
+    /// upload has then been aborted, and the store is not asked again in this session.
+    /// </summary>
+    private async Task<PartCopyOutcome> TryCopyInPartsAsync(
+        string srcBucket, string srcKey, ObjectInfo source, string dstBucket, string dstKey,
+        IProgress<FileProgress>? progress, string name, Stopwatch started, CancellationToken ct)
+    {
+        var stored = source.Stored.Any(h => h.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+            ? source.Stored
+            : [.. source.Stored, new("Content-Type", ContentTypes.ForName(dstKey))];
+        var uploadId = await InitiateMultipartAsync(dstBucket, dstKey, stored, ct);
+        try
+        {
+            var length = source.Size;
+            var partSize = PartSize(length, CopyPartSize);
+            var count = PartCount(length, partSize);
+            var copied = new PartProgress(
+                progress is null ? null : new InlineProgress<long>(bytes => progress.Report(new FileProgress(bytes, length, name, started.Elapsed))),
+                count);
+            var etags = await PartedTransfer.RunAsync(count, PartConcurrency, PartRetries, (index, attempt) => PartedTransfer.WithStallLimitAsync(CopyPartStallLimit, async watch =>
+            {
+                var (start, size) = PartAt(index, partSize, length);
+                var etag = await CopyPartAsync(srcBucket, srcKey, source.ETag, dstBucket, dstKey, uploadId, index, start, size, watch.Token);
+                copied.For(index)?.Report(size);
+                return etag;
+            }, attempt), ct);
+
+            await CompleteMultipartAsync(dstBucket, dstKey, uploadId, etags, overwrite: true, name, ct);
+
+            // A move deletes the source next. A store that got the ranges wrong must be caught here, while
+            // the bytes still exist; streaming them through then puts the right object in place.
+            if ((await HeadObjectAsync(dstBucket, dstKey, ct))?.Size != length)
+            {
+                _partCopyUnsupported = true;
+                return PartCopyOutcome.WrongObjectLeft;
+            }
+
+            return PartCopyOutcome.Copied;
+        }
+        catch (Exception ex)
+        {
+            await AbortMultipartAsync(dstBucket, dstKey, uploadId);
+            if (ex is S3Exception s3 && IsNoPartCopy(s3))
+            {
+                _partCopyUnsupported = true;
+                return PartCopyOutcome.NotDone;
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// One UploadPartCopy. A success is only what says so in its body: 200 with <c>&lt;Error&gt;</c> is a
+    /// failure that came late, and 200 without <c>&lt;CopyPartResult&gt;</c> is a store that took the
+    /// request for an empty part (TRAP-103).
+    /// </summary>
+    private async Task<string> CopyPartAsync(
+        string srcBucket, string srcKey, string? sourceETag, string dstBucket, string dstKey, string uploadId,
+        int index, long start, long size, CancellationToken ct)
+    {
+        var headers = new List<KeyValuePair<string, string>>
+        {
+            new("x-amz-copy-source", CopySource(srcBucket, srcKey)),
+            new("x-amz-copy-source-range", CopyRange(start, size)),
+        };
+        if (sourceETag is not null)
+        {
+            headers.Add(new("x-amz-copy-source-if-match", sourceETag));
+        }
+
+        var call = new S3Call(HttpMethod.Put, dstBucket, dstKey)
+        {
+            Query = PartQuery(index, uploadId),
+            Headers = headers,
+            Body = () => new ByteArrayContent([]),
+            Kind = CallKind.Upload,
+        };
+        using var response = await SendAsync(call, ct);
+        await EnsureSuccessAsync(response, call, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        ThrowIfError(body, response, dstBucket, dstKey);
+        return S3Response.ParseCopiedPartETag(body) ?? throw new S3Exception(
+            "This S3 server does not copy parts (UploadPartCopy).", HttpStatusCode.NotImplemented, "NotImplemented");
+    }
+
+    /// <summary>A refusal that says the store lacks UploadPartCopy, as opposed to refusing this copy.</summary>
+    private static bool IsNoPartCopy(S3Exception error) =>
+        error.StatusCode is HttpStatusCode.NotImplemented or HttpStatusCode.MethodNotAllowed
+        || error.ErrorCode is "NotImplemented" or "NotSupported" or "InvalidRequest";
+
+    /// <summary>The source of a server-side copy: bucket and key, each encoded once, the slashes of the key kept.</summary>
+    private static string CopySource(string bucket, string key) =>
+        "/" + S3Signer.UriEncode(bucket) + "/" + S3Endpoint.EncodeKey(key);
+
+    /// <summary>The range of a copied part. Both ends count, unlike a length: ten bytes from 0 are <c>bytes=0-9</c>.</summary>
+    internal static string CopyRange(long start, long length) => string.Create(
+        CultureInfo.InvariantCulture, $"bytes={start}-{start + length - 1}");
+
+    /// <summary>Down and up again, for a store that cannot copy in parts. Every byte travels twice; each pass counts for half.</summary>
     private async Task StreamCopyAsync(
         string srcBucket, string srcKey, string dstBucket, string dstKey, long size,
         IProgress<FileProgress>? progress, string name, Stopwatch started, CancellationToken ct)
@@ -919,7 +1180,32 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         await EnsureSuccessAsync(response, call, ct);
         return new ObjectInfo(
             response.Content.Headers.ContentLength ?? 0,
-            response.Content.Headers.LastModified?.UtcDateTime.ToLocalTime() ?? DateTime.MinValue);
+            response.Content.Headers.LastModified?.UtcDateTime.ToLocalTime() ?? DateTime.MinValue,
+            ETagOf(response),
+            StoredHeaders(response));
+    }
+
+    /// <summary>The headers an object was stored with and a HEAD repeats: its type and the like, its own metadata.</summary>
+    private static List<KeyValuePair<string, string>> StoredHeaders(HttpResponseMessage response)
+    {
+        var stored = new List<KeyValuePair<string, string>>();
+        foreach (var (name, values) in response.Headers.NonValidated)
+        {
+            if (name.StartsWith("x-amz-meta-", StringComparison.OrdinalIgnoreCase) || name.Equals("Cache-Control", StringComparison.OrdinalIgnoreCase))
+            {
+                stored.Add(new(name, values.ToString()));
+            }
+        }
+
+        foreach (var (name, values) in response.Content.Headers.NonValidated)
+        {
+            if (name.ToLowerInvariant() is "content-type" or "content-encoding" or "content-language" or "content-disposition" or "expires")
+            {
+                stored.Add(new(name, values.ToString()));
+            }
+        }
+
+        return stored;
     }
 
     private async Task<IFileEntry?> BucketEntryAsync(string bucket, VfsPath path, CancellationToken ct)
@@ -955,11 +1241,12 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
     /// Sends <paramref name="call"/>, signed for the region its bucket lives in. A bucket that turns
     /// out to be elsewhere — the server answers 301 or 400 and names the region in
     /// <c>x-amz-bucket-region</c> or in the error — is remembered there and the request sent once more.
+    /// A 307 is followed each time and not remembered (<see cref="SendFollowingAsync"/>).
     /// </summary>
     private async Task<HttpResponseMessage> SendAsync(S3Call call, CancellationToken ct)
     {
         var credentials = Credentials();
-        var response = await SendOnceAsync(call, credentials, ct);
+        var response = await SendFollowingAsync(call, credentials, ct);
         if (call.Bucket is null
             || response.StatusCode is not (HttpStatusCode.MovedPermanently or HttpStatusCode.BadRequest))
         {
@@ -985,7 +1272,77 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
 
         response.Dispose();
         _locations[call.Bucket] = new BucketLocation(region, S3Endpoint.RetargetHost(current.Host, current.Region, region));
-        return await SendOnceAsync(call, credentials, ct);
+        return await SendFollowingAsync(call, credentials, ct);
+    }
+
+    /// <summary>
+    /// Sends <paramref name="call"/> and follows a 307 (TemporaryRedirect, a bucket whose DNS is still
+    /// settling after it was created or moved), at most <see cref="MaxRedirects"/> times. Each hop is a
+    /// new request: built afresh with a fresh body from the call's factory and signed for the new host
+    /// and region, so no <c>Authorization</c> travels from one host to the next. AWS asks to keep using
+    /// the original endpoint afterwards, so this one call goes there and the next starts over.
+    /// </summary>
+    private async Task<HttpResponseMessage> SendFollowingAsync(S3Call call, S3Credentials? credentials, CancellationToken ct)
+    {
+        var location = Location(call.Bucket);
+        for (var hops = 0; ; hops++)
+        {
+            var response = await SendOnceAsync(call, location, credentials, ct);
+            if (response.StatusCode != HttpStatusCode.TemporaryRedirect)
+            {
+                return response;
+            }
+
+            BucketLocation? next;
+            try
+            {
+                next = await RedirectTargetAsync(call, response, location, hops, ct);
+            }
+            catch
+            {
+                response.Dispose();
+                throw;
+            }
+
+            // Names no address: an error like any other, for the caller to report.
+            if (next is null)
+            {
+                return response;
+            }
+
+            response.Dispose();
+            location = next;
+        }
+    }
+
+    private async Task<BucketLocation?> RedirectTargetAsync(
+        S3Call call, HttpResponseMessage response, BucketLocation from, int hops, CancellationToken ct)
+    {
+        // Read into memory so that the caller can still read the error if this leads nowhere.
+        await response.Content.LoadIntoBufferAsync(ct);
+        var error = S3Response.ParseError(await response.Content.ReadAsStringAsync(ct));
+        var redirect = _endpoint.ReadRedirect(call.Bucket, response.Headers.Location, error?.Endpoint);
+        if (redirect is null)
+        {
+            return null;
+        }
+
+        if (!redirect.Allowed)
+        {
+            throw new S3Exception(
+                $"The server redirected the request to \"{redirect.Host}\", which is not a server of \"{_endpoint.Host}\". " +
+                "The request was not sent there: check the endpoint of the connection.",
+                HttpStatusCode.TemporaryRedirect, "TemporaryRedirect");
+        }
+
+        if (hops >= MaxRedirects)
+        {
+            throw new S3Exception(
+                $"The server keeps redirecting the request (now to \"{redirect.Host}\"): try again in a while.",
+                HttpStatusCode.TemporaryRedirect, "TemporaryRedirect");
+        }
+
+        return new BucketLocation(RegionHeader(response) ?? error?.Region ?? redirect.Region ?? from.Region, redirect.Host);
     }
 
     private async Task<string?> RedirectRegionAsync(
@@ -1009,16 +1366,17 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         // whatever the answer is.
         if (response.StatusCode == HttpStatusCode.MovedPermanently && !(call.Method == HttpMethod.Head && call.Key.Length == 0))
         {
-            using var probe = await SendOnceAsync(new S3Call(HttpMethod.Head, call.Bucket, string.Empty), credentials, ct);
+            using var probe = await SendOnceAsync(
+                new S3Call(HttpMethod.Head, call.Bucket, string.Empty), Location(call.Bucket), credentials, ct);
             return RegionHeader(probe);
         }
 
         return null;
     }
 
-    private async Task<HttpResponseMessage> SendOnceAsync(S3Call call, S3Credentials? credentials, CancellationToken ct)
+    private async Task<HttpResponseMessage> SendOnceAsync(
+        S3Call call, BucketLocation location, S3Credentials? credentials, CancellationToken ct)
     {
-        var location = Location(call.Bucket);
         using var request = new HttpRequestMessage(
             call.Method, _endpoint.BuildUri(call.Bucket, call.Key, call.Query, location.Host));
         foreach (var (name, value) in call.Headers)
@@ -1072,7 +1430,7 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
         if (response.StatusCode == HttpStatusCode.PreconditionFailed)
         {
             response.Dispose();
-            throw new IOException($"\"{name}\" already exists.");
+            throw new ObjectAlreadyExistsException($"\"{name}\" already exists.");
         }
 
         if (response.StatusCode == HttpStatusCode.NotImplemented && call.Headers.Contains(IfNoneMatchAny))
@@ -1120,15 +1478,25 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
             response.StatusCode, error?.Code);
     }
 
-    /// <summary>CopyObject and CompleteMultipartUpload can answer 200 and fail afterwards: the error then is the body.</summary>
-    private async Task ThrowIfErrorBodyAsync(HttpResponseMessage response, string bucket, string key, CancellationToken ct)
+    /// <summary>CopyObject, UploadPartCopy and CompleteMultipartUpload can answer 200 and fail afterwards: the error then is the body.</summary>
+    private async Task ThrowIfErrorBodyAsync(HttpResponseMessage response, string bucket, string key, CancellationToken ct) =>
+        ThrowIfError(await response.Content.ReadAsStringAsync(ct), response, bucket, key);
+
+    private void ThrowIfError(string body, HttpResponseMessage response, string bucket, string key)
     {
-        var error = S3Response.ParseError(await response.Content.ReadAsStringAsync(ct));
+        var error = S3Response.ParseError(body);
         if (error is not null)
         {
+            // The status is the 200 sent before the failure happened; the code says what kind of failure it is.
+            var status = error.Code switch
+            {
+                "InternalError" => HttpStatusCode.InternalServerError,
+                "SlowDown" or "ServiceUnavailable" => HttpStatusCode.ServiceUnavailable,
+                _ => response.StatusCode,
+            };
             throw new S3Exception(
                 S3Exception.Describe(HttpStatusCode.InternalServerError, error, bucket, key, Credentials() is null),
-                response.StatusCode, error.Code);
+                status, error.Code);
         }
     }
 
@@ -1225,8 +1593,9 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
 
     private static HttpClient CreateClient()
     {
-        // No redirects followed: S3's 307 points at another host, and the signature of this one would
-        // go along to it. No overall timeout either: HttpClient.Timeout limits the whole exchange, which
+        // No redirects followed by the handler: S3's 307 points at another host, and the signature of this
+        // one would go along to it (SendFollowingAsync signs anew and checks where it goes). No overall
+        // timeout either: HttpClient.Timeout limits the whole exchange, which
         // would cut off any transfer longer than it; metadata calls get their own.
         var handler = new SocketsHttpHandler { ConnectTimeout = TimeSpan.FromSeconds(15), AllowAutoRedirect = false };
         return new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
@@ -1243,55 +1612,30 @@ public sealed class S3FileSystem : IVirtualFileSystem, IRangeReader, IReadLinkSo
             ? etag
             : null;
 
-    private static async Task<string> HashRangeAsync(FileStream body, long start, long size, CancellationToken ct)
+    private static async Task<string> HashRangeAsync(SafeFileHandle file, long start, long size, CancellationToken ct)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var buffer = new byte[81920];
-        body.Position = start;
-        var left = size;
-        while (left > 0)
+        long done = 0;
+        while (done < size)
         {
-            var read = await body.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, left)), ct);
+            var read = await RandomAccess.ReadAsync(file, buffer.AsMemory(0, (int)Math.Min(buffer.Length, size - done)), start + done, ct);
             if (read == 0)
             {
                 throw new EndOfStreamException("The upload's temporary copy ended early.");
             }
 
             hash.AppendData(buffer, 0, read);
-            left -= read;
+            done += read;
         }
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
     }
 
-    /// <summary>
-    /// The type a browser opening a presigned link needs to show the file rather than download it;
-    /// <c>application/octet-stream</c> for anything else.
-    /// </summary>
-    private static MediaTypeHeaderValue ContentTypeFor(string key) => new(Path.GetExtension(key).ToLowerInvariant() switch
-    {
-        ".html" or ".htm" => "text/html",
-        ".css" => "text/css",
-        ".js" or ".mjs" => "text/javascript",
-        ".json" => "application/json",
-        ".txt" or ".log" or ".md" or ".csv" => "text/plain",
-        ".xml" => "application/xml",
-        ".svg" => "image/svg+xml",
-        ".png" => "image/png",
-        ".jpg" or ".jpeg" => "image/jpeg",
-        ".gif" => "image/gif",
-        ".webp" => "image/webp",
-        ".ico" => "image/x-icon",
-        ".pdf" => "application/pdf",
-        ".wasm" => "application/wasm",
-        ".mp4" => "video/mp4",
-        ".zip" => "application/zip",
-        _ => "application/octet-stream",
-    });
-
     private sealed record BucketLocation(string Region, string Host);
 
-    private sealed record ObjectInfo(long Size, DateTime LastModified);
+    private sealed record ObjectInfo(
+        long Size, DateTime LastModified, string? ETag, IReadOnlyList<KeyValuePair<string, string>> Stored);
 
     private enum CallKind
     {

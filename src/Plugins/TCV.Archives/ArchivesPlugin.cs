@@ -36,7 +36,10 @@ public sealed class ArchivesPlugin : IArchivePlugin
     /// Creates an <see cref="ArchiveFileSystem"/> for the given archive file path.
     /// </summary>
     /// <param name="rootPath">Absolute path to the archive file (e.g. "C:\files\archive.zip").</param>
-    /// <param name="options">Optional options. Supported key: "password".</param>
+    /// <param name="options">
+    /// Optional options. Supported keys: "password", and <see cref="ArchiveFileSystem.ScratchCopyOption"/>
+    /// for a file that is a temporary copy of the archive.
+    /// </param>
     /// <exception cref="ArchivePasswordRequiredException">
     /// Thrown when the archive is encrypted and no (or wrong) password was supplied.
     /// </exception>
@@ -77,7 +80,9 @@ public sealed class ArchivesPlugin : IArchivePlugin
             RememberPassword(rootPath, password);
         }
 
-        return new ArchiveFileSystem(rootPath, engine, entries);
+        var isScratchCopy = options is not null && options.TryGetValue(ArchiveFileSystem.ScratchCopyOption, out var scratch)
+            && !string.Equals(scratch, "false", StringComparison.OrdinalIgnoreCase);
+        return new ArchiveFileSystem(rootPath, engine, entries, isScratchCopy);
     }
 
     public TCV.Core.PluginSdk.IArchiveEngine CreateEngine(string archivePath, string? password = null)

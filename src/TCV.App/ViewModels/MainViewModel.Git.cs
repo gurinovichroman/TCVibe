@@ -460,7 +460,7 @@ public partial class MainViewModel
         var definition = WorkspaceProjectFile.Load(file);
         if (definition is null) return;
 
-        await Workspaces.ApplyDefinition(WorkspaceProjectFile.ToWorkspace(definition, file));
+        await Workspaces.ApplyDefinition(definition, file);
     }
 
     // ─────────────────────────────── Shared helpers ───────────────────────────────

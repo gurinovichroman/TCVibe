@@ -13,6 +13,13 @@ public sealed class AppSettings : System.Text.Json.Serialization.IJsonOnDeserial
     public LayoutSettings Layout { get; set; } = new();
     public Dictionary<string, string> Hotkeys { get; set; } = new();
     public List<ColorRule> ColorRules { get; set; } = new();
+    /// <summary>The templates of Num+ (select by mask). A missing key gives the shipped ones; a list the
+    /// user emptied stays empty.</summary>
+    public List<TCV.App.Selection.SelectionTemplate> SelectionTemplates { get; set; } = TCV.App.Selection.SelectionTemplate.CreateBuiltins();
+    /// <summary>The masks typed into Num+, newest first (<see cref="TCV.App.Selection.SelectionHistory"/>).</summary>
+    public List<string> SelectionMaskHistory { get; set; } = new();
+    /// <summary>Whether Num+ marks folders with plain masks too; the dialog remembers the last choice.</summary>
+    public bool SelectionIncludeFolders { get; set; }
     /// <summary>
     /// Only the settings bundle (6.20) fills this: the live list is kept by the user-tools plugin in
     /// its own store, and an export copies it here so the file carries it.
@@ -93,6 +100,8 @@ public sealed class AppSettings : System.Text.Json.Serialization.IJsonOnDeserial
         Layout ??= new();
         Hotkeys ??= new();
         ColorRules ??= new();
+        SelectionTemplates ??= new();
+        SelectionMaskHistory ??= new();
         UserTools ??= new();
         Bookmarks ??= new();
         Updates ??= new();
@@ -527,7 +536,7 @@ public sealed class ThemeSettings
 {
     public string ThemeName { get; set; } = "Dark";
     public bool UseSystemTheme { get; set; } = false;
-    /// <summary>UI language code: "en" or "ru". Empty = detect from system.</summary>
+    /// <summary>UI language code, one of <c>LocalizationManager.SupportedLanguages</c>. Empty = detect from system.</summary>
     public string Language { get; set; } = string.Empty;
 
     /// <summary>

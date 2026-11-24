@@ -406,7 +406,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <StackPanel Orientation="Horizontal" Background="Transparent" SnapsToDevicePixels="True">
+                    <!-- A Grid, not a StackPanel: a StackPanel gives the content all the width it asks for,
+                         and a long label in a translation ran off the window instead of wrapping. -->
+                    <Grid Background="Transparent" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
                         <Border x:Name="Box" Width="15" Height="15" VerticalAlignment="Center"
                                 CornerRadius="3" BorderThickness="1"
                                 Background="{DynamicResource BackgroundBrush}"
@@ -421,9 +427,9 @@
                                            Fill="{DynamicResource AccentForegroundBrush}" />
                             </Grid>
                         </Border>
-                        <ContentPresenter x:Name="Content" Margin="{TemplateBinding Padding}"
+                        <ContentPresenter x:Name="Content" Grid.Column="1" Margin="{TemplateBinding Padding}"
                                           VerticalAlignment="Center" RecognizesAccessKey="True" />
-                    </StackPanel>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="HasContent" Value="False">
                             <Setter TargetName="Content" Property="Margin" Value="0" />
@@ -1339,6 +1345,11 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- A workspace in a menu, the header being the workspace (MainWindow.WorkspaceMenuItem). -->
+    <DataTemplate x:Key="WorkspaceMenuHeader">
+        <ctrl:WorkspaceLabel Picture="{Binding IconImage}" Text="{Binding DisplayName}" TextBesidePicture="{Binding Name}" />
+    </DataTemplate>
 
     <!-- The menu bar is a card strip: the same plane as the window chrome around it. -->
     <Style TargetType="Menu">

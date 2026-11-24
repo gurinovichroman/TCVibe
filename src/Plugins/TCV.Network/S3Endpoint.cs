@@ -144,6 +144,107 @@ internal sealed partial class S3Endpoint
         return changed ? string.Join('.', labels) : host;
     }
 
+    /// <summary>
+    /// Reads where a 307 sends a request: the <c>Location</c> header, else the <c>&lt;Endpoint&gt;</c> of
+    /// the error body (a host and nothing more). Null when the answer names no address. Only the host
+    /// is taken: the request stays the same request, so the path and query of the new address play no part.
+    /// </summary>
+    /// <remarks>
+    /// A redirect is followed only to the provider the connection is for: same scheme, so https never
+    /// falls back to http; same port; same base zone (<see cref="IsSameZone"/>). A signature is made for
+    /// one host and a request carries the user's data, so neither goes to an address a server merely
+    /// named. The base zone is taken from the connection's own host, so a chain of redirects cannot
+    /// walk away from it step by step.
+    /// </remarks>
+    public S3Redirect? ReadRedirect(string? bucket, Uri? location, string? namedEndpoint)
+    {
+        var fromHeader = location is { IsAbsoluteUri: true };
+        Uri? target = fromHeader ? location : null;
+        if (target is null
+            && (string.IsNullOrWhiteSpace(namedEndpoint)
+                || !Uri.TryCreate($"{Scheme}://{namedEndpoint.Trim()}", UriKind.Absolute, out target)))
+        {
+            return null;
+        }
+
+        var host = target.Host;
+        if (bucket is not null && host.StartsWith(bucket + ".", StringComparison.OrdinalIgnoreCase))
+        {
+            // The virtual-hosted form: BuildUri puts the bucket back, or into the path.
+            host = host[(bucket.Length + 1)..];
+        }
+
+        var allowed = host.Length > 0
+                      && target.Scheme == Scheme
+                      && (!fromHeader || target.Port == Port)
+                      && IsSameZone(Host, host);
+        return new S3Redirect(host, RegionInHost(host), allowed);
+    }
+
+    /// <summary>
+    /// True when <paramref name="other"/> is <paramref name="host"/> or lies in its base zone. An address
+    /// or a local name has no zone, only itself.
+    /// </summary>
+    public static bool IsSameZone(string host, string other)
+    {
+        if (host.Equals(other, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return BaseZone(host) is { } zone
+               && (other.Equals(zone, StringComparison.OrdinalIgnoreCase)
+                   || other.EndsWith("." + zone, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The registered domain of <paramref name="host"/>: <c>amazonaws.com</c> for any AWS endpoint. A
+    /// country's own second level (<c>amazonaws.com.cn</c>, <c>example.co.uk</c>) takes one label more, so
+    /// the zone is never all of <c>co.uk</c>. Without a list of public suffixes a short domain under a
+    /// country code (<c>abc.de</c>) also counts as such a level: a zone too narrow refuses a redirect,
+    /// one too wide would follow it to a stranger. Null for an address or a name without a dot.
+    /// </summary>
+    public static string? BaseZone(string host)
+    {
+        if (IsAddressOrLocal(host))
+        {
+            return null;
+        }
+
+        var labels = host.Split('.');
+        if (labels.Length < 2)
+        {
+            return null;
+        }
+
+        var keep = labels[^1].Length == 2 && labels[^2].Length <= 3 ? 3 : 2;
+        return labels.Length <= keep ? host : string.Join('.', labels[^keep..]);
+    }
+
+    /// <summary>
+    /// The region an S3 host name states: <c>s3.eu-west-1.…</c>, <c>s3-eu-west-1.…</c>,
+    /// <c>s3.dualstack.eu-west-1.…</c>. Null when it states none (<c>s3.amazonaws.com</c>,
+    /// <c>s3-accelerate.…</c>, a host of another shape): the signature then keeps its region, and a store
+    /// that disagrees says so with a 400 that <c>SendAsync</c> already acts on.
+    /// </summary>
+    public static string? RegionInHost(string host)
+    {
+        if (BaseZone(host) is not { } zone || host.Length <= zone.Length)
+        {
+            return null;
+        }
+
+        var labels = host[..^(zone.Length + 1)].Split('.');
+        if (labels[0] != "s3" && !labels[0].StartsWith("s3-", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var last = labels[^1];
+        var region = last.StartsWith("s3-", StringComparison.Ordinal) ? last[3..] : last;
+        return RegionName().IsMatch(region) ? region : null;
+    }
+
     private static bool IsAddressOrLocal(string host) =>
         IPAddress.TryParse(host.Trim('[', ']'), out _)
         || host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
@@ -151,4 +252,11 @@ internal sealed partial class S3Endpoint
 
     [GeneratedRegex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")]
     private static partial Regex DnsCompatibleBucket();
+
+    /// <summary>Words joined by hyphens with a digit somewhere: <c>eu-west-1</c>, <c>ru-central1</c>; not <c>accelerate</c> or <c>fips</c>.</summary>
+    [GeneratedRegex("^(?=.*[0-9])[a-z]+(-[a-z0-9]+)+$")]
+    private static partial Regex RegionName();
 }
+
+/// <summary>Where a 307 sends a request: the endpoint host, the region it states if any, and whether it may be followed.</summary>
+internal sealed record S3Redirect(string Host, string? Region, bool Allowed);

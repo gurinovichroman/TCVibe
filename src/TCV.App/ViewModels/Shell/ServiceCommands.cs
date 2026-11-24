@@ -129,7 +129,7 @@ public sealed partial class ServiceCommands : ObservableObject
         // and the checksum file is offered in the folder the panel works in.
         if (await _shell.WorkingFolderOrRejectAsync(LocalizationManager.Get("Checksum_Unavailable")) is not { } folder) return;
 
-        var vm = new ChecksumDialogViewModel(selected, folder, _checksumEngine);
+        var vm = new ChecksumDialogViewModel(selected, folder, _checksumEngine, _dialogs);
         await _dialogs.ShowChecksumAsync(vm);
     }
 
@@ -314,12 +314,12 @@ public sealed partial class ServiceCommands : ObservableObject
     // Plugin Manager dialog (3.3)
     [RelayCommand]
     private Task OpenPluginManager() =>
-        _dialogs.ShowPluginManagerAsync(new PluginManagerDialogViewModel(_pluginHost, _pluginLoader));
+        _dialogs.ShowPluginManagerAsync(new PluginManagerDialogViewModel(_pluginHost, _pluginLoader, _dialogs));
 
     // Hotkey Settings dialog (3.5)
     [RelayCommand]
     private Task OpenHotkeySettings() =>
-        _dialogs.ShowHotkeySettingsAsync(new HotkeySettingsDialogViewModel(_hotkeyManager, _settings, _serializer));
+        _dialogs.ShowHotkeySettingsAsync(new HotkeySettingsDialogViewModel(_hotkeyManager, _settings, _serializer, _dialogs));
 
     // ── Help > feedback (ADR-0036): bugs go to the issue form, the rest to discussions ──
 
@@ -500,11 +500,23 @@ public sealed partial class ServiceCommands : ObservableObject
             return;
         }
 
+        // F4 edits go up before the hand-over, with the window alive: the updater would not wait for
+        // them, and it may end this process before the copies were named. Any that stay behind stop the
+        // update: it stays downloaded, the sessions go on (TRAP-72, TRAP-105).
+        var (clean, copies) = await _shell.FlushRemoteEditsBeforeUpdateAsync();
+        if (!clean)
+        {
+            await _dialogs.ShowInfoAsync(title, string.Format(
+                LocalizationManager.Get("Update_EditsNotUploaded"), string.Join(Environment.NewLine, copies)));
+            return;
+        }
+
         // The window stayed usable while the workspace windows closed. Checked again with nothing
         // awaited between here and the exit: a close cancelled over running work would leave the
         // updater waiting, and it kills this process when its wait runs out (TRAP-72).
         if (_shell.HasRunningWork)
         {
+            _shell.ResumeRemoteEditsAfterFlush();
             await _dialogs.ShowInfoAsync(title, LocalizationManager.Get("Update_Busy"));
             return;
         }
@@ -516,12 +528,17 @@ public sealed partial class ServiceCommands : ObservableObject
         }
         catch (Exception ex)
         {
+            _shell.ResumeRemoteEditsAfterFlush();
             await _dialogs.ShowErrorAsync(title, string.Format(LocalizationManager.Get("Update_ApplyFailed"), ex.Message));
             return;
         }
 
+        UpdateHandedOver = true;
         _shell.RequestExit();
     }
+
+    /// <summary>The updater is waiting for this process to exit (TRAP-72).</summary>
+    public bool UpdateHandedOver { get; private set; }
 
     /// <summary>
     /// Says, once the window is up, that a downloaded update is not installed. Either the install

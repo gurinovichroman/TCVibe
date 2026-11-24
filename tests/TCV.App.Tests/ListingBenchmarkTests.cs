@@ -8,6 +8,83 @@ using Xunit.Abstractions;
 
 namespace TCV.App.Tests;
 
+/// <summary>What the listing may cost: the rule, apart from the timing, so that it can be tested.</summary>
+internal static class ListingBudget
+{
+    /// <summary>docs/VISION.md budget — opening a directory of 10 000 files.</summary>
+    public const int BudgetMs = 500;
+
+    /// <summary>
+    /// OS walks in one run of the yardstick, which makes it about as long as a listing. It has to be:
+    /// load does not stretch short work and long work alike. One walk (15 ms) can fit in a single
+    /// scheduler quantum and costs 13 ms under any load, while the listing (50 ms and a collection) is
+    /// preempted, so the ratio to one walk went from ×4 on a quiet machine to ×15 under CPU load. To four
+    /// walks it stayed between ×0.4 and ×1.1 at every load tried.
+    /// </summary>
+    public const int WalksPerYardstick = 4;
+
+    /// <summary>
+    /// How much longer than the yardstick the listing may take: above the ×1.1 ever measured, while
+    /// a listing grown by ×2.3 from its usual ×0.65 no longer fits, let alone one ten times slower.
+    /// </summary>
+    public const double MaxTimesYardstick = 1.5;
+
+    /// <summary>
+    /// Above this per walk, the disk alone eats the budget: on such a machine the absolute assertion
+    /// would be testing the hardware, not this code.
+    /// </summary>
+    public const int WalkCeilingMs = 125;
+
+    public static double RelativeAllowance(double yardstickMs) => yardstickMs * MaxTimesYardstick;
+
+    public static bool AbsoluteBudgetApplies(double yardstickMs) => yardstickMs / WalksPerYardstick <= WalkCeilingMs;
+
+    public static bool Fits(double yardstickMs, double listingMs) =>
+        listingMs < RelativeAllowance(yardstickMs)
+        && (!AbsoluteBudgetApplies(yardstickMs) || listingMs < BudgetMs);
+}
+
+/// <summary>
+/// The benchmark runs by itself, after the parallel tests of this assembly: a listing goes through the
+/// thread pool and pays for collections, so tests running beside it in the same process charge it for
+/// their own work. Its 10 000 files, in turn, do not get in the way of theirs.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ListingBenchmarkCollection
+{
+    public const string Name = "Listing benchmark";
+}
+
+/// <summary>A directory of 10 000 empty files: the requirement is about enumerating it, not reading it.</summary>
+/// <remarks>Creating them takes 6 s on a quiet machine and 20 s on a busy one, and none of it is timed.</remarks>
+public sealed class TenThousandFiles : IDisposable
+{
+    public const int Count = 10_000;
+
+    public TenThousandFiles()
+    {
+        Directory.CreateDirectory(Dir);
+        for (var i = 0; i < Count; i++)
+        {
+            File.WriteAllBytes(Path.Combine(Dir, $"file-{i:D5}.txt"), []);
+        }
+    }
+
+    public string Dir { get; } = Path.Combine(Path.GetTempPath(), "tcv-bench-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        try
+        {
+            Directory.Delete(Dir, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort cleanup.
+        }
+    }
+}
+
 /// <summary>
 /// The automated half of task 6.25: the «open a directory of 10 000 files in under 500 ms»
 /// budget from <c>docs/VISION.md</c>, turned into something that fails when it regresses.
@@ -16,141 +93,101 @@ namespace TCV.App.Tests;
 /// </summary>
 /// <remarks>
 /// Two assertions, because an absolute millisecond budget alone is either flaky or meaningless:
-/// <list type="bullet">
-///   <item>the <b>relative</b> one — our listing may cost at most a small multiple of what the OS
-///   itself charges to enumerate the same directory. That is the number a regression moves. It is
-///   asserted only when the machine is quiet enough to measure it: on a warm cache the OS walk
-///   costs single-digit milliseconds, so the margin is tens of milliseconds and a contended runner
-///   can blow through it with no regression at all. The run-to-run spread of the repeated
-///   measurements is the yardstick for «quiet enough».</item>
-///   <item>the <b>absolute</b> 500 ms is asserted only when the machine's own enumeration is fast
-///   enough for the product requirement to be reachable at all; otherwise the measurement is
-///   reported and the budget is left to the benchmark script on real hardware.</item>
-/// </list>
-/// Both gates report what they skipped and why — a silent pass on a noisy box would read as a
-/// clean run.
+/// the <b>relative</b> one, against a yardstick of the OS walking the same directory, is the number a
+/// regression moves; the <b>absolute</b> 500 ms is asserted when the machine's own walk is fast enough
+/// for it to be reachable at all, and otherwise reported, leaving it to the benchmark script on real
+/// hardware. How the two are timed so that neither depends on what else the machine is doing:
+/// <see cref="PairedBenchmark"/>.
 /// </remarks>
-public class ListingBenchmarkTests : IDisposable
+[Collection(ListingBenchmarkCollection.Name)]
+public sealed class ListingBenchmarkTests(TenThousandFiles files, ITestOutputHelper output) : IClassFixture<TenThousandFiles>
 {
-    private const int FileCount = 10_000;
-
-    /// <summary>docs/VISION.md budget — opening a directory of 10 000 files.</summary>
-    private const int BudgetMs = 500;
+    /// <summary>Rounds a verdict rests on.</summary>
+    private const int Window = 5;
 
     /// <summary>
-    /// Above this, the disk alone eats the budget: on such a machine the absolute assertion would
-    /// be testing the hardware, not this code.
+    /// With the pauses, several seconds of giving a burst the time to pass. Only a run that keeps
+    /// failing gets that far: a machine under steady load stretches the yardstick as well, and fits.
     /// </summary>
-    private const int BaselineCeilingMs = 125;
+    private const int MaxRounds = 30;
 
-    /// <summary>How much of a markup over the OS enumeration our listing may cost. It builds a
-    /// <c>FileEntry</c> per row on top of the same <c>FindFirstFile</c> walk, so the honest number is
-    /// small — measured at ×2.5 with the baseline below.</summary>
-    private const double MaxOverheadFactor = 2.5;
+    private const int PauseBetweenRoundsMs = 200;
 
-    /// <summary>
-    /// Scheduling noise the relative budget absorbs on top of the markup — and, by the same token,
-    /// the most run-to-run jitter the baseline may show before the measurement is worth nothing:
-    /// if repeating the identical OS walk already swings by more than this, so can our listing, and
-    /// a failure would say «the runner was busy», not «the listing got slower».
-    /// </summary>
-    private const int NoiseAllowanceMs = 50;
-
-    private readonly ITestOutputHelper _output;
-    private readonly string _dir = Path.Combine(
-        Path.GetTempPath(), "tcv-bench-" + Guid.NewGuid().ToString("N"));
-
-    public ListingBenchmarkTests(ITestOutputHelper output)
-    {
-        _output = output;
-        Directory.CreateDirectory(_dir);
-        // Empty files: the requirement is about enumerating a directory, not about reading it.
-        for (int i = 0; i < FileCount; i++)
-            File.WriteAllBytes(Path.Combine(_dir, $"file-{i:D5}.txt"), []);
-    }
-
-    public void Dispose()
-    {
-        try { Directory.Delete(_dir, recursive: true); } catch { /* best effort */ }
-    }
+    private readonly WindowsFileSystem _fs = new(NullLogger<WindowsFileSystem>.Instance);
+    private readonly VfsPath _path = new(files.Dir);
 
     [Fact]
     public async Task Listing_10_000_files_stays_within_the_product_budget()
     {
-        var fs = new WindowsFileSystem(NullLogger<WindowsFileSystem>.Instance);
-        var path = new VfsPath(_dir);
+        // Something that lists nothing would be very fast.
+        (await _fs.ListAsync(_path)).Should().HaveCount(TenThousandFiles.Count);
 
-        // Warm-up: the first pass pays for the directory metadata cache, and no user meets a
-        // stone-cold cache twice in a row on the folder they are working in.
-        (await fs.ListAsync(path)).Should().HaveCount(FileCount);
-        _ = Baseline();
+        var result = PairedBenchmark.Run(
+            Yardstick, () => TimeMs(ListOnce), ListingBudget.Fits, Window, MaxRounds,
+            () => Thread.Sleep(PauseBetweenRoundsMs));
 
-        var baselineSamples = SamplesMs(() => Baseline());
-        var listingSamples = SamplesMs(() => fs.ListAsync(path).GetAwaiter().GetResult());
+        output.WriteLine(
+            $"listing {TenThousandFiles.Count} entries: {result.SubjectMs:F1} ms · yardstick of " +
+            $"{ListingBudget.WalksPerYardstick} OS walks: {result.YardstickMs:F1} ms · " +
+            $"×{result.SubjectMs / result.YardstickMs:F2} (may be ×{ListingBudget.MaxTimesYardstick}) · " +
+            $"budget {ListingBudget.BudgetMs} ms · {result.Rounds} rounds");
 
-        var baseline = Median(baselineSamples);
-        var listing = Median(listingSamples);
-        // Spread of each series (sorted: slowest − fastest). A regression is uniform — every run
-        // pays it — so a wide spread is the machine talking, whichever series it shows up in.
-        var jitter = Math.Max(Spread(baselineSamples), Spread(listingSamples));
-        var allowance = (baseline * MaxOverheadFactor) + NoiseAllowanceMs;
+        result.SubjectMs.Should().BeLessThan(ListingBudget.RelativeAllowance(result.YardstickMs),
+            "the listing may only cost a small markup over what the OS charges for the same walk");
 
-        _output.WriteLine(
-            $"listing {FileCount} entries: {listing:F1} ms · OS baseline {baseline:F1} ms · " +
-            $"jitter {jitter:F1} ms · overhead ×{listing / Math.Max(baseline, 0.1):F2} · " +
-            $"allowance {allowance:F1} ms · budget {BudgetMs} ms");
-
-        if (jitter <= NoiseAllowanceMs)
+        if (ListingBudget.AbsoluteBudgetApplies(result.YardstickMs))
         {
-            listing.Should().BeLessThan(allowance,
-                "the listing may only cost a small markup over what the OS charges for the same walk");
-        }
-        else
-        {
-            _output.WriteLine(
-                $"relative budget not asserted: repeats of the same work swung by {jitter:F1} ms " +
-                $"(> {NoiseAllowanceMs} ms), so this machine is too busy to tell a regression from noise");
-        }
-
-        if (baseline <= BaselineCeilingMs)
-        {
-            listing.Should().BeLessThan(BudgetMs,
+            result.SubjectMs.Should().BeLessThan(ListingBudget.BudgetMs,
                 "docs/VISION.md requires a 10 000-file directory to open in under 500 ms");
         }
         else
         {
-            _output.WriteLine(
-                $"absolute budget not asserted: the OS itself needed {baseline:F1} ms " +
-                $"(> {BaselineCeilingMs} ms), so this machine cannot meet it — run tools/benchmark.ps1 instead");
+            output.WriteLine(
+                $"absolute budget not asserted: the OS itself needed {result.YardstickMs / ListingBudget.WalksPerYardstick:F1} ms " +
+                $"a walk (> {ListingBudget.WalkCeilingMs} ms), so this machine cannot meet it — run tools/benchmark.ps1 instead");
         }
     }
+
+    [Fact]
+    public void Run_ListingTenTimesSlower_DoesNotFit()
+    {
+        // The other half of a benchmark that does not fail under load: it still fails when it should,
+        // on this machine, right now, with the same timers. One window is enough to know.
+        var result = PairedBenchmark.Run(
+            Yardstick,
+            () => TimeMs(() =>
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    ListOnce();
+                }
+            }),
+            ListingBudget.Fits, Window, maxRounds: Window);
+
+        output.WriteLine($"ten listings: {result.SubjectMs:F1} ms · yardstick {result.YardstickMs:F1} ms");
+        result.Fits.Should().BeFalse("a listing ten times slower is the regression this benchmark exists for");
+    }
+
+    private void ListOnce() => _fs.ListAsync(_path).GetAwaiter().GetResult();
 
     /// <summary>
     /// The OS's own price for the same work: names <b>plus</b> attributes, size and timestamps.
     /// <c>GetFileSystemEntries</c> would be the cheaper and flattering comparison — it returns bare
     /// names, which is not what a file panel needs.
     /// </summary>
-    private FileSystemInfo[] Baseline() => new DirectoryInfo(_dir).GetFileSystemInfos();
-
-    /// <summary>
-    /// Three timed runs, sorted. The caller takes the median — one slow run (a background indexer,
-    /// a GC) must not decide the verdict — and reads the spread as how noisy the machine is.
-    /// </summary>
-    private static List<double> SamplesMs(Action action)
+    private double Yardstick() => TimeMs(() =>
     {
-        var samples = new List<double>();
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < ListingBudget.WalksPerYardstick; i++)
         {
-            var sw = Stopwatch.StartNew();
-            action();
-            sw.Stop();
-            samples.Add(sw.Elapsed.TotalMilliseconds);
+            _ = new DirectoryInfo(files.Dir).GetFileSystemInfos();
         }
-        samples.Sort();
-        return samples;
+    });
+
+    private static double TimeMs(Action action)
+    {
+        var sw = Stopwatch.StartNew();
+        action();
+        sw.Stop();
+        return sw.Elapsed.TotalMilliseconds;
     }
-
-    private static double Median(List<double> sortedSamples) => sortedSamples[sortedSamples.Count / 2];
-
-    private static double Spread(List<double> sortedSamples) => sortedSamples[^1] - sortedSamples[0];
 }

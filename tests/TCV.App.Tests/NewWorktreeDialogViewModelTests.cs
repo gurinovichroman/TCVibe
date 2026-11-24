@@ -156,6 +156,67 @@ public class NewWorktreeDialogViewModelTests
     }
 
     [Fact]
+    public async Task TargetPath_NewPathNotProbedYet_DoesNotInheritTheOldVerdict()
+    {
+        var full = Path.Combine(WorktreeRoot, "fix-login");
+        var other = Path.Combine(WorktreeRoot, "other");
+        using var otherAnswer = new ManualResetEventSlim();
+        var vm = CreateProbing(path =>
+        {
+            if (path == other)
+            {
+                otherAnswer.Wait(TimeSpan.FromSeconds(10));
+            }
+
+            return path == full;
+        });
+        vm.TaskTitle = "Fix login";
+        await vm.TargetProbe;
+        vm.CanConfirm.Should().BeFalse("the folder of the task is full");
+
+        vm.TargetPath = other;
+
+        // The message must not name the new folder with the old folder's verdict.
+        vm.CanConfirm.Should().BeTrue(vm.ValidationMessage);
+        vm.ValidationMessage.Should().BeEmpty();
+        otherAnswer.Set();
+        await vm.TargetProbe;
+        vm.CanConfirm.Should().BeTrue(vm.ValidationMessage);
+    }
+
+    [Fact]
+    public async Task TargetPath_FullFolderProbed_SaysSoAboutThatFolder()
+    {
+        var full = Path.Combine(WorktreeRoot, "fix-login");
+        var vm = CreateProbing(path => path == full);
+        vm.TaskTitle = "Fix login";
+        await vm.TargetProbe;
+
+        vm.CanConfirm.Should().BeFalse();
+        vm.ValidationMessage.Should().Contain("Git_WtPathNotEmpty");
+    }
+
+    [Fact]
+    public async Task TargetPath_NewPathTurnsOutFull_SaysSoWhenTheProbeAnswers()
+    {
+        var other = Path.Combine(WorktreeRoot, "other");
+        var vm = CreateProbing(path => path == other);
+        vm.TaskTitle = "Fix login";
+        await vm.TargetProbe;
+        vm.CanConfirm.Should().BeTrue();
+
+        vm.TargetPath = other;
+        await vm.TargetProbe;
+
+        vm.CanConfirm.Should().BeFalse();
+        vm.ValidationMessage.Should().Contain("Git_WtPathNotEmpty");
+    }
+
+    private static NewWorktreeDialogViewModel CreateProbing(Func<string, bool> folderHasContent) =>
+        new(RepositoryRoot, WorktreeRoot, Array.Empty<string>(), setupCommand: "", createWorkspaceByDefault: true,
+            folderHasContent: folderHasContent);
+
+    [Fact]
     public void Confirm_WithoutASetupCommand_NeverAsksForOne()
     {
         var vm = new NewWorktreeDialogViewModel(

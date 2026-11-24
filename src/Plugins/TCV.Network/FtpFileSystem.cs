@@ -2,13 +2,14 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using FluentFTP;
+using FluentFTP.Exceptions;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 
 namespace TCV.Network;
 
 /// <summary>IVirtualFileSystem backed by FTP/FTPS via FluentFTP.</summary>
-public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKeepAlive
+public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKeepAlive, IRangeReader
 {
     private readonly ConnectionInfo _conn;
     private readonly HostTrustPolicy? _trust;
@@ -98,6 +99,12 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         return policy.VerifyCertificate(conn.Host, conn.Port, subject, hash, chainIsValid, e.PolicyErrors.ToString());
     }
 
+    /// <summary>How long an upload waits for the server's reply after its data connection closed; tests shorten it.</summary>
+    internal TimeSpan UploadReplyWait { get; init; } = FtpFinalReply.DefaultWait;
+
+    /// <summary>How long a download at the end of its data waits for the server's word; tests shorten it.</summary>
+    internal TimeSpan DownloadReplyWait { get; init; } = FtpFinalReply.DefaultDownloadWait;
+
     public string Scheme => _conn.GetScheme();
     public string DisplayName => $"{_conn.Username}@{_conn.Host}";
 
@@ -115,11 +122,25 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
         try
         {
             await _client.Connect(ct);
+
+            // The server takes this login now, so a refusal of a spare connection may be out of date:
+            // a password corrected since, or a slot freed.
+            _transfers.AskAgain();
         }
-        catch (Exception ex) when (NetworkErrors.Find<HostKeyChangedException>(ex) is { } changed)
+        catch (Exception ex)
         {
-            // The one failure the user must read verbatim, not as "TLS handshake failed".
-            throw changed;
+            // FluentFTP leaves the socket open behind a failed connect (a refused login, a refused AUTH):
+            // IsConnected stays true, the next command skips the login and gets a 530, and the server
+            // keeps a slot for a session nobody can use (TRAP-101).
+            await DropDeadConnectionAsync();
+
+            if (NetworkErrors.Find<HostKeyChangedException>(ex) is { } changed)
+            {
+                // The one failure the user must read verbatim, not as "TLS handshake failed".
+                throw changed;
+            }
+
+            throw;
         }
     }
 
@@ -131,12 +152,23 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
             await EnsureConnectedAsync(ct);
             return await work();
         }
+        catch (Exception ex) when (IsRefusedLogin(ex))
+        {
+            await DropDeadConnectionAsync();
+            throw;
+        }
         finally
         {
             Touch();
             _gate.Release();
         }
     }
+
+    /// <summary>
+    /// FluentFTP reconnects by itself inside a command when it finds the session gone or stale, and that
+    /// login can be refused just like ours (TRAP-101).
+    /// </summary>
+    private static bool IsRefusedLogin(Exception ex) => NetworkErrors.Find<FtpAuthenticationException>(ex) is not null;
 
     private void Touch() => Interlocked.Exchange(ref _lastActivityTicks, DateTime.UtcNow.Ticks);
 
@@ -280,21 +312,75 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
     public Task<Stream> OpenWriteAsync(VfsPath path, bool overwrite = false, CancellationToken ct = default) =>
         OpenTransferAsync(path, download: false, (client, remotePath) => client.OpenWrite(remotePath, token: ct), ct);
 
+    /// <summary>A server that refused REST once is not asked again: every jump would pay for the refusal.</summary>
+    private volatile bool _restRefused;
+
+    /// <summary>
+    /// Opens the file at <paramref name="offset"/> with REST, so the viewer's End on a 2 GB file does not
+    /// download 2 GB (TRAP-106). The offset returned is where the stream really starts: 0 when the server
+    /// would not (no REST, or a reply the library will not take), and the caller then reads up to the
+    /// offset itself, as it always did. Nothing here proves the file is the version an earlier read saw:
+    /// FTP has no validator, so <paramref name="validator"/> goes unused and none comes back. The path goes
+    /// through <see cref="ToSendablePath"/> like every other (TRAP-94).
+    /// </summary>
+    public async Task<(Stream Stream, long Offset, long Total, string? Validator)> OpenReadFromAsync(
+        VfsPath path, long offset, string? validator, CancellationToken ct)
+    {
+        if (offset > 0 && !_restRefused)
+        {
+            try
+            {
+                var ranged = await OpenTransferAsync(
+                    path, download: true,
+                    (client, remotePath) => client.OpenRead(remotePath, FtpDataType.Binary, offset, token: ct), ct);
+                return (ranged, offset, 0, null);
+            }
+            catch (FtpCommandException)
+            {
+                // REST refused, or RETR after it (no such file): the plain open below says which. Thrown
+                // again from there, a real failure reads as it always did.
+                var whole = await OpenReadAsync(path, ct);
+                _restRefused = true;
+                return (whole, 0, 0, null);
+            }
+        }
+
+        return (await OpenReadAsync(path, ct), 0, 0, null);
+    }
+
     /// <summary>
     /// Opens a transfer stream on a connection of its own, so the panel keeps listing the server while
     /// the file streams. A kept connection the server has dropped meanwhile is replaced once. Without a
     /// spare connection the stream goes over the control one and holds the gate until it is closed.
+    /// An upload ends with the server's reply (<see cref="FtpFinalReply"/>), and the connection is handed
+    /// back only after it. <paramref name="ct"/> stays in force for that wait: closing the stream is the
+    /// last step of the transfer, and a stream's dispose takes no token. A download reads its reply when
+    /// the data runs out, under the token of that read.
     /// </summary>
     private async Task<Stream> OpenTransferAsync(
         VfsPath path, bool download, Func<AsyncFtpClient, string, Task<Stream>> open, CancellationToken ct)
     {
         var remotePath = ToRemotePath(path);
+        Func<Task>? ConfirmOn(AsyncFtpClient client) =>
+            download ? null : () => FtpFinalReply.ConfirmUploadAsync(client, remotePath, UploadReplyWait, ct);
+        Func<CancellationToken, Task>? ConfirmReadOn(AsyncFtpClient client) =>
+            download ? token => FtpFinalReply.ConfirmDownloadAsync(client, remotePath, DownloadReplyWait, token) : null;
+
         for (var attempt = 0; attempt < 2 && await _transfers.RentAsync(ct) is { } transfer; attempt++)
         {
             try
             {
                 var stream = await open(transfer, remotePath);
-                return new TransferStream(stream, download, reusable => _transfers.Return(transfer, reusable));
+                return new TransferStream(stream, download, reusable =>
+                {
+                    if (!download && !reusable)
+                    {
+                        // No QUIT behind an upload left unconfirmed: it would first wait out the reply still to come.
+                        transfer.Config.DisconnectWithQuit = false;
+                    }
+
+                    _transfers.Return(transfer, reusable);
+                }, ConfirmOn(transfer), ConfirmReadOn(transfer));
             }
             catch (Exception) when (!transfer.IsConnected && !ct.IsCancellationRequested && attempt == 0)
             {
@@ -315,16 +401,45 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
             var stream = await open(_client, remotePath);
 
             // The gate is handed back when the stream is closed, however the transfer went; a transfer counts as use.
-            return new TransferStream(stream, download, _ =>
+            return new TransferStream(stream, download, finished =>
             {
                 Touch();
-                _gate.Release();
-            });
+                if (download || finished)
+                {
+                    _gate.Release();
+                }
+                else
+                {
+                    _ = DropThenReleaseGateAsync();
+                }
+            }, ConfirmOn(_client), ConfirmReadOn(_client));
         }
-        catch
+        catch (Exception ex)
         {
+            if (IsRefusedLogin(ex))
+            {
+                await DropDeadConnectionAsync();
+            }
+
             _gate.Release();
             throw;
+        }
+    }
+
+    /// <summary>
+    /// An upload left without the server's word on it (aborted, closed without waiting): that word may
+    /// still be on its way, and the next command on this connection would take it for its own answer
+    /// (TRAP-100). The next use connects afresh.
+    /// </summary>
+    private async Task DropThenReleaseGateAsync()
+    {
+        try
+        {
+            await DropDeadConnectionAsync();
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
 
@@ -384,8 +499,19 @@ public sealed class FtpFileSystem : IVirtualFileSystem, IModifiedTimeWriter, IKe
                     : new Progress<FtpProgress>(p => progress.Report(new FileProgress(
                         p.TransferredBytes, 0, source.FileName, started.Elapsed)));
 
-                await client.DownloadFile(tempFile, sourcePath, FtpLocalExists.Overwrite, token: ct, progress: adapter);
-                await client.UploadFile(tempFile, ToRemotePath(destination), FtpRemoteExists.Overwrite, token: ct);
+                // The server's refusal comes back as a status here, not as an exception (TRAP-100).
+                var destinationPath = ToRemotePath(destination);
+                if (await FtpFinalReply.WithPatienceAsync(client, UploadReplyWait,
+                        () => client.DownloadFile(tempFile, sourcePath, FtpLocalExists.Overwrite, token: ct, progress: adapter)) == FtpStatus.Failed)
+                {
+                    throw new IOException($"The server did not give out \"{sourcePath}\".");
+                }
+
+                if (await FtpFinalReply.WithPatienceAsync(client, UploadReplyWait,
+                        () => client.UploadFile(tempFile, destinationPath, FtpRemoteExists.Overwrite, token: ct)) == FtpStatus.Failed)
+                {
+                    throw new IOException($"The server refused the upload of \"{destinationPath}\".");
+                }
             }
             finally
             {

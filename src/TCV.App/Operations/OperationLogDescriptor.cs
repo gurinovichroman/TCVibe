@@ -52,6 +52,14 @@ public sealed record OperationLogDescriptor(
     public string? ArrivedIn { get; init; }
 
     /// <summary>
+    /// The archive file an edit inside it rewrote: a rename, a new folder or a delete. The source of such
+    /// a line is a path inside the archive, which names nothing without it, and the file that changed on
+    /// the disk is the archive (TRAP-62). Null for everything else; a pack names its archive as the
+    /// destination.
+    /// </summary>
+    public string? ChangedArchive { get; init; }
+
+    /// <summary>
     /// A concise source description: the single item's full path, or the containing directory
     /// with the object count when several were selected.
     /// </summary>

@@ -166,6 +166,75 @@ public sealed class ArchiveEditTests : IDisposable
         fs.CanRenameAsBatch.Should().Be(writable);
     }
 
+    // ── A scratch copy: an archive opened from another archive or a server (TRAP-98) ─────
+
+    [Fact]
+    public void SupportsOperation_ScratchCopyOfAZip_OnlyReads()
+    {
+        using var fs = new ArchiveFileSystem(Zip(("a.txt", "A")), new ZipEngine(), isScratchCopy: true);
+
+        fs.CanEdit.Should().BeFalse();
+        fs.CanRenameAsBatch.Should().BeFalse();
+        fs.SupportsOperation(VfsOperation.Read).Should().BeTrue();
+        foreach (var edit in new[] { VfsOperation.Delete, VfsOperation.Copy, VfsOperation.Rename, VfsOperation.CreateDirectory })
+        {
+            fs.SupportsOperation(edit).Should().BeFalse(edit.ToString());
+        }
+    }
+
+    [Fact]
+    public async Task EveryEdit_ScratchCopyOfAZip_IsRefusedWithoutTouchingTheFile()
+    {
+        var zip = Zip(("a.txt", "A"));
+        var before = File.ReadAllBytes(zip);
+        using var fs = new ArchiveFileSystem(zip, new ZipEngine(), isScratchCopy: true);
+
+        Func<Task>[] edits =
+        [
+            () => fs.CreateDirectoryAsync(new VfsPath("/new"), CancellationToken.None),
+            () => fs.RenameAsync(new VfsPath("/a.txt"), "b.txt", CancellationToken.None),
+            () => fs.RenameBatchAsync([(new VfsPath("/a.txt"), "b.txt")], CancellationToken.None),
+            () => fs.AddFilesAsync([(string.Empty, "new/")], CancellationToken.None),
+        ];
+
+        foreach (var edit in edits)
+        {
+            await edit.Should().ThrowAsync<NotSupportedException>();
+        }
+
+        File.ReadAllBytes(zip).Should().Equal(before);
+    }
+
+    [Fact]
+    public void Create_ScratchCopyOption_OpensTheArchiveReadOnly()
+    {
+        var zip = Zip(("a.txt", "A"));
+        var plugin = new ArchivesPlugin();
+
+        using var scratch = (ArchiveFileSystem)plugin.Create(zip, new Dictionary<string, string> { [ArchiveFileSystem.ScratchCopyOption] = "true" });
+        using var own = (ArchiveFileSystem)plugin.Create(zip);
+
+        scratch.IsScratchCopy.Should().BeTrue();
+        scratch.CanEdit.Should().BeFalse();
+        own.IsScratchCopy.Should().BeFalse();
+        own.CanEdit.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AddFilesAsync_Zip_AddsFilesAndFoldersInOneRewrite_AndReadsTheNewListing()
+    {
+        var zip = Zip(("a.txt", "old"));
+        var local = Path.Combine(_dir, "local.txt");
+        File.WriteAllText(local, "new");
+        using var fs = new ArchiveFileSystem(zip, new ZipEngine());
+        await fs.ListAsync(new VfsPath("/"));
+
+        await fs.AddFilesAsync([(local, "a.txt"), (local, "dir/b.txt"), (string.Empty, "empty/")], CancellationToken.None);
+
+        Contents(zip).Should().Contain(new Dictionary<string, string> { ["a.txt"] = "new", ["dir/b.txt"] = "new", ["empty/"] = string.Empty });
+        (await fs.ListAsync(new VfsPath("/"))).Select(e => e.Name).Should().BeEquivalentTo("a.txt", "dir", "empty");
+    }
+
     [Fact]
     public async Task RenameAndCreateDirectory_ReadOnlyFormat_AreRefusedWithoutTouchingTheArchive()
     {

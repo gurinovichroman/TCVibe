@@ -78,7 +78,7 @@ public class ShellSettingsTests
         shell.Name.Should().Be("Ubuntu-24.04 (WSL)");
         shell.Command.Should().Be(ShellCatalog.WslProgram);
         ShellCommandLine.Build(@"C:\Program Files\WSL\wsl.exe", shell.Arguments, "ls -la | head", @"C:\x")
-            .Arguments.Should().Equal("-d", "Ubuntu-24.04", "-e", "bash", "-li", "-c", "ls -la | head; exec bash -li");
+            .Arguments.Should().Equal("-d", "Ubuntu-24.04", "-e", "bash", "-li", "-c", "eval 'ls -la | head'\nexec bash -li");
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class ShellSettingsTests
 
         var launch = ShellCommandLine.Build(@"C:\Program Files\Git\bin\bash.exe", bash.Arguments, "echo \"a b\"", @"C:\x");
 
-        launch.Arguments[^1].Should().Be("echo \"a b\"; exec bash --login -i");
+        launch.Arguments[^1].Should().Be("eval 'echo \"a b\"'\nexec bash --login -i");
     }
 
     [Fact]

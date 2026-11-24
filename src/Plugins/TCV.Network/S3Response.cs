@@ -13,8 +13,8 @@ internal sealed record S3ListPage(
 
 internal sealed record S3Bucket(string Name, DateTime Created);
 
-/// <summary>The <c>&lt;Error&gt;</c> document of a failed request.</summary>
-internal sealed record S3Error(string? Code, string? Message, string? Region);
+/// <summary>The <c>&lt;Error&gt;</c> document of a failed request; a 307 names where to go in <see cref="Endpoint"/>.</summary>
+internal sealed record S3Error(string? Code, string? Message, string? Region, string? Endpoint = null);
 
 internal sealed record S3DeleteFailure(string Key, string? Code, string? Message);
 
@@ -77,7 +77,11 @@ internal static class S3Response
                 .Select(e => new S3DeleteFailure(Value(e, "Key") ?? string.Empty, Value(e, "Code"), Value(e, "Message")))
                 .ToList();
 
-    /// <summary>The error document in <paramref name="body"/>, or null when it is empty or something else.</summary>
+    /// <summary>
+    /// The error document in <paramref name="body"/>, or null when it is empty or something else. The
+    /// body of a long copy may open with spaces: S3 sends them to keep the connection alive once it
+    /// has answered 200, and only then knows whether the copy worked.
+    /// </summary>
     public static S3Error? ParseError(string? body)
     {
         if (string.IsNullOrWhiteSpace(body))
@@ -87,10 +91,34 @@ internal static class S3Response
 
         try
         {
-            var root = XDocument.Parse(body).Root;
+            var root = XDocument.Parse(body.TrimStart()).Root;
             return root?.Name.LocalName == "Error"
-                ? new S3Error(Value(root, "Code"), Value(root, "Message"), Value(root, "Region"))
+                ? new S3Error(Value(root, "Code"), Value(root, "Message"), Value(root, "Region"), Value(root, "Endpoint"))
                 : null;
+        }
+        catch (XmlException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The ETag of a part made by UploadPartCopy. Unlike UploadPart it comes in the body
+    /// (<c>&lt;CopyPartResult&gt;</c>), not in a header. Null for anything else: a store that does not
+    /// know the operation may take the request for an empty part and answer 200 with the ETag of
+    /// nothing, and that ETag must not end up in the finished object (TRAP-103).
+    /// </summary>
+    public static string? ParseCopiedPartETag(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            var root = XDocument.Parse(body.TrimStart()).Root;
+            return root?.Name.LocalName == "CopyPartResult" && Value(root, "ETag") is { Length: > 0 } etag ? etag : null;
         }
         catch (XmlException)
         {

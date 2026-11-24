@@ -44,6 +44,21 @@ public sealed class TransferItem : INotifyPropertyChanged
     /// <summary>File name shown in the queue window.</summary>
     public string FileName => new VfsPath(SourcePath).FileName;
 
+    /// <summary>
+    /// A folder to make at the destination, not a file to move: what a folder put in the queue starts
+    /// with, so that it arrives even when empty and its files find it there.
+    /// </summary>
+    public bool IsFolder { get; init; }
+
+    /// <summary>The path under what was selected, for an item that came out of a folder: the bare name repeats too much there.</summary>
+    public string? DisplayPath { get; init; }
+
+    /// <summary>What the queue window names it.</summary>
+    public string DisplayName => DisplayPath ?? FileName;
+
+    /// <summary>Taken off the list (<see cref="TransferQueue.ClearFinished"/>) before the window got to show it.</summary>
+    internal bool Removed { get; set; }
+
     // ── Mutable state (updated by TransferQueue) ──────────────────────────────
 
     private TransferStatus _status = TransferStatus.Pending;
@@ -86,7 +101,8 @@ public sealed class TransferItem : INotifyPropertyChanged
 
     /// <summary>0–100, or 0 while the total size is still unknown.</summary>
     public double PercentComplete =>
-        TotalBytes > 0 ? Math.Min(100d, BytesTransferred * 100d / TotalBytes) : 0d;
+        IsFolder && Status == TransferStatus.Complete ? 100d
+        : TotalBytes > 0 ? Math.Min(100d, BytesTransferred * 100d / TotalBytes) : 0d;
 
     /// <summary>True for a transfer that has stopped for good (done, failed or cancelled).</summary>
     public bool IsFinished => Status is TransferStatus.Complete or TransferStatus.Failed or TransferStatus.Cancelled;
@@ -175,6 +191,10 @@ public sealed class TransferItem : INotifyPropertyChanged
         if (name == nameof(Status))
         {
             OnPropertyChanged(nameof(IsFinished));
+            if (IsFolder)
+            {
+                OnPropertyChanged(nameof(PercentComplete));
+            }
         }
 
         return true;

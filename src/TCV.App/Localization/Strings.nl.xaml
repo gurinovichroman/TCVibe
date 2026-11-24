@@ -19,10 +19,7 @@
 
     <!-- File list columns -->
     <sys:String x:Key="Col_Name">Naam</sys:String>
-    <sys:String x:Key="Col_Ext">Ext.</sys:String>
     <sys:String x:Key="Col_Size">Grootte</sys:String>
-    <sys:String x:Key="Col_Date">Datum</sys:String>
-    <sys:String x:Key="Col_Attr">Attr.</sys:String>
     <sys:String x:Key="Col_Computed">gemeten</sys:String>
     <sys:String x:Key="Col_Reset">Kolommen herstellen</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Comparing and synchronising directories, editing a remote file (6.23) -->
     <sys:String x:Key="Cmp_Title">Mappen vergelijken</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Er is niets aangevinkt om te kopiëren. Vink rijen aan of gebruik de pijl op een rij om de richting in te stellen.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">controleren of er niets is gewijzigd…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">Gewijzigd sinds de vergelijking: {0} {0:plural:bestand|bestanden}, het eerste is {1}. Er is niets gekopieerd. Klik op Vergelijken om de mappen te zien zoals ze nu zijn.</sys:String>
     <sys:String x:Key="Cmp_Compare">Vergelijken</sys:String>
     <sys:String x:Key="Cmp_Recursive">Submappen opnemen</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Identieke tonen</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Synchroniseren</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">De aangevinkte items kopiëren? In totaal {0}. Bestaande bestanden worden overschreven.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Extern bestand bewerken</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">"{0}" is geopend als tijdelijke kopie. Elke opgeslagen wijziging wordt teruggeüpload.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">"{0}" is geopend als tijdelijke kopie. Elke opgeslagen wijziging wordt teruggeüpload.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Het bestand kon niet worden opgehaald, of de bron is alleen-lezen.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Wijzigingen uploaden</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Opgeslagen wijzigingen zijn onderweg naar de server. Het programma sluit zodra ze zijn aangekomen.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">Als u niet wacht, gaat er niets verloren: de wijzigingen blijven in de lokale kopie, en het programma vertelt waar die staat.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Stoppen en de kopieën houden</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">Een upload is niet voltooid: het bestand op de server kan onvolledig zijn.</sys:String>
+    <sys:String x:Key="Fetch_Title">Bestand ophalen</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} is opgehaald, maar het paneel staat nu ergens anders. Druk er nogmaals op Enter om het te openen.</sys:String>
 
     <!-- Saved operations, the drop stack and gadgets (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Opgeslagen bewerkingen</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">Nieuwe worktree voor een taak…</sys:String>
     <sys:String x:Key="Git_WtRemove">Worktree verwijderen</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Verwijderen</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">De worktree "{0}" en de bijbehorende map verwijderen?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">De worktree "{0}" en de bijbehorende map verwijderen?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Waarschuwing: {0} niet-gecommitte {0:plural:wijziging gaat|wijzigingen gaan} definitief verloren.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree "{0}" verwijderd.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">De worktree kon niet worden verwijderd: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">Uit deze titel kan geen branchnaam worden afgeleid: er staan geen Latijnse of Cyrillische letters of cijfers in. Typ de branch en de map zelf.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">De map is niet leeg: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">De worktree kon niet worden gemaakt: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree op "{0}" gemaakt: {1}&#x0a;Overgenomen bestanden: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree op "{0}" gemaakt: {1}&#x0a;Overgenomen bestanden: {2}</sys:String>
 
     <!-- Git: index, commit, branches, stash -->
     <sys:String x:Key="Git_CommitTitle">Commit</sys:String>
@@ -350,20 +356,20 @@
     <sys:String x:Key="Tool_PickPlaceholder">Typ een deel van een naam…</sys:String>
 
     <!-- Workspace notes and terminal (Alt+N / Alt+T) -->
-    <sys:String x:Key="WsNotes_Title">Notities van werkruimte</sys:String>
+    <sys:String x:Key="WsNotes_Title">Werkruimtenotities</sys:String>
     <sys:String x:Key="WsNotes_Notes">Notities (markdown):</sys:String>
     <sys:String x:Key="WsNotes_File">Bestand:</sys:String>
     <sys:String x:Key="WsNotes_DiscardConfirm">De wijzigingen in de notities negeren?</sys:String>
     <sys:String x:Key="WsNotes_NoWorkspace">Sla de huidige context eerst op als werkruimte ({gesture:SaveWorkspace}) of schakel over naar een bestaande ({gesture:WorkspaceSwitcher}).</sys:String>
-    <sys:String x:Key="WsTerminal_Title">Terminal van werkruimte</sys:String>
+    <sys:String x:Key="WsTerminal_Title">Werkruimte-terminal</sys:String>
     <sys:String x:Key="WsTerminal_NoDirectory">Map niet gevonden: {0}. Stel een andere in via de eigenschappen van de werkruimte ({gesture:WorkspaceProperties}).</sys:String>
     <sys:String x:Key="WsTerminal_NoFolder">Werkruimte “{0}” heeft geen map op de schijf om een terminal in te openen. Stel de terminalmap in via de eigenschappen van de werkruimte.</sys:String>
     <sys:String x:Key="WsTerminal_Failed">De opdracht kon niet worden uitgevoerd: {0}</sys:String>
     <sys:String x:Key="WsWindow_Title">Werkruimte in een nieuw venster</sys:String>
     <sys:String x:Key="WsWindow_Failed">Werkruimte “{0}” kon niet in een nieuw venster worden geopend.</sys:String>
     <sys:String x:Key="WsColor_Invalid">Dit lijkt niet op een kleur. Verwacht hex: #4F9CF9, #F00 of 4F9CF9.</sys:String>
-    <sys:String x:Key="WsProps_Title">Eigenschappen van werkruimte</sys:String>
-    <sys:String x:Key="WsProps_WindowTitle">Eigenschappen van werkruimte — {0}</sys:String>
+    <sys:String x:Key="WsProps_Title">Werkruimte-eigenschappen</sys:String>
+    <sys:String x:Key="WsProps_WindowTitle">Werkruimte-eigenschappen — {0}</sys:String>
     <sys:String x:Key="WsProps_NewTitle">Nieuwe werkruimte</sys:String>
     <sys:String x:Key="WsProps_Create">Maken</sys:String>
     <sys:String x:Key="WsProps_Name">Naam</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Verwijderen</sys:String>
     <sys:String x:Key="WsProps_PictureNone">geen</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Gevonden in het project:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Staat op de werkruimtezijbalk in plaats van het pictogram en de letters. Zolang een werkruimte geen afbeelding en geen pictogram heeft, wordt het logo of favicon uit haar repository vanzelf gebruikt; zodra u kiest — een afbeelding, een pictogram of geen — wordt er niet meer gezocht.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Staat in plaats van het pictogram en de letters op de werkruimtezijbalk, en vóór de naam in het menu, de wisselaar en de titelbalk. Zolang een werkruimte geen afbeelding en geen pictogram heeft, wordt het logo of favicon uit haar repository vanzelf gebruikt; zodra u kiest — een afbeelding, een pictogram of geen — wordt er niet meer gezocht.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Afbeelding van de werkruimte</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Afbeeldingen</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">Dit bestand kan niet als afbeelding worden gelezen.</sys:String>
@@ -537,7 +543,7 @@
     <sys:String x:Key="Settings_AgentMcpEnabled">De MCP-server inschakelen</sys:String>
     <sys:String x:Key="Settings_AgentMcpAutoStart">Met de toepassing starten</sys:String>
     <sys:String x:Key="Settings_AgentMcpPort">Poort (0 = een vrije kiezen):</sys:String>
-    <sys:String x:Key="Settings_AgentApprovalTimeout">Wachttijd voor een schrijfbeslissing, s:</sys:String>
+    <sys:String x:Key="Settings_AgentApprovalTimeout">Wachttijd schrijfbeslissing, s:</sys:String>
     <sys:String x:Key="Settings_AgentRemotePanels">Agents verbindingen (servers en cloudopslag) laten lezen die in de panelen openstaan</sys:String>
     <sys:String x:Key="Settings_AgentMcpHint">De server luistert alleen op 127.0.0.1 en vereist een token; het adres en het token worden geschreven naar mcp-endpoint.json in de gegevensmap van het programma (data\ in een portable kopie). Mappen worden goedgekeurd in «Agentwijzigingen» ({gesture:AgentChanges}).</sys:String>
     <sys:String x:Key="Settings_AgentLlm">Taalmodel (OpenAI-compatibel eindpunt)</sys:String>
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Werkruimte vastmaken</sys:String>
     <sys:String x:Key="Ws_RenameTaken">Er bestaat al een werkruimte met de naam “{0}”.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">De werkruimte kon niet worden hernoemd: workspaces.json is nu niet leesbaar of schrijfbaar.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Afbeeldingen niet in het bestand geschreven: {0}. Ze ontbreken hier of zijn groter dan de limiet.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Afbeeldingen niet overgenomen uit het bestand: {0}. Geaccepteerd: een PNG van 64×64 tot 24 KB.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Werkruimten</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">workspaces.json was beschadigd, dus de vorige kopie (workspaces.json.bak) is geladen. Het beschadigde bestand is naast het programma bewaard als {0}.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">Deze werkruimte is ingesteld om de onderstaande opdracht uit te voeren in {1}. De opdracht is niet op deze computer getypt (ze kan uit een projectbestand komen), dus controleer haar voordat ze wordt uitgevoerd.&#10;&#10;{0}&#10;&#10;Uitvoeren?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">De lokale branch &quot;{0}&quot; verwijderen? Remote branches blijven onaangeroerd.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">De branch &quot;{0}&quot; bevat commits die nergens anders bestaan. Door hem te verwijderen gaan ze definitief verloren. Toch verwijderen?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Branch &quot;{0}&quot; verwijderd.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">Er zijn niet-gecommitte wijzigingen, dus git kan niet overschakelen naar &quot;{0}&quot;.&#x0a;&#x0a;Ze stashen (inclusief niet-gevolgde bestanden) en overschakelen? U kunt ze terughalen met Stash pop ({gesture:GitStashPop}).</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">Er zijn niet-gecommitte wijzigingen, dus git kan niet overschakelen naar &quot;{0}&quot;.&#x0a;&#x0a;Ze stashen (inclusief niet-gevolgde bestanden) en overschakelen? U kunt ze terughalen met Stash pop ({gesture:GitStashPop}).</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">voor het overschakelen naar {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Onopgelost merge-conflict</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Bevat wijzigingen</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Negeren</sys:String>
     <sys:String x:Key="Git_DiscardHint">Gooit de geselecteerde wijzigingen in de werkmap weg en herstelt de laatst gecommitte versie. Kan niet ongedaan worden gemaakt.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Wijzigingen negeren</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">De wijzigingen in {0} {0:plural:bestand|bestanden} negeren en de laatst gecommitte versie herstellen?&#x0a;&#x0a;{1}&#x0a;&#x0a;Dit kan niet ongedaan worden gemaakt.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">De wijzigingen in {0} {0:plural:bestand|bestanden} negeren en de laatst gecommitte versie herstellen?&#x0a;&#x0a;{1}&#x0a;&#x0a;Dit kan niet ongedaan worden gemaakt.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} ervan zijn ook gestaged; hun gestagede wijzigingen worden ook genegeerd.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0} niet-gevolgde {0:plural:bestand wordt|bestanden worden} overgeslagen: {0:plural:het heeft|ze hebben} geen gecommitte versie om naar terug te gaan. Verwijder {0:plural:het|ze} met {gesture:Delete}.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">Niet-gevolgde bestanden kunnen hier niet worden genegeerd (er valt niets te herstellen). Verwijder ze met {gesture:Delete}.</sys:String>
@@ -842,10 +850,10 @@
     <sys:String x:Key="CS_Status_FAILED">Afwijking</sys:String>
     <sys:String x:Key="CS_Status_Missing">Ontbreekt</sys:String>
     <sys:String x:Key="CS_Status_Error">Leesfout</sys:String>
-    <sys:String x:Key="Menu_Files">_Bestanden</sys:String>
+    <sys:String x:Key="Menu_Files">Bestan_den</sys:String>
     <sys:String x:Key="Menu_Commands">_Opdrachten</sys:String>
-    <sys:String x:Key="Menu_Settings">_Instellingen</sys:String>
-    <sys:String x:Key="Menu_Bookmarks">Blad_wijzers</sys:String>
+    <sys:String x:Key="Menu_Settings">Inste_llingen</sys:String>
+    <sys:String x:Key="Menu_Bookmarks">Bladwi_jzers</sys:String>
     <sys:String x:Key="Menu_Workspaces">Werk_ruimten</sys:String>
     <sys:String x:Key="Menu_Help">_Help</sys:String>
     <sys:String x:Key="Git_Menu_Worktrees">_Worktree-overzicht…</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Toegang geweigerd.</sys:String>
     <sys:String x:Key="Files_NotFound">Deze map bestaat niet.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Deze map kan niet worden gelezen: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">Het lezen van de map is gestopt.</sys:String>
     <sys:String x:Key="Files_Empty">Deze map is leeg</sys:String>
     <sys:String x:Key="Files_NoMatches">Geen namen komen overeen met het getypte filter (Esc wist het)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Verstreken:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Selectie opheffen op masker</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Masker om te selecteren (bijv. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Masker om de selectie op te heffen (bijv. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">S_jabloon:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Sjabloon</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">_Verwijderen</sys:String>
+    <sys:String x:Key="Sel_Mask">_Masker:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Scheid maskers met ;. Na | volgen uitsluitingen, een masker dat eindigt op \ staat voor mappen: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">Ook ma_ppen</sys:String>
+    <sys:String x:Key="Sel_Age">_Leeftijd:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Leeftijd</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Aantal</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Eenheid</sys:String>
+    <sys:String x:Key="Sel_AgeAny">willekeurig</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">ouder dan</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">nieuwer dan</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">minuten</sys:String>
+    <sys:String x:Key="Sel_UnitHours">uur</sys:String>
+    <sys:String x:Key="Sel_UnitDays">dagen</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Alleen gewijzigd in _Git</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Gewijzigd, gestaged, niet gevolgd of met een conflict. Werkt in een map op schijf.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Alleen gewijzigd door een _agent</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">Wat de agentwijzigingen van het project aan een agent toeschrijven. Werkt in een map op schijf.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Opslaan als sjabloon</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">_Naam:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">_Toets:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Toets</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">Een combinatie met Ctrl, Alt of Shift. Een toets die al door een andere opdracht wordt gebruikt, wordt genegeerd.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">_Opslaan</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Git- en agentvoorwaarden werken alleen in een map op schijf.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Niets komt overeen.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Zet de cursor op een bestand om op de extensie ervan te selecteren.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">Er is geen eerdere selectie om te herstellen.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">Geen van de eerder geselecteerde namen staat in deze map.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Selecteren: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Broncode</sys:String>
+    <sys:String x:Key="SelTpl_Config">Configuratiebestanden</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Documenten</sys:String>
+    <sys:String x:Key="SelTpl_Images">Afbeeldingen</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Archieven</sys:String>
+    <sys:String x:Key="SelTpl_Junk">Tijdelijke bestanden en logs</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Buildmappen</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">Gewijzigd in Git</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Gewijzigd door een agent</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">Gewijzigd in de laatste 24 uur</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Ouder dan 2 dagen</sys:String>
     <sys:String x:Key="Log_Title">Bewerkingslogboek</sys:String>
     <sys:String x:Key="Log_ColTime">Tijd</sys:String>
     <sys:String x:Key="Log_ColOperation">Bewerking</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Het hele bewerkingslogboek verwijderen? Het is het overzicht van wat de bestandsbeheerder en agents hebben gedaan, en kan niet worden hersteld.</sys:String>
     <sys:String x:Key="Log_ClearButton">Het logboek wissen</sys:String>
     <sys:String x:Key="Log_UndoRename">Hernoeming ongedaan maken</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Geeft de bestanden van de geselecteerde hernoemreeks (AI-hernoemen) hun vorige namen terug. Controleert de map en vraagt eerst om bevestiging.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Geeft de bestanden van de geselecteerde hernoemreeks hun vorige namen terug. Controleert de map en vraagt eerst om bevestiging.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">De oorspronkelijke {0:plural:naam|namen} van {0} {0:plural:bestand|bestanden} in {1} van vóór deze hernoeming terugzetten?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:bestand blijft|bestanden blijven} zoals {0:plural:het is|ze zijn}: sindsdien hernoemd, verplaatst of verwijderd, of de oude naam is door een ander bestand ingenomen.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">In {0} kan niets worden teruggehernoemd: de bestanden dragen niet meer de namen die deze reeks hun gaf, of hun oude namen zijn bezet.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">Deze reeks is hernoemd op {0}. Verbind een paneel met die server en probeer het opnieuw.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">Deze reeks is hernoemd in het archief {0}. Open dat archief in een paneel en probeer het opnieuw.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Prullenbak</sys:String>
     <sys:String x:Key="Log_KindCopy">Kopiëren</sys:String>
     <sys:String x:Key="Log_KindMove">Verplaatsen</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Sommige items zijn niet verplaatst; ze blijven waar ze waren.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Sommige items zijn niet aan het archief toegevoegd; de originelen zijn op hun plaats gelaten.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">De archiefindeling kan niet worden gewijzigd: de bestanden zijn uitgepakt, maar blijven ook in het archief staan.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">De bestanden zijn uitgepakt, maar blijven in het archief: het is geopend vanaf een server of vanuit een ander archief, en hier is alleen een tijdelijke kopie ervan geopend.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Eigenschappen zijn niet beschikbaar</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">Uitpakken is niet beschikbaar</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Kies in het andere paneel een gewone map op de lokale schijf als doel.</sys:String>
@@ -1160,7 +1215,7 @@
     <sys:String x:Key="Fc_FileInTheWay">Een bestand met de naam "{0}" zit de map in de weg.</sys:String>
     <sys:String x:Key="Fc_FolderInTheWay">Een map met de naam "{0}" zit het bestand in de weg.</sys:String>
     <sys:String x:Key="Menu_Rename">_Naam wijzigen…</sys:String>
-    <sys:String x:Key="Menu_View">_Bekijken</sys:String>
+    <sys:String x:Key="Menu_View">Beki_jken</sys:String>
     <sys:String x:Key="Menu_Edit">B_ewerken</sys:String>
     <sys:String x:Key="Menu_Copy">_Kopiëren…</sys:String>
     <sys:String x:Key="Menu_Move">_Verplaatsen…</sys:String>
@@ -1168,41 +1223,46 @@
     <sys:String x:Key="Menu_Delete">Ver_wijderen</sys:String>
     <sys:String x:Key="Menu_SelectByMask">_Selecteren op masker…</sys:String>
     <sys:String x:Key="Menu_UnselectByMask">Selectie _opheffen op masker…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">_Selectie</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Zelfde e_xtensie selecteren</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">Zelfde extensie _deselecteren</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">Selectie _herstellen</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">Sja_blonen</sys:String>
     <sys:String x:Key="Menu_CopyFullPath">Volledig _pad kopiëren</sys:String>
-    <sys:String x:Key="Menu_CopyNames">Na_men kopiëren</sys:String>
+    <sys:String x:Key="Menu_CopyNames">Namen kopië_ren</sys:String>
     <sys:String x:Key="Menu_CopyReadLink">_Link kopiëren</sys:String>
     <sys:String x:Key="Link_ForHour">Voor 1 uur</sys:String>
     <sys:String x:Key="Link_ForDay">Voor 1 dag</sys:String>
     <sys:String x:Key="Link_ForWeek">Voor 7 dagen</sys:String>
     <sys:String x:Key="Menu_Properties">Ei_genschappen</sys:String>
     <sys:String x:Key="Menu_FolderSizes">Mapgroot_tes</sys:String>
-    <sys:String x:Key="Menu_Pack">In_pakken…</sys:String>
+    <sys:String x:Key="Menu_Pack">_Inpakken…</sys:String>
     <sys:String x:Key="Menu_Unpack">_Uitpakken…</sys:String>
-    <sys:String x:Key="Menu_Exit">Af_sluiten</sys:String>
+    <sys:String x:Key="Menu_Exit">_Afsluiten</sys:String>
     <sys:String x:Key="Menu_NewFile">Nieuw _bestand…</sys:String>
     <sys:String x:Key="Menu_DeletePermanent">_Definitief verwijderen</sys:String>
-    <sys:String x:Key="Menu_NameSearch">Overal een bestand _zoeken…</sys:String>
+    <sys:String x:Key="Menu_NameSearch">_Overal een bestand zoeken…</sys:String>
     <sys:String x:Key="Menu_QuickFilter">_Snelfilter</sys:String>
-    <sys:String x:Key="Menu_CompareDirs">Mappen _vergelijken…</sys:String>
-    <sys:String x:Key="Menu_SavedOps">Op_geslagen bewerkingen…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">Opgeslagen _bewerkingen beheren…</sys:String>
-    <sys:String x:Key="Menu_DropStackAdd">Afleverstapel: _selectie toevoegen</sys:String>
+    <sys:String x:Key="Menu_CompareDirs">Mappen vergeli_jken…</sys:String>
+    <sys:String x:Key="Menu_SavedOps">Opgeslagen be_werkingen…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Opgeslagen bewerkingen beheren…</sys:String>
+    <sys:String x:Key="Menu_DropStackAdd">Afleverstapel: selectie toevoegen</sys:String>
     <sys:String x:Key="Menu_DropStackShow">A_fleverstapel…</sys:String>
     <sys:String x:Key="Menu_RunGadget">Een _gadget uitvoeren…</sys:String>
-    <sys:String x:Key="Menu_GadgetsManage">Gadgets _beheren…</sys:String>
+    <sys:String x:Key="Menu_GadgetsManage">Gadgets beheren…</sys:String>
     <sys:String x:Key="Menu_Agents">_Agents</sys:String>
     <sys:String x:Key="Menu_AgentChanges">Agent_wijzigingen…</sys:String>
     <sys:String x:Key="Menu_AgentLaunch">Een agent op een _taak starten…</sys:String>
     <sys:String x:Key="Menu_AiRename">AI-_hernoemen…</sys:String>
     <sys:String x:Key="Menu_SemanticSearch">_Semantisch zoeken…</sys:String>
     <sys:String x:Key="Menu_FolderTree">_Mappenstructuur</sys:String>
-    <sys:String x:Key="Menu_HideIgnored">Gitignored bestanden _verbergen</sys:String>
-    <sys:String x:Key="Menu_ShowHidden">_Verborgen bestanden tonen</sys:String>
-    <sys:String x:Key="Menu_ShowExtensions">Bestands_extensies tonen</sys:String>
-    <sys:String x:Key="Menu_FoldersFirst">Mappen e_erst</sys:String>
+    <sys:String x:Key="Menu_HideIgnored">_Gitignored bestanden verbergen</sys:String>
+    <sys:String x:Key="Menu_ShowHidden">Ve_rborgen bestanden tonen</sys:String>
+    <sys:String x:Key="Menu_ShowExtensions">_Bestandsextensies tonen</sys:String>
+    <sys:String x:Key="Menu_FoldersFirst">Mappe_n eerst</sys:String>
     <sys:String x:Key="Menu_Columns">_Kolommen…</sys:String>
     <sys:String x:Key="Menu_ExportSettings">Instellingen _exporteren…</sys:String>
-    <sys:String x:Key="Menu_ImportSettings">Instellingen _importeren…</sys:String>
+    <sys:String x:Key="Menu_ImportSettings">Inste_llingen importeren…</sys:String>
     <sys:String x:Key="Menu_FindInProject">Bestand in _project zoeken…</sys:String>
     <sys:String x:Key="Menu_FindFiles">Bestanden _zoeken…</sys:String>
     <sys:String x:Key="Menu_MultiRename">_Meervoudig hernoemen…</sys:String>
@@ -1210,28 +1270,28 @@
     <sys:String x:Key="Menu_OperationLog">Bewerkings_logboek…</sys:String>
     <sys:String x:Key="Menu_BackgroundOperations">_Achtergrondbewerkingen</sys:String>
     <sys:String x:Key="Menu_Terminal">_Terminal openen</sys:String>
-    <sys:String x:Key="Menu_ShellsManage">_Opdrachtregelshells…</sys:String>
+    <sys:String x:Key="Menu_ShellsManage">Opdrachtregelshells…</sys:String>
     <sys:String x:Key="Menu_OpenInEditor">In _editor openen</sys:String>
-    <sys:String x:Key="Menu_OpenInEditorPicker">In e_ditor openen…</sys:String>
+    <sys:String x:Key="Menu_OpenInEditorPicker">In editor openen…</sys:String>
     <sys:String x:Key="Menu_RunAgent">_Agent hier starten</sys:String>
     <sys:String x:Key="Menu_RunAgentPicker">A_gent hier starten…</sys:String>
     <sys:String x:Key="Menu_GoRoot">Naar _hoofdmap</sys:String>
-    <sys:String x:Key="Menu_GoHome">Naar _persoonlijke map</sys:String>
-    <sys:String x:Key="Menu_GoClipboard">Naar pad van _klembord</sys:String>
+    <sys:String x:Key="Menu_GoHome">_Naar persoonlijke map</sys:String>
+    <sys:String x:Key="Menu_GoClipboard">Naar pad van klembord</sys:String>
     <sys:String x:Key="Menu_EditPath">Pad t_ypen</sys:String>
-    <sys:String x:Key="Menu_OpenExplorer">In _Verkenner openen</sys:String>
-    <sys:String x:Key="Menu_UserTools">_Gebruikershulpmiddelen…</sys:String>
+    <sys:String x:Key="Menu_OpenExplorer">_In Verkenner openen</sys:String>
+    <sys:String x:Key="Menu_UserTools">Gebruikershulpmiddelen…</sys:String>
     <sys:String x:Key="Menu_ConnectionManager">Verbindings_beheer…</sys:String>
-    <sys:String x:Key="Menu_Disconnect">Verbinding ver_breken</sys:String>
-    <sys:String x:Key="Menu_QueueTransfer">Aan overdrachts_wachtrij toevoegen</sys:String>
+    <sys:String x:Key="Menu_Disconnect">Verbinding verbre_ken</sys:String>
+    <sys:String x:Key="Menu_QueueTransfer">Aan overdrachtswachtrij toevoegen</sys:String>
     <sys:String x:Key="Menu_TransferQueue">Over_drachtswachtrij…</sys:String>
     <sys:String x:Key="Menu_Options">_Instellingen…</sys:String>
     <sys:String x:Key="Menu_Hotkeys">_Sneltoetsen…</sys:String>
-    <sys:String x:Key="Menu_PluginManager">_Plug-inbeheer…</sys:String>
+    <sys:String x:Key="Menu_PluginManager">_Pluginbeheer…</sys:String>
     <sys:String x:Key="Menu_SplitVertical">Panelen _verticaal splitsen</sys:String>
     <sys:String x:Key="Menu_SwapPanels">Panelen _wisselen</sys:String>
     <sys:String x:Key="Menu_ToggleTheme">Licht / donker _thema</sys:String>
-    <sys:String x:Key="Menu_ViewMode">Weergave_modus</sys:String>
+    <sys:String x:Key="Menu_ViewMode">Weergavemo_dus</sys:String>
     <sys:String x:Key="Menu_ViewDetails">_Details</sys:String>
     <sys:String x:Key="Menu_ViewBrief">_Beknopt</sys:String>
     <sys:String x:Key="Menu_ViewThumbnails">_Miniaturen</sys:String>
@@ -1244,20 +1304,20 @@
     <sys:String x:Key="Menu_Ws_Notes">Werkruimte_notities…</sys:String>
     <sys:String x:Key="Menu_Ws_Terminal">Werkruimte-_terminal</sys:String>
     <sys:String x:Key="Menu_Ws_NewWindow">In nieuw _venster openen</sys:String>
-    <sys:String x:Key="Menu_Ws_Properties">Werkruimte_eigenschappen…</sys:String>
+    <sys:String x:Key="Menu_Ws_Properties">Werkruimte-_eigenschappen…</sys:String>
     <sys:String x:Key="Menu_Ws_Sidebar">Werkruimte_zijbalk</sys:String>
     <sys:String x:Key="Menu_Ws_RailExpand">Werkruimtezijbalk _uitklappen</sys:String>
     <sys:String x:Key="Menu_Ws_OpenDefinition">Projectbe_stand openen (.tcvproj)…</sys:String>
     <sys:String x:Key="Menu_Ws_ExportDefinition">Pro_jectbestand opslaan (.tcvproj)…</sys:String>
     <sys:String x:Key="Menu_Ws_SwitchTo">_Overschakelen naar</sys:String>
-    <sys:String x:Key="Menu_Ws_Pin">_Vastmaken aan de werkruimtezijbalk</sys:String>
+    <sys:String x:Key="Menu_Ws_Pin">Vastmaken _aan de werkruimtezijbalk</sys:String>
     <sys:String x:Key="Menu_Ws_Unpin">_Losmaken van de werkruimtezijbalk</sys:String>
     <sys:String x:Key="Menu_Ws_PropertiesItem">Ei_genschappen: naam, pictogram, kleur, groep, terminal…</sys:String>
     <sys:String x:Key="Menu_Ws_NotesItem">_Notities…</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalItem">_Terminal</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalNoCommand">Geen opdracht ingesteld: er opent alleen een terminal. Stel de opdracht in via de eigenschappen van de werkruimte.</sys:String>
     <sys:String x:Key="Menu_Ws_SaveProject">.tcvproj op_slaan…</sys:String>
-    <sys:String x:Key="Menu_Ws_Delete">_Verwijderen</sys:String>
+    <sys:String x:Key="Menu_Ws_Delete">Ve_rwijderen</sys:String>
     <sys:String x:Key="Menu_Palette">_Opdrachtenpalet…</sys:String>
     <sys:String x:Key="Menu_CheckUpdates">Op _updates controleren…</sys:String>
     <sys:String x:Key="Menu_ReportBug">Een _bug melden…</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">Versie {0} is beschikbaar.&#10;&#10;{1}&#10;&#10;Nu installeren? Het programma sluit, werkt zichzelf bij en opent opnieuw. Instellingen en werkruimten blijven behouden.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">Versie {0} is beschikbaar. Installeer haar vanuit het hoofdvenster: dat sluit de werkruimtevensters en start opnieuw.</sys:String>
     <sys:String x:Key="Update_Busy">Bijwerken sluit het programma, en er lopen bewerkingen of overdrachten. Wacht tot ze klaar zijn en probeer het opnieuw.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">De update is niet geïnstalleerd: wijzigingen van bestanden op een server zijn niet geüpload. Ze staan veilig in:&#10;{0}&#10;&#10;Sla ze opnieuw op in de editor en probeer het nogmaals.</sys:String>
     <sys:String x:Key="Update_Downloading">de update downloaden… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">De update kon niet worden gedownload: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Niet elk werkruimtevenster is gesloten. Sluit ze en probeer de update opnieuw.</sys:String>
@@ -1301,7 +1362,7 @@
     <sys:String x:Key="Update_NotInstalled">Versie {0} is gedownload maar niet geïnstalleerd: de installatie is onderbroken, of een ander programma (bijvoorbeeld een antivirusprogramma) hield de bestanden van het programma vast. De vorige versie is actief. Om te installeren: Help → Op updates controleren.</sys:String>
     <sys:String x:Key="Update_FeedNeedsPortable">Een updatefeed-map of -URL werkt alleen voor een portable kopie; deze kan alleen een GitHub-repository (eigenaar/naam) controleren.</sys:String>
     <sys:String x:Key="Checksum_Unavailable">Controlesommen zijn hier niet beschikbaar</sys:String>
-    <sys:String x:Key="UserTools_NotLoaded">De plug-in voor gebruikershulpmiddelen is niet geladen.</sys:String>
+    <sys:String x:Key="UserTools_NotLoaded">De plugin voor gebruikershulpmiddelen is niet geladen.</sys:String>
     <sys:String x:Key="Settings_ExtCommand">Opdracht</sys:String>
     <sys:String x:Key="Settings_ExtArguments">Argumenten</sys:String>
     <sys:String x:Key="Settings_ExtInTerminal">In terminal</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">Nieuwe naam</sys:String>
     <sys:String x:Key="MR_ColConflict">Probleem</sys:String>
     <sys:String x:Key="MR_Rename">Hernoemen</sys:String>
-    <sys:String x:Key="MR_Undo">Ongedaan maken</sys:String>
-    <sys:String x:Key="MR_UndoTip">Geef de zojuist hernoemde bestanden hun oude namen terug</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Een ander bestand krijgt dezelfde naam</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Lege naam</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Ongeldige naam</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Niets te hernoemen. Conflicten: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Niets te hernoemen: geen naamwijzigingen.</sys:String>
     <sys:String x:Key="MR_Error">Fout: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Namen hersteld: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">{0} van {1} hersteld; {2} mislukt.</sys:String>
-    <sys:String x:Key="MR_UndoError">Ongedaan maken mislukt: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">Bestanden hernoemd: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Overgeslagen vanwege conflicten: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Mislukt: {0} (bijvoorbeeld "{1}": {2}).</sys:String>
@@ -1385,6 +1441,7 @@
     <sys:String x:Key="Conn_Browse">Bladeren…</sys:String>
     <sys:String x:Key="Conn_Test">Verbinding testen</sys:String>
     <sys:String x:Key="Conn_Connecting">Verbinden…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Verbinden met “{0}”…</sys:String>
     <sys:String x:Key="Conn_TestOk">Verbinding geslaagd.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Test geannuleerd.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Mislukt: {0}</sys:String>
@@ -1448,7 +1505,7 @@
     <sys:String x:Key="Conn_QuickPrompt">Adres van een server of opslag: sftp://user@host:22/path, ftp://…, davs://…, s3://bucket/prefix</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">“{0}” is geen verbindingsadres. Bijvoorbeeld: sftp://user@host/path, s3://bucket.</sys:String>
     <sys:String x:Key="Menu_Reconnect">Opnieuw _verbinden</sys:String>
-    <sys:String x:Key="Menu_QuickConnect">_Snel verbinden…</sys:String>
+    <sys:String x:Key="Menu_QuickConnect">Snel ve_rbinden…</sys:String>
     <sys:String x:Key="Conn_Saved">Verbinding “{0}” opgeslagen.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">“{0}”: geef de share op — een pad zoals /share of /share/folder.</sys:String>
     <sys:String x:Key="Conn_ShareInUse">Windows heeft de verbinding met {0} niet gesloten: {1} Sluit de bestanden die vanuit die share zijn geopend en probeer het opnieuw.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">geen IdentityFile: de standaardsleutel</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">het sleutelbestand staat niet op deze computer</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">geen sleutel: er wordt om een wachtwoord gevraagd</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump en ProxyCommand worden niet ondersteund: er wordt rechtstreeks verbonden</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Bereikbaar via {0}, maar tunnels worden hier niet ondersteund: aangevinkt wordt er rechtstreeks verbonden, daaraan voorbij</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">Match-blokken kunnen hier niet worden geëvalueerd; hun instellingen zijn niet toegepast ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: bestand bestaat niet.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include niet gelezen: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Downloaden</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Uploaden</sys:String>
     <sys:String x:Key="Transfer_Empty">De wachtrij is leeg. Selecteer bestanden op een server en druk op {gesture:QueueTransfer}.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Toevoegen aan de wachtrij</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">{0} {0:plural:bestand|bestanden} gevonden</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Niet in de wachtrij gezet: {0} {0:plural:item|items}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: een koppeling, wordt niet gevolgd</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: dezelfde inhoud als een map erboven, waarschijnlijk een koppelingslus</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: te diep genest</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: kon niet worden gelezen: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: deze naam kan op de bestemming niet bestaan</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: een bestand en een map zouden dezelfde naam krijgen</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">Open in een van de panelen een verbinding met een server of opslag — de wachtrij werkt alleen daarmee.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">Het andere paneel moet een lokale schijf tonen — de wachtrij verplaatst bestanden tussen een server en de schijf.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">Alleen bestanden kunnen in de wachtrij worden geplaatst — kopieer mappen met {gesture:Copy}.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">"{0}" bestaat al en is ongemoeid gelaten.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">"{0}" bestaat al op de server en is ongemoeid gelaten.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">De overdracht van "{0}" is mislukt.</sys:String>
@@ -1615,7 +1680,7 @@
     <sys:String x:Key="Crash_Message" xml:space="preserve">Er is iets misgegaan: {0}&#10;&#10;Details zijn naar het logboek geschreven ({1}). Het programma blijft draaien; als het blijft gebeuren, start u het opnieuw op en meldt u het: Help → Een bug melden.</sys:String>
     <sys:String x:Key="Crash_FatalMessage" xml:space="preserve">Het programma kan niet doorgaan: {0}&#10;&#10;Details zijn naar het logboek geschreven ({1}). Meld dit met het logboek als bijlage: Help → Een bug melden.</sys:String>
     <sys:String x:Key="Settings_ThemeGroup">Thema</sys:String>
-    <sys:String x:Key="Settings_ThemeLabel">_Thema:</sys:String>
+    <sys:String x:Key="Settings_ThemeLabel">T_hema:</sys:String>
     <sys:String x:Key="Settings_ThemeDark">Donker</sys:String>
     <sys:String x:Key="Settings_ThemeLight">Licht</sys:String>
     <sys:String x:Key="Settings_UseSystemTheme">Windows volgen</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">De map waarin gezocht moet worden bestaat niet: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Ongeldige grootte "{0}". Voer bytes in, of een getal met KB, MB of GB (bijvoorbeeld 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">De minimumgrootte is groter dan het maximum.</sys:String>
-    <sys:String x:Key="Search_BadDate">Ongeldige datum "{0}". Voer een dag in, bijvoorbeeld 2026-10-01 of 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Ongeldige datum "{0}". Voer een dag in, bijvoorbeeld 2026-10-31 of 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">De begindatum ligt na de einddatum.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Automatisch</sys:String>
     <sys:String x:Key="Search_NameRegex">Bestandsnaam is een reguliere expressie</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Bytes, of een getal met KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Gewijzigd op of na</sys:String>
     <sys:String x:Key="Search_DateTo">Gewijzigd op of vóór</sys:String>
-    <sys:String x:Key="Search_DateHint">Een dag: 2026-10-01 of 01.10.2026. Beide dagen zijn inbegrepen; laat leeg voor geen limiet.</sys:String>
+    <sys:String x:Key="Search_DateHint">Een dag: 2026-10-31 of 31.10.2026. Beide dagen zijn inbegrepen; laat leeg voor geen limiet.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">kan niet worden gelezen</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">namen verschillen alleen in hoofdletters</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Inhoud vergelijken</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">de map bestaat niet</sys:String>
     <sys:String x:Key="Cmp_Failed">Vergelijking mislukt: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · {0} mappen konden niet worden gelezen en zijn weggelaten</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">de linkerkant kan niet worden gewijzigd, dus er wordt niets naartoe gekopieerd</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">de rechterkant kan niet worden gewijzigd, dus er wordt niets naartoe gekopieerd</sys:String>
     <sys:String x:Key="Cmp_TickRow">Deze rij opnemen</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Kopieerrichting</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Klik om de richting te wijzigen: → naar rechts kopiëren, ← naar links kopiëren, = met rust laten</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">Bestanden die worden vervangen:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… en nog {0}</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">Vervangen bestanden gaan eerst naar de Prullenbak, zodat ze kunnen worden hersteld.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Sommige vervangen bestanden staan op een server, die geen Prullenbak heeft: die kunnen niet worden hersteld.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Sommige vervangen bestanden staan op een server of in een archief, die geen Prullenbak hebben: die kunnen niet worden hersteld.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">WAARSCHUWING: {0} van de vervangen bestanden zijn NIEUWER dan de kopie die ze vervangt:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">{0} items worden overgeslagen: een bestand aan de ene kant en een map aan de andere.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Synchroniseren?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: kan het bestaande bestand niet naar de Prullenbak verplaatsen, ongemoeid gelaten</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: het kopiëren is niet voltooid</sys:String>
     <sys:String x:Key="Cmp_Unstamped">Bij {0} gekopieerde bestanden kon de wijzigingstijd van de bron niet worden overgenomen (de server staat dit niet toe). Ze dragen het tijdstip van de kopie, dus de volgende vergelijking toont ze als nieuwer — gebruik "Inhoud vergelijken" voordat u terug synchroniseert.</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Sommige op afstand bewerkte bestanden zijn niet geüpload vóór het afsluiten. Uw wijzigingen zijn bewaard in:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Sommige op afstand bewerkte bestanden zijn niet geüpload vóór het afsluiten. Uw wijzigingen zijn bewaard in:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0} geüpload naar de server</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">Kan {0} niet uploaden: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">Kan {0} niet uploaden: {1}
 
 Uw wijzigingen staan veilig in de lokale kopie, die bewaard blijft:
 {2}
 
 Het bestand op de server is mogelijk onvolledig. Sla opnieuw op in de editor om het nogmaals te proberen.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} is niet geüpload: de kopie op de server is gewijzigd nadat u het bestand opende en u hebt ervoor gekozen die niet te overschrijven.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} is niet geüpload: de kopie op de server is gewijzigd nadat u het bestand opende en u hebt ervoor gekozen die niet te overschrijven.
 
 Uw wijzigingen blijven staan in:
 {1}
 
 Sla opnieuw op in de editor om opnieuw te worden gevraagd.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} is op de server gewijzigd nadat u het opende.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} is op de server gewijzigd nadat u het opende.
 
 Bij openen: {1:N0} bytes, {2}
 Nu: {3:N0} bytes, {4}
@@ -1893,8 +1960,11 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_SelectAll">Selecteert alle zichtbare bestanden en mappen (met inachtneming van het snelfilter).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Heft alle selecties in het actieve paneel op.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Keert de selectie om: geselecteerde items worden gedeselecteerd en de rest wordt geselecteerd (mappen inbegrepen).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Selecteert items waarvan de naam overeenkomt met een masker, bijv. *.cs; *.md. Scheid maskers met ;, een komma of een spatie; *.* komt overeen met alles, mappen inbegrepen.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Selecteert items op een masker of sjabloon, bijv. *.cs;*.md | *.g.cs. Maskers worden gescheiden door ;, na | volgen uitsluitingen, een masker dat eindigt op \ staat voor mappen. Een sjabloon kan ook een leeftijd (ouder of nieuwer dan), een wijziging in Git of een wijziging door een agent vereisen.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Deselecteert de items waarvan de naam overeenkomt met het masker.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Selecteert alle bestanden met dezelfde extensie als het bestand onder de cursor.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Deselecteert alle bestanden met dezelfde extensie als het bestand onder de cursor.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Selecteert opnieuw de namen die geselecteerd waren vóór de laatste deselectie, verwijdering of mapwissel — in deze map of in een andere met dezelfde namen.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Zet de geselecteerde bestanden op het klembord om ze hier ({gesture:ClipboardPaste}) of in Verkenner te plakken. Werkt op schijf, in archieven (die kunnen alleen binnen de app worden geplakt) en in zoekresultaten; niet op servers — gebruik daar {gesture:Copy}.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Zoals Kopiëren naar klembord, maar plakken verplaatst de bestanden; de originelen worden pas verwijderd nadat alles is aangekomen.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Plakt bestanden die hier of in Verkenner zijn gekopieerd of geknipt in de huidige map (of in een geopend ZIP-bestand). Vraagt bij naamconflicten; een kopie in dezelfde map wordt "bestand (1)".</sys:String>
@@ -1913,7 +1983,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_ToggleSplit">Schakelt de panelen tussen naast elkaar en boven elkaar. De keuze wordt onthouden.</sys:String>
     <sys:String x:Key="Help_Cmd_FindFiles">Direct zoeken op benadering naar een bestand op naam en pad binnen het project — vanaf de hoofdmap van de git-repository, anders vanaf de huidige map; ook in archieven. Alle door spaties gescheiden woorden moeten overeenkomen, Tab beperkt tot de gemarkeerde map, Enter brengt het paneel naar het bestand. Bestanden die u vaak kiest staan hoger.</sys:String>
     <sys:String x:Key="Help_Cmd_NameSearch">Vindt direct een bestand of map op een deel van de naam op alle lokale schijven, met een vooraf opgebouwde index. De index wordt bij het eerste gebruik op de achtergrond opgebouwd en vernieuwd als hij ouder is dan 6 uur; systeemmappen, .git en node_modules worden weggelaten.</sys:String>
-    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Scant de schijven opnieuw voor Bestand overal zoeken — gebruik dit nadat bestanden buiten de app zijn gewijzigd. Draait op de achtergrond; opnieuw uitvoeren tijdens een herbouw biedt aan die te annuleren.</sys:String>
+    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Scant de schijven opnieuw voor Overal een bestand zoeken — gebruik dit nadat bestanden buiten de app zijn gewijzigd. Draait op de achtergrond; opnieuw uitvoeren tijdens een herbouw biedt aan die te annuleren.</sys:String>
     <sys:String x:Key="Help_Cmd_FolderTree">Toont of verbergt een boomstructuur van stations en mappen links van de panelen. Een klik op een map opent die in het actieve paneel; de mappenstructuur volgt het actieve paneel naar zijn map. Ze werkt zichzelf bij op basis van wat de panelen tonen; {gesture:RefreshTab} leest al haar geopende mappen opnieuw.</sys:String>
     <sys:String x:Key="Help_Cmd_QuickFilter">Opent het snelfilter van het actieve paneel zonder de eerste letter te typen (zoals de sneltoets voor snel zoeken in Total Commander); als het open is, geeft het toetsenbord er weer aan terug. Het overeenkomende deel van elke naam is gemarkeerd, Enter opent het item onder de cursor, Esc sluit het filter. De weergave Boomstructuur heeft geen filter: letters gaan naar de map waarvan de naam ermee begint.</sys:String>
     <sys:String x:Key="Help_Cmd_ToggleHiddenFiles">Toont verborgen bestanden en systeembestanden in het actieve paneel, of verbergt ze weer. De instelling wordt per paneel onthouden. Dezelfde schakelaar staat achter een rechtsklik op de weergaveknoppen in de statusregel van het paneel en in het menu van de kolomkop.</sys:String>
@@ -1935,8 +2005,8 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Vergrendelt het tabblad op zijn map (slotpictogram): het kan niet worden gesloten, en telkens als u ernaar terugkeert, opent het die map opnieuw. Voer het opnieuw uit om te ontgrendelen.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Geeft het tabblad een eigen naam in plaats van de mapnaam (ook dubbelklikken op het tabblad). Een lege naam herstelt de mapnaam.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">Bestanden zoeken: op naammasker of reguliere expressie, op inhoud, grootte en kenmerken, ook in archieven en met inachtneming van .gitignore; criteria kunnen als voorinstellingen worden opgeslagen. Weergeven in paneel toont de resultaten in het actieve paneel, waar de gebruikelijke opdrachten erop werken. Doorzoekt lokale schijven.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Hernoemen in batch met een sjabloon ([N] naam, [E] extensie, [C] teller, [D] en [T] datum en tijd, [P] map), vervangen met reguliere expressies, tekens invoegen en verwijderen, en hoofdlettergebruik wijzigen. Het voorbeeld toont conflicten meteen; na Naam wijzigen kunt u op Ongedaan maken drukken zolang het venster open is. In een ZIP-archief is de hele batch één herschrijving van het archief, alles of niets; andere archiefindelingen zijn alleen-lezen.</sys:String>
-    <sys:String x:Key="Help_Cmd_OperationLog">Geschiedenis van bestandsbewerkingen, van u en van agents: kopiëren, verplaatsen, verwijderen, hernoemen, maken, inpakken en uitpakken, downloads en uploads (de overdrachtswachtrij en opslagen van een bestand dat vanaf een server is geopend), met resultaat en fouten. Een regel kan worden opgeslagen als herbruikbare bewerking. Het enige wat het logboek ongedaan kan maken is een hernoembatch of AI-hernoemen (Hernoemen ongedaan maken); voor de rest is de Prullenbak de weg terug.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Hernoemen in reeks met een sjabloon ([N] naam, [E] extensie, [C] teller, [D] en [T] datum en tijd, [P] map), vervangen met reguliere expressies, tekens invoegen en verwijderen, en hoofdlettergebruik wijzigen. Het voorbeeld toont conflicten meteen; Hernoemen sluit het venster en de reeks loopt op de achtergrond; "Hernoeming ongedaan maken" in het bewerkingslogboek zet de oude namen terug (op een server zodra een paneel ermee is verbonden). In een ZIP-archief is de hele reeks één herschrijving van het archief, alles of niets; andere archiefindelingen zijn alleen-lezen.</sys:String>
+    <sys:String x:Key="Help_Cmd_OperationLog">Geschiedenis van bestandsbewerkingen, van u en van agents: kopiëren, verplaatsen, verwijderen, hernoemen, maken, inpakken en uitpakken, downloads en uploads (de overdrachtswachtrij en opslagen van een bestand dat vanaf een server is geopend), met resultaat en fouten. Een regel kan worden opgeslagen als herbruikbare bewerking. Het enige wat het logboek ongedaan kan maken is een hernoemreeks of AI-hernoemen (Hernoeming ongedaan maken); voor de rest is de Prullenbak de weg terug.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Toont de voortgangsvensters die met Op de achtergrond zijn verborgen opnieuw. Kopiëren, verplaatsen of verwijderen gaat door terwijl het venster verborgen is; de statusbalk toont hoeveel bewerkingen op de achtergrond lopen en hoe ver ze zijn, en een klik erop toont ze in een lijst, elk met zijn voortgang of 'in wachtrij', om het venster te tonen of de bewerking te annuleren. Bewerkingen met een server aan één kant lopen naast die op de schijf, zodat een lange download een lokale kopie niet ophoudt.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Voegt de huidige map van het actieve paneel toe aan de bladwijzers onder een naam die u kiest. Bladwijzers staan in het menu Bladwijzers.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Bladwijzereditor: naam, pad, volgorde en groep (groepen worden submenu's van het menu Bladwijzers), importeren en exporteren als JSON. Wijzigingen worden toegepast met OK.</sys:String>
@@ -1944,7 +2014,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_OpenInEditor">Opent de huidige map en de geselecteerde bestanden in uw standaardeditor (VS Code, Cursor, Rider, Zed, Sublime Text, Notepad++ en andere worden automatisch gevonden). Kies de standaard onder Instellingen → Externe hulpmiddelen, of met In editor openen….</sys:String>
     <sys:String x:Key="Help_Cmd_OpenInEditorPicker">Zoals In editor openen, maar laat u eerst de editor uit een lijst kiezen; uw keuze wordt de standaard.</sys:String>
     <sys:String x:Key="Help_Cmd_RunAgentHere">Start een agent-CLI (Claude Code, Codex, Gemini, Aider en andere) in een nieuw terminalvenster in de map van het actieve paneel. De start wordt vastgelegd als agentsessie, zodat de wijzigingen ervan later verschijnen in Agentwijzigingen ({gesture:AgentChanges}).</sys:String>
-    <sys:String x:Key="Help_Cmd_RunAgentPicker">Zoals Agent hier uitvoeren, maar laat u eerst de agent kiezen; de keuze wordt onthouden.</sys:String>
+    <sys:String x:Key="Help_Cmd_RunAgentPicker">Zoals Agent hier starten, maar laat u eerst de agent kiezen; de keuze wordt onthouden.</sys:String>
     <sys:String x:Key="Help_Cmd_RunGadget">Een gadget is een opgeslagen, benoemde opdrachtregel, bijv. build = dotnet build. Dit opent een doorzoekbare lijst met gadgets en voert de gekozen uit in de map van het actieve paneel. Gadgets worden toegevoegd, bewerkt en verwijderd onder Instellingen → Gadgets (Opdrachten → Gadgets beheren…); zolang er geen zijn, biedt de opdracht aan de eerste in één regel te beschrijven.</sys:String>
     <sys:String x:Key="Help_Cmd_GadgetsManager">Opent Instellingen op het tabblad Gadgets: gadgets toevoegen, bewerken en verwijderen — naam, opdracht, argumenten met macro's, werkmap en of het in een terminal wordt uitgevoerd. Een gadget wordt gekozen op naam, dus namen moeten uniek zijn.</sys:String>
     <sys:String x:Key="Help_Cmd_ShellsManager">Opent Instellingen op het tabblad Shells: de shells waarin de opdrachtregel onderin het venster opdrachten uitvoert — cmd, PowerShell, Git Bash, WSL of een eigen shell: naam, programma en argumenten waarbij %C de getypte opdracht is. De shell voor de volgende opdracht kiest u links van de opdrachtregel.</sys:String>
@@ -1972,7 +2042,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_SemanticSearch">Zoeken op betekenis: een vraag in woorden ("waar wordt het token gecontroleerd?") vindt passende codefragmenten. Druk eerst op Indexeren — bestandstekst wordt naar het embeddingmodel gestuurd en de index blijft op deze machine. Vereist een embeddingmodel onder Instellingen → Agentlaag.</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Opgeslagen verbindingen: SFTP (wachtwoord of sleutel), FTP en FTPS, WebDAV, S3 en compatibele opslag (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Drive, Dropbox, OneDrive en Windows-shares. Links de lijst met zoekfunctie en een markering waar een verbinding open is; rechts de velden ervan: bewerken, testen, kleurlabel, alleen-lezen. Een bovenaan geplakt adres vult de velden in. Wachtwoorden, sleutels en aanmeldtokens worden versleuteld opgeslagen voor uw Windows-account. Importeren voegt de hosts uit ~/.ssh/config toe als SFTP-verbindingen, nadat is getoond wat er wordt toegevoegd; de al opgeslagen worden weggelaten.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Sluit de serververbinding (in het actieve paneel, of in het andere als het actieve paneel er geen heeft) en brengt het paneel terug naar de schijfmap die het eerder toonde.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Zet de geselecteerde bestanden in de wachtrij voor een overdracht op de achtergrond tussen een server en de schijf: een download als het serverpaneel actief is, anders een upload van schijf naar de server in het andere paneel. Overdrachten kunnen worden onderbroken en hervat; alleen bestanden, geen mappen.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Zet de geselecteerde bestanden in de wachtrij voor een overdracht op de achtergrond tussen een server en de schijf: een download als het serverpaneel actief is, anders een upload van schijf naar de server in het andere paneel. Een map gaat mee met alles erin; koppelingen worden niet gevolgd, en wat wordt overgeslagen, wordt genoemd. Overdrachten kunnen worden onderbroken en hervat.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">Het venster van de overdrachtswachtrij: voortgang per bestand, onderbreken, hervatten, annuleren, opnieuw proberen na een fout en voltooide items wissen. Het blokkeert de panelen niet; de wachtrij blijft bestaan tot u het programma sluit.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">Een doorzoekbare lijst met opgeslagen werkruimten: typ een deel van een naam en druk op Enter, en beide panelen met hun tabbladen en indeling keren terug naar de status van dat project. De groep en een markering "vastgemaakt" staan rechts.</sys:String>
     <sys:String x:Key="Help_Cmd_NewWorkspace">Maakt een lege werkruimte. Een venster vraagt om de naam, het pictogram, de kleur en de groep, waarna beide panelen met elk één tabblad in uw thuismap openen. De werkruimte waar u was, wordt opgeslagen, zoals bij elke wissel. De nieuwe werkruimte wordt meteen vastgemaakt aan de werkruimtezijbalk (haal het vinkje in het venster weg als u dat liever niet wilt). Een map neerzetten op de werkruimtezijbalk opent hetzelfde venster, waarna beide bestandspanelen in die map openen. Gebruik {gesture:SaveWorkspace} om de huidige panelen onder een nieuwe naam te kopiëren.</sys:String>
@@ -1994,7 +2064,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_HotkeySettings">Opdrachten en hun toetsen: zoek een opdracht, druk op een nieuwe sneltoets (of een akkoord van twee toetsaanslagen) en pas die toe. Conflicten met andere opdrachten worden geweigerd; Herstellen zet de standaardtoets terug.</sys:String>
     <sys:String x:Key="Help_Cmd_PluginManager">Toont de geladen plugins (bestandssystemen, hulpmiddelen, kolommen) en laadt een nieuwe .NET-plugin uit een DLL. Een plugin is vreemde code, dus laad alleen vertrouwde plugins.</sys:String>
     <sys:String x:Key="Help_Cmd_CheckForUpdates">Controleert op GitHub of er een nieuwere versie is. Een portable kopie installeert die zelf: het downloadt alleen wat is gewijzigd, sluit en opent weer als de nieuwe versie, en instellingen en werkruimten blijven behouden. Een dev-build of een oud ZIP-bestand biedt in plaats daarvan de downloadpagina aan. Het programma gaat alleen online wanneer u dit uitvoert.</sys:String>
-    <sys:String x:Key="Help_Cmd_ReportBug">Opent het bugmeldingsformulier op GitHub met de versie en Windows al ingevuld. Beschrijf wat er gebeurde en voeg het logboek bij (Help → Logboekmap openen). Het programma verstuurt zelf niets: u ziet het formulier en verstuurt het in uw browser.</sys:String>
+    <sys:String x:Key="Help_Cmd_ReportBug">Opent het bugmeldingsformulier op GitHub met de versie en Windows al ingevuld. Beschrijf wat er gebeurde en voeg het logboek bij (Help → De logmap openen). Het programma verstuurt zelf niets: u ziet het formulier en verstuurt het in uw browser.</sys:String>
     <sys:String x:Key="Help_Cmd_Discussions">Opent de discussies van het project op GitHub: vragen, ideeën en hoe u het programma gebruikt. Bugs gaan via Een bug melden.</sys:String>
     <sys:String x:Key="Help_Cmd_OpenLogFolder">Toont de logboeken van het programma in Verkenner met het nieuwste geselecteerd: voeg het bij een bugmelding. De logboeken blijven op deze computer; elke dag begint een nieuw bestand en de laatste zeven blijven bewaard.</sys:String>
     <sys:String x:Key="Help_Cmd_ExportSettings">Slaat instellingen, werkruimten, zoekvoorinstellingen en gebruikershulpmiddelen op in één .tcvsettings-bestand, om ze naar een andere machine te verplaatsen. De modelsleutel, MCP-server, goedgekeurde mappen, verbindingen en notities zijn niet inbegrepen.</sys:String>
@@ -2002,11 +2072,11 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Help_Cmd_Quit">Sluit het programma en slaat de panelen en de indeling van de huidige werkruimte op. Als kopiëren of een overdracht nog loopt, wordt eerst gevraagd.</sys:String>
     <sys:String x:Key="Help_Cmd_Menu">Opent het hoofdmenu met het toetsenbord; gebruik daarna de pijltoetsen en Enter.</sys:String>
     <sys:String x:Key="Help_Topic_Start">Aan de slag</sys:String>
-    <sys:String x:Key="Help_Topic_Start_Body" xml:space="preserve">## Twee panelen&#10;Het venster heeft twee bestandspanelen. Het actieve heeft een onderstreept tabblad en een stip in de statusregel: opdrachten werken erop, en het andere paneel is het doel voor kopiëren en verplaatsen. Wissel met {gesture:SwitchPanel} of een muisklik.&#10;• De cursor is de rij waarop u staat. Selecties zijn de bestanden die voor een bewerking zijn gekozen: {gesture:SelectToggle} selecteert een bestand en gaat omlaag, {gesture:SelectToggleSize} doet hetzelfde en telt ook de grootte van een map, {gesture:SelectAll} selecteert alles. Een klik met Ctrl selecteert of deselecteert één bestand en laat de rest met rust; een klik met Shift en de pijltoetsen met Shift selecteren een reeks, en de pijltoetsen met Shift die op een geselecteerd bestand zijn begonnen, deselecteren juist. Als niets is geselecteerd, werken opdrachten op het bestand onder de cursor.&#10;• Begin te typen om het snelfilter te openen: de lijst houdt de namen die de tekst bevatten en de cursor komt op de beste overeenkomst (een naam die ermee begint, dan een woord binnen een naam). ↑ en ↓ lopen door de overeenkomsten, {gesture:OpenFile} opent de gevonden, en {gesture:View}, {gesture:Copy} en de andere opdrachten werken er direct vanuit het vak op; Esc wist het filter. Tekst met * of ? is een masker voor de hele naam: *.cs zijn alleen C#-bestanden.&#10;• {gesture:OpenFile} opent een map of een bestand, {gesture:NavigateUp} gaat een niveau omhoog.&#10;## Knoppen onderaan&#10;Ze volgen het klassieke Total Commander: {gesture:View} weergeven, {gesture:Edit} bewerken, {gesture:Copy} kopiëren, {gesture:Move} verplaatsen, {gesture:NewFolder} nieuwe map, {gesture:Delete} verwijderen, {gesture:Terminal} terminal, {gesture:Quit} afsluiten. {gesture:Rename} wijzigt de naam; het menu opent met Alt.&#10;## De opdrachtregel&#10;Onder de panelen staat de opdrachtregel. cd pad verplaatst het actieve paneel; al het andere wordt uitgevoerd in een terminal in de map van het paneel, in de shell die links van de regel is gekozen: cmd, PowerShell, Git Bash, WSL. Enter op een lege regel opent de shell zelf. Voeg eigen shells toe via Opdrachten → Shells voor de opdrachtregel….&#10;## Elke opdracht vinden&#10;• {gesture:CommandPalette} is het opdrachtenpalet: begin een naam te typen, Enter voert ze uit. Het bevat alles wat het programma kan, met de huidige toetsen.&#10;• {gesture:Help} is deze help: wat elke opdracht doet en waar ze in de menu's staat.&#10;• Elke toets kan opnieuw worden toegewezen: menu Instellingen → Sneltoetsen.&#10;## Waar het programma voor dient&#10;Het is gebouwd om naast LLM-agents te werken: snel zien wat een agent heeft gewijzigd ({gesture:AgentChanges}), de diff bekijken ({gesture:GitDiff}), terugdraaien wat u niet wilt, en direct tussen projecten wisselen — werkruimten ({gesture:WorkspaceSwitcher}).</sys:String>
-    <sys:String x:Key="Help_Topic_Panels">Panelen, tabbladen en bestanden zoeken</sys:String>
+    <sys:String x:Key="Help_Topic_Start_Body" xml:space="preserve">## Twee panelen&#10;Het venster heeft twee bestandspanelen. Het actieve heeft een onderstreept tabblad en een stip in de statusregel: opdrachten werken erop, en het andere paneel is het doel voor kopiëren en verplaatsen. Wissel met {gesture:SwitchPanel} of een muisklik.&#10;• De cursor is de rij waarop u staat. Selecties zijn de bestanden die voor een bewerking zijn gekozen: {gesture:SelectToggle} selecteert een bestand en gaat omlaag, {gesture:SelectToggleSize} doet hetzelfde en telt ook de grootte van een map, {gesture:SelectAll} selecteert alles. Een klik met Ctrl selecteert of deselecteert één bestand en laat de rest met rust; een klik met Shift en de pijltoetsen met Shift selecteren een reeks, en de pijltoetsen met Shift die op een geselecteerd bestand zijn begonnen, deselecteren juist. Als niets is geselecteerd, werken opdrachten op het bestand onder de cursor.&#10;• Begin te typen om het snelfilter te openen: de lijst houdt de namen die de tekst bevatten en de cursor komt op de beste overeenkomst (een naam die ermee begint, dan een woord binnen een naam). ↑ en ↓ lopen door de overeenkomsten, {gesture:OpenFile} opent de gevonden, en {gesture:View}, {gesture:Copy} en de andere opdrachten werken er direct vanuit het vak op; Esc wist het filter. Tekst met * of ? is een masker voor de hele naam: *.cs zijn alleen C#-bestanden.&#10;• {gesture:OpenFile} opent een map of een bestand, {gesture:NavigateUp} gaat een niveau omhoog.&#10;## Knoppen onderaan&#10;Ze volgen het klassieke Total Commander: {gesture:View} weergeven, {gesture:Edit} bewerken, {gesture:Copy} kopiëren, {gesture:Move} verplaatsen, {gesture:NewFolder} nieuwe map, {gesture:Delete} verwijderen, {gesture:Terminal} terminal, {gesture:Quit} afsluiten. {gesture:Rename} wijzigt de naam; het menu opent met Alt.&#10;## De opdrachtregel&#10;Onder de panelen staat de opdrachtregel. cd pad verplaatst het actieve paneel; al het andere wordt uitgevoerd in een terminal in de map van het paneel, in de shell die links van de regel is gekozen: cmd, PowerShell, Git Bash, WSL. Enter op een lege regel opent de shell zelf. Voeg eigen shells toe via Opdrachten → Opdrachtregelshells….&#10;## Elke opdracht vinden&#10;• {gesture:CommandPalette} is het opdrachtenpalet: begin een naam te typen, Enter voert ze uit. Het bevat alles wat het programma kan, met de huidige toetsen.&#10;• {gesture:Help} is deze help: wat elke opdracht doet en waar ze in de menu's staat.&#10;• Elke toets kan opnieuw worden toegewezen: menu Instellingen → Sneltoetsen.&#10;## Waar het programma voor dient&#10;Het is gebouwd om naast LLM-agents te werken: snel zien wat een agent heeft gewijzigd ({gesture:AgentChanges}), de diff bekijken ({gesture:GitDiff}), terugdraaien wat u niet wilt, en direct tussen projecten wisselen — werkruimten ({gesture:WorkspaceSwitcher}).</sys:String>
+    <sys:String x:Key="Help_Topic_Panels">Panelen, tabbladen en zoeken</sys:String>
     <sys:String x:Key="Help_Topic_Panels_Body" xml:space="preserve">## Pad en stations&#10;• Boven elk paneel staan de stationslijst en de padbalk. Klik op een deel van het pad om daarheen te gaan; klik op het lege deel van de balk, of druk op {gesture:EditPath}, om een pad met suggesties te typen. In een archief of op een server is het eerste deel de naam ervan (archive.zip, sftp://user@host) en leidt naar de hoofdmap.&#10;• Op een netwerkshare (\\server\share) toont de stationslijst de share in plaats van een station. De lijst volgt stations terwijl ze komen en gaan (USB, gekoppelde netwerkstations).&#10;• {gesture:NavigateBack} en {gesture:NavigateForward} lopen door de geschiedenis van het paneel.&#10;• {gesture:GoToRoot} gaat naar de hoofdmap van het station, {gesture:GoHome} naar uw profielmap, {gesture:GoToClipboardPath} naar het pad op het klembord.&#10;## Tabbladen&#10;• Elk paneel heeft zijn eigen tabbladen: {gesture:NewTab} nieuw, {gesture:CloseTab} sluiten, {gesture:NextTab} volgende. Dubbelklik op een tabblad om de naam te wijzigen, klik met de middelste knop om te sluiten, rechtsklik voor een menu (dupliceren, vergrendelen, andere sluiten). Als de tabbladen niet passen, scrolt het muiswiel ze en toont de knop ▾ rechts ze allemaal.&#10;• De huidige git-branch staat naast de naam van het tabblad.&#10;## Weergave&#10;• Weergaveknoppen in de statusregel van het paneel: Details (kolommen), Beknopt, Miniaturen, Boomstructuur. Rechtsklik erop voor verborgen bestanden ({gesture:ToggleHiddenFiles}), extensies en mappen eerst; dezelfde schakelaars staan in het menu Instellingen en in het menu van de kolomkop. De weergaven hebben ook toetsen: {gesture:ViewModeDetails}, {gesture:ViewModeBrief}, {gesture:ViewModeThumbnails}, {gesture:ViewModeTree}.&#10;• Home en End gaan naar de eerste en laatste rij in elke weergave; met Shift selecteren ze alles onderweg, of deselecteren ze het als ze op een geselecteerde rij begonnen.&#10;• Sorteer door op een kolomkop te klikken. Kies kolommen met {gesture:ColumnSettings}; de kolom Git toont de status van elk bestand.&#10;• {gesture:ToggleIgnored} verbergt bestanden die door .gitignore zijn uitgesloten (bin, obj, node_modules). {gesture:FolderTree} toont een mappenstructuur links. {gesture:ToggleSplit} zet de panelen naast of boven elkaar.&#10;## Een bestand zoeken&#10;• Letters die in de lijst worden getypt openen het snelfilter, en {gesture:QuickFilter} opent het vóór de eerste letter: de lijst wordt beperkt tot de namen die overeenkomen, het overeenkomende deel van elke naam is gemarkeerd en Enter opent het item onder de cursor. Instellingen → Bestanden maken er een sprong van: de lijst blijft compleet, de cursor gaat naar de overeenkomst, ↑ en ↓ gaan naar de volgende. Tekst die nergens mee overeenkomt wordt rood. In de weergave Boomstructuur gaan letters naar de zichtbare map waarvan de naam ermee begint.&#10;• {gesture:FindFiles} — op naam binnen het huidige project: fuzzy en direct.&#10;• {gesture:NameSearch} — op naam op alle stations, uit een index.&#10;• {gesture:Search} — de volledige zoekopdracht: op masker, inhoud, grootte, ook in archieven; resultaten kunnen in een paneel worden getoond.&#10;• {gesture:SemanticSearch} — op betekenis, met een taalmodel.&#10;## Archieven en zoekresultaten&#10;{gesture:OpenFile} op een archief opent het als map. ZIP kan worden gewijzigd; andere indelingen zijn alleen-lezen. Zoekresultaten die in een paneel worden getoond zijn echte bestanden: u kunt ze kopiëren, verwijderen, hernoemen, inpakken en bewerken, in Verkenner tonen en er hulpmiddelen op uitvoeren, maar in die lijst kan niets worden gemaakt. Hulpmiddelen, editors en agents die vanuit de lijst worden gestart, werken in de map waarover ze is geopend. Verlaat een archief of de resultaten met {gesture:NavigateUp} in hun hoofdmap.</sys:String>
-    <sys:String x:Key="Help_Topic_Files">Bestandsbewerkingen en ongedaan maken</sys:String>
-    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Kopiëren en verplaatsen&#10;{gesture:Copy} en {gesture:Move} sturen de geselecteerde items naar de map van het andere paneel. In het dialoogvenster kunt u de bestemming wijzigen en kiezen wat er gebeurt bij naamconflicten. Bewerkingen draaien op de achtergrond met voortgang, Onderbreken en Annuleren; bij een fout in één bestand kunt u opnieuw proberen, overslaan of afbreken.&#10;## Verwijderen&#10;Op een lokale schijf (zoekresultaten inbegrepen) stuurt {gesture:Delete} bestanden naar de Prullenbak; elders (verwisselbare schijven, netwerk, servers, archieven) verwijdert het definitief — de bevestiging vermeldt altijd welke van de twee. {gesture:DeletePermanent} omzeilt de Prullenbak altijd.&#10;## Klembord en slepen&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} en {gesture:ClipboardPaste} werken op bestanden en werken samen met Verkenner.&#10;• {gesture:CopyFullPath} kopieert paden als tekst, {gesture:CopyNames} kopieert namen.&#10;• Bestanden kunnen tussen de panelen en van en naar Verkenner worden gesleept; houd Shift ingedrukt of sleep met de rechtermuisknop om te verplaatsen. Bestanden van een server- of cloudpaneel gaan op dezelfde manier naar het andere paneel. Items van een geopend archief die op het andere paneel worden neergezet, worden daar uitgepakt, en neergezet op de rij ".." in de hoofdmap van het archief, in de map waarin het archief staat.&#10;## Het logboek, en wat ongedaan kan worden gemaakt&#10;• Elke bewerking — van u en van agents — wordt naar het logboek geschreven ({gesture:OperationLog}).&#10;• Er is geen algemene functie voor ongedaan maken. De wegen terug zijn: de Prullenbak voor wat van een lokale schijf is verwijderd; Ongedaan maken in Meervoudig hernoemen zolang het venster open is; Ongedaan maken in AI-hernoemen, en later Hernoemen ongedaan maken in het logboek; bestanden terugdraaien naar de laatste git-commit ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Herhaalbare acties&#10;• {gesture:SavedOperations} — opgeslagen bewerkingen, gemaakt uit het logboek of via Opdrachten → Opgeslagen bewerkingen beheren….&#10;• {gesture:DropStackAdd} verzamelt bestanden uit verschillende mappen op een stapel; {gesture:DropStackShow} kopieert of verplaatst ze allemaal tegelijk.&#10;• {gesture:MultiRename} hernoemt met een sjabloon, {gesture:CompareDirectories} vergelijkt en synchroniseert twee mappen.</sys:String>
+    <sys:String x:Key="Help_Topic_Files">Bewerkingen en ongedaan maken</sys:String>
+    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Kopiëren en verplaatsen&#10;{gesture:Copy} en {gesture:Move} sturen de geselecteerde items naar de map van het andere paneel. In het dialoogvenster kunt u de bestemming wijzigen en kiezen wat er gebeurt bij naamconflicten. Bewerkingen draaien op de achtergrond met voortgang, Onderbreken en Annuleren; bij een fout in één bestand kunt u opnieuw proberen, overslaan of afbreken.&#10;## Verwijderen&#10;Op een lokale schijf (zoekresultaten inbegrepen) stuurt {gesture:Delete} bestanden naar de Prullenbak; elders (verwisselbare schijven, netwerk, servers, archieven) verwijdert het definitief — de bevestiging vermeldt altijd welke van de twee. {gesture:DeletePermanent} omzeilt de Prullenbak altijd.&#10;## Klembord en slepen&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} en {gesture:ClipboardPaste} werken op bestanden en werken samen met Verkenner.&#10;• {gesture:CopyFullPath} kopieert paden als tekst, {gesture:CopyNames} kopieert namen.&#10;• Bestanden kunnen tussen de panelen en van en naar Verkenner worden gesleept; houd Shift ingedrukt of sleep met de rechtermuisknop om te verplaatsen. Bestanden van een server- of cloudpaneel gaan op dezelfde manier naar het andere paneel. Items van een geopend archief die op het andere paneel worden neergezet, worden daar uitgepakt, en neergezet op de rij ".." in de hoofdmap van het archief, in de map waarin het archief staat.&#10;## Het logboek, en wat ongedaan kan worden gemaakt&#10;• Elke bewerking — van u en van agents — wordt naar het logboek geschreven ({gesture:OperationLog}).&#10;• Er is geen algemene functie voor ongedaan maken. De wegen terug zijn: de Prullenbak voor wat van een lokale schijf is verwijderd; Ongedaan maken in Meervoudig hernoemen zolang het venster open is; Ongedaan maken in AI-hernoemen, en later Hernoeming ongedaan maken in het logboek; bestanden terugdraaien naar de laatste git-commit ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Herhaalbare acties&#10;• {gesture:SavedOperations} — opgeslagen bewerkingen, gemaakt uit het logboek of via Opdrachten → Opgeslagen bewerkingen beheren….&#10;• {gesture:DropStackAdd} verzamelt bestanden uit verschillende mappen op een stapel; {gesture:DropStackShow} kopieert of verplaatst ze allemaal tegelijk.&#10;• {gesture:MultiRename} hernoemt met een sjabloon, {gesture:CompareDirectories} vergelijkt en synchroniseert twee mappen.</sys:String>
     <sys:String x:Key="Help_Topic_Workspaces">Werkruimten</sys:String>
     <sys:String x:Key="Help_Topic_Workspaces_Body" xml:space="preserve">## Wat het is&#10;Een werkruimte is de opgeslagen status van een heel project: beide panelen met al hun tabbladen en mappen, de weergave en de indeling. Wisselen naar een werkruimte brengt alles terug zoals het was — sneller dan tabbladen en bladwijzers.&#10;## Maken, opslaan, wisselen&#10;• {gesture:NewWorkspace} maakt een lege werkruimte: beide panelen in uw thuismap. Degene waar u was, wordt opgeslagen.&#10;• {gesture:SaveWorkspace} slaat de huidige status onder een naam op (of werkt de actieve werkruimte bij).&#10;• {gesture:WorkspaceSwitcher} is een doorzoekbare lijst met werkruimten; {gesture:Workspace1}, {gesture:Workspace2}… springen direct naar de werkruimte met dat nummer.&#10;• Wanneer u een werkruimte verlaat (wegschakelen of het programma sluiten), worden de huidige tabbladen automatisch opgeslagen.&#10;## Eigenschappen: naam, pictogram, kleur, groep&#10;{gesture:WorkspaceProperties} opent één venster met alle eigenschappen van de actieve werkruimte; voor een andere gebruikt u het menu Werkruimten → de werkruimte → Eigenschappen.&#10;• Het pictogram is een emoji die vóór de naam staat in het menu, de wisselaar en de venstertitel; op de werkruimtezijbalk staat het in plaats van de letters.&#10;• De kleur is een strook onder het menu, het kader van het actieve paneel en een stip op de werkruimtezijbalk. Kies er een uit de set of druk op Overige…. Zo houdt u vensters van verschillende projecten uit elkaar.&#10;• De groep is een kop boven de vastgemaakte werkruimten op de werkruimtezijbalk en een label in de wisselaar, bijv. "Werk" en "OSS". Werkruimten zonder groep komen eerst, dan de groepen van A tot Z. Een groep doet er pas toe als veel werkruimten zijn vastgemaakt.&#10;## De werkruimtezijbalk en vastmaken&#10;De werkruimtezijbalk links toont de vastgemaakte werkruimten en de nu geopende. Een vastgemaakte werkruimte staat er altijd en komt eerst in de lijst. Een losgemaakte staat er alleen zolang ze open is: ze staat onder een lijn na de vastgemaakte en verlaat de zijbalk als u wegschakelt. Een nieuwe werkruimte wordt meteen vastgemaakt. Om vast te maken of los te maken rechtsklikt u op de werkruimte op de zijbalk of gebruikt u het menu Werkruimten → de werkruimte; de zijbalk schakelt zichzelf in zodra u vastmaakt. Verberg of toon hem met {gesture:WorkspaceSidebar}.&#10;## Volgorde en een nieuwe map&#10;• U bepaalt de volgorde: sleep een werkruimte omhoog of omlaag op de zijbalk, binnen haar groep. De nummers {gesture:Workspace1}, {gesture:Workspace2}… tellen van boven naar beneden langs de zijbalk, en het menu en de wisselaar tonen de werkruimten in dezelfde volgorde. Een net vastgemaakte werkruimte, of een naar een andere groep verplaatste, komt aan het einde daarvan.&#10;• Een map die op de zijbalk wordt neergezet (uit een bestandslijst of Verkenner) wordt een nieuwe werkruimte: het eigenschappenvenster opent en daarna openen beide bestandspanelen in die map. Als de map al open is in een paneel van een werkruimte, wisselt u gewoon daarheen.&#10;## Notities en terminal&#10;{gesture:WorkspaceNotes} bevat notities voor het project: waar u mee bezig was en wat er nog komt. {gesture:WorkspaceTerminal} opent een terminal en voert de opdracht van het project uit (npm run dev, dotnet watch…). De opdracht en de map stelt u in via de eigenschappen van de werkruimte ({gesture:WorkspaceProperties}); het menu Werkruimten toont de opdracht naast het item.&#10;## Meerdere vensters en het projectbestand&#10;• {gesture:WorkspaceNewWindow} opent een werkruimte in een apart venster.&#10;• {gesture:WorkspaceExportDefinition} slaat de werkruimtebeschrijving op als .tcvproj-bestand dat u kunt committen; {gesture:WorkspaceOpenDefinition} opent zo'n bestand — bijvoorbeeld na een clone.</sys:String>
     <sys:String x:Key="Help_Topic_Git">Git</sys:String>
@@ -2114,6 +2184,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Shell_ShellBoxTip">De shell waarin de opdracht wordt uitgevoerd. Wijzig met een klik, of Alt+↓ in de regel</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Shells configureren…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">Die map bestaat niet: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">"{1}" is een pad binnen {0}: het paneel opent alleen Windows-mappen.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">De panelen kunnen niet worden verwisseld zolang een ervan in een archief, op een server of in zoekresultaten staat.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:wijziging|wijzigingen}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Alle bewerkingen voltooid</sys:String>
@@ -2150,6 +2221,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Palette_Title">Opdrachtenpalet</sys:String>
     <sys:String x:Key="Palette_Placeholder">Typ een opdracht…</sys:String>
     <sys:String x:Key="Palette_UserTools">Gebruikershulpmiddelen</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Selectiesjablonen</sys:String>
     <!-- Titles of the palette commands, their categories and the file-list columns: English and Russian
          keep them in CommandCatalog / ColumnCatalog, every other language here (Cmd_<Id>, CmdCat_<Category>,
          ColTitle_<Id>). -->
@@ -2175,7 +2247,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_Pack">Inpakken…</sys:String>
     <sys:String x:Key="Cmd_Unpack">Uitpakken…</sys:String>
     <sys:String x:Key="Cmd_OpenFile">Openen</sys:String>
-    <sys:String x:Key="Cmd_View">Weergeven</sys:String>
+    <sys:String x:Key="Cmd_View">Bekijken</sys:String>
     <sys:String x:Key="Cmd_Edit">Bewerken</sys:String>
     <sys:String x:Key="Cmd_Properties">Eigenschappen</sys:String>
     <sys:String x:Key="Cmd_CalculateFolderSizes">Mapgroottes</sys:String>
@@ -2185,7 +2257,10 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_DeselectAll">Alles deselecteren</sys:String>
     <sys:String x:Key="Cmd_InvertSelection">Selectie omkeren</sys:String>
     <sys:String x:Key="Cmd_SelectByMask">Selecteren op masker…</sys:String>
-    <sys:String x:Key="Cmd_UnselectByMask">Deselecteren op masker…</sys:String>
+    <sys:String x:Key="Cmd_UnselectByMask">Selectie opheffen op masker…</sys:String>
+    <sys:String x:Key="Cmd_SelectSameExtension">Zelfde extensie selecteren</sys:String>
+    <sys:String x:Key="Cmd_UnselectSameExtension">Zelfde extensie deselecteren</sys:String>
+    <sys:String x:Key="Cmd_RestoreSelection">Selectie herstellen</sys:String>
     <sys:String x:Key="Cmd_ClipboardCopy">Kopiëren naar klembord</sys:String>
     <sys:String x:Key="Cmd_ClipboardCut">Knippen naar klembord</sys:String>
     <sys:String x:Key="Cmd_ClipboardPaste">Plakken vanaf klembord</sys:String>
@@ -2196,21 +2271,21 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_NavigateBack">Vorige</sys:String>
     <sys:String x:Key="Cmd_NavigateForward">Volgende</sys:String>
     <sys:String x:Key="Cmd_GoToRoot">Naar hoofdmap</sys:String>
-    <sys:String x:Key="Cmd_GoHome">Naar thuismap</sys:String>
+    <sys:String x:Key="Cmd_GoHome">Naar persoonlijke map</sys:String>
     <sys:String x:Key="Cmd_GoToClipboardPath">Naar pad van klembord</sys:String>
     <sys:String x:Key="Cmd_EditPath">Pad bewerken</sys:String>
-    <sys:String x:Key="Cmd_OpenInExplorer">Openen in Verkenner</sys:String>
+    <sys:String x:Key="Cmd_OpenInExplorer">In Verkenner openen</sys:String>
     <sys:String x:Key="Cmd_SwitchPanel">Paneel wisselen</sys:String>
     <sys:String x:Key="Cmd_ToggleSplit">Splitsrichting wisselen</sys:String>
-    <sys:String x:Key="Cmd_SwapPanels">Panelen verwisselen</sys:String>
+    <sys:String x:Key="Cmd_SwapPanels">Panelen wisselen</sys:String>
     <sys:String x:Key="Cmd_FindFiles">Bestand in project zoeken…</sys:String>
     <sys:String x:Key="Cmd_QuickFilter">Snelfilter</sys:String>
-    <sys:String x:Key="Cmd_NameSearch">Bestand overal zoeken…</sys:String>
+    <sys:String x:Key="Cmd_NameSearch">Overal een bestand zoeken…</sys:String>
     <sys:String x:Key="Cmd_RebuildNameIndex">Naamindex opnieuw opbouwen</sys:String>
     <sys:String x:Key="Cmd_FolderTree">Mappenstructuur tonen/verbergen</sys:String>
-    <sys:String x:Key="Cmd_ToggleIgnored">Gitignored-bestanden verbergen</sys:String>
-    <sys:String x:Key="Cmd_ToggleHiddenFiles">Verborgen bestanden weergeven</sys:String>
-    <sys:String x:Key="Cmd_ToggleExtensions">Bestandsextensies weergeven</sys:String>
+    <sys:String x:Key="Cmd_ToggleIgnored">Gitignored bestanden verbergen</sys:String>
+    <sys:String x:Key="Cmd_ToggleHiddenFiles">Verborgen bestanden tonen</sys:String>
+    <sys:String x:Key="Cmd_ToggleExtensions">Bestandsextensies tonen</sys:String>
     <sys:String x:Key="Cmd_ToggleFoldersFirst">Mappen eerst</sys:String>
     <sys:String x:Key="Cmd_ColumnSettings">Kolommen…</sys:String>
     <sys:String x:Key="Cmd_ToggleTheme">Licht / donker thema wisselen</sys:String>
@@ -2234,11 +2309,11 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_AddBookmark">Bladwijzer toevoegen…</sys:String>
     <sys:String x:Key="Cmd_BookmarksManager">Bladwijzers beheren…</sys:String>
     <sys:String x:Key="Cmd_Terminal">Terminal hier openen</sys:String>
-    <sys:String x:Key="Cmd_ShellsManager">Shells voor de opdrachtregel…</sys:String>
+    <sys:String x:Key="Cmd_ShellsManager">Opdrachtregelshells…</sys:String>
     <sys:String x:Key="Cmd_OpenInEditor">In editor openen</sys:String>
     <sys:String x:Key="Cmd_OpenInEditorPicker">In editor openen…</sys:String>
-    <sys:String x:Key="Cmd_RunAgentHere">Agent hier uitvoeren</sys:String>
-    <sys:String x:Key="Cmd_RunAgentPicker">Agent hier uitvoeren…</sys:String>
+    <sys:String x:Key="Cmd_RunAgentHere">Agent hier starten</sys:String>
+    <sys:String x:Key="Cmd_RunAgentPicker">Agent hier starten…</sys:String>
     <sys:String x:Key="Cmd_RunGadget">Een gadget uitvoeren…</sys:String>
     <sys:String x:Key="Cmd_GadgetsManager">Gadgets beheren…</sys:String>
     <sys:String x:Key="Cmd_SavedOperations">Opgeslagen bewerkingen…</sys:String>
@@ -2269,7 +2344,7 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_QuickConnect">Snel verbinden via adres…</sys:String>
     <sys:String x:Key="Cmd_QueueTransfer">Aan overdrachtswachtrij toevoegen</sys:String>
     <sys:String x:Key="Cmd_TransferQueue">Overdrachtswachtrij…</sys:String>
-    <sys:String x:Key="Cmd_WorkspaceSwitcher">Van werkruimte wisselen…</sys:String>
+    <sys:String x:Key="Cmd_WorkspaceSwitcher">Werkruimte wisselen…</sys:String>
     <sys:String x:Key="Cmd_NewWorkspace">Nieuwe werkruimte…</sys:String>
     <sys:String x:Key="Cmd_SaveWorkspace">Huidige opslaan als werkruimte…</sys:String>
     <sys:String x:Key="Cmd_WorkspaceNotes">Werkruimtenotities…</sys:String>
@@ -2296,10 +2371,10 @@ Uploaden vervangt die wijzigingen op de server. De kopie op de server vervangen?
     <sys:String x:Key="Cmd_Settings">Instellingen…</sys:String>
     <sys:String x:Key="Cmd_HotkeySettings">Sneltoetsen…</sys:String>
     <sys:String x:Key="Cmd_PluginManager">Pluginbeheer…</sys:String>
-    <sys:String x:Key="Cmd_CheckForUpdates">Controleren op updates…</sys:String>
+    <sys:String x:Key="Cmd_CheckForUpdates">Op updates controleren…</sys:String>
     <sys:String x:Key="Cmd_ReportBug">Een bug melden…</sys:String>
     <sys:String x:Key="Cmd_Discussions">Vragen en ideeën…</sys:String>
-    <sys:String x:Key="Cmd_OpenLogFolder">Logboekmap openen</sys:String>
+    <sys:String x:Key="Cmd_OpenLogFolder">De logmap openen</sys:String>
     <sys:String x:Key="Cmd_ExportSettings">Alle instellingen exporteren…</sys:String>
     <sys:String x:Key="Cmd_ImportSettings">Alle instellingen importeren…</sys:String>
     <sys:String x:Key="Cmd_Quit">Afsluiten</sys:String>

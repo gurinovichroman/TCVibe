@@ -19,16 +19,20 @@ public sealed record WorkspacePictureContext(
 /// <summary>A picture found in the project, drawn as the rail will show it.</summary>
 public sealed partial class WorkspacePictureCandidate : ObservableObject
 {
-    public WorkspacePictureCandidate(string path, BitmapSource picture)
+    public WorkspacePictureCandidate(string path, BitmapSource picture, string fileName)
     {
         Path = path;
         Picture = picture;
+        FileName = fileName;
     }
 
     /// <summary>Where it was found — the tooltip.</summary>
     public string Path { get; }
 
     public BitmapSource Picture { get; }
+
+    /// <summary>The name it has in the store: a workspace wearing this picture holds this name.</summary>
+    public string FileName { get; }
 
     [ObservableProperty]
     private bool _isSelected;
@@ -121,7 +125,7 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
     private string _iconImage;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasIconImage))]
+    [NotifyPropertyChangedFor(nameof(HasIconImage), nameof(PreviewName))]
     private ImageSource? _iconImageSource;
 
     /// <summary>The project may still be searched for a picture: the user has not chosen one, an emoji or none.</summary>
@@ -151,6 +155,22 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// The picture in use is marked among those found, however it got there: clicked here, chosen in the
+    /// window last time or put there by the search. The store names a picture by its content, so the same
+    /// file drawn again is the same name.
+    /// </summary>
+    partial void OnIconImageChanged(string value)
+    {
+        foreach (var candidate in Candidates)
+        {
+            candidate.IsSelected = IsInUse(candidate);
+        }
+    }
+
+    private bool IsInUse(WorkspacePictureCandidate candidate) =>
+        string.Equals(candidate.FileName, IconImage, StringComparison.OrdinalIgnoreCase);
+
     private async Task FindCandidatesAsync(string folder)
     {
         var paths = await Task.Run(() => ProjectIconFinder.FindRepositoryRoot(folder) is { } root
@@ -162,7 +182,8 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
         {
             if (await WorkspaceIconStore.RenderAsync(path) is { } drawn)
             {
-                var candidate = new WorkspacePictureCandidate(path, drawn.Bitmap);
+                var candidate = new WorkspacePictureCandidate(path, drawn.Bitmap, drawn.FileName);
+                candidate.IsSelected = IsInUse(candidate);
                 if (drawn.IsSquarish)
                 {
                     Candidates.Add(candidate);
@@ -177,6 +198,7 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
         var firstSquare = Candidates.FirstOrDefault();
         foreach (var candidate in wide)
         {
+            candidate.IsSelected = IsInUse(candidate);   // the picture may have changed while these were drawn
             Candidates.Add(candidate);
         }
 
@@ -218,10 +240,6 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
             }
 
             await StoreAsync(drawn.Bitmap, byUser: true);
-            foreach (var candidate in Candidates)
-            {
-                candidate.IsSelected = false;
-            }
         }
         finally
         {
@@ -244,10 +262,6 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
         IconImageSource = null;
         AutoIconImage = false;
         PictureError = string.Empty;
-        foreach (var candidate in Candidates)
-        {
-            candidate.IsSelected = false;
-        }
     }
 
     private async Task UseAsync(WorkspacePictureCandidate chosen, bool byUser)
@@ -255,13 +269,7 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
         BeginPictureWork();
         try
         {
-            if (await StoreAsync(chosen.Picture, byUser))
-            {
-                foreach (var candidate in Candidates)
-                {
-                    candidate.IsSelected = ReferenceEquals(candidate, chosen);
-                }
-            }
+            await StoreAsync(chosen.Picture, byUser);
         }
         finally
         {
@@ -361,14 +369,14 @@ public partial class WorkspacePropertiesDialogViewModel : ObservableObject
     public string NormalizedColor =>
         WorkspaceColor.TryNormalize(ColorText, out var normalized) ? normalized : string.Empty;
 
-    /// <summary>The name as the menu and the sidebar will show it.</summary>
+    /// <summary>The name as the menu will show it: a picture stands in place of the icon.</summary>
     public string PreviewName
     {
         get
         {
             var name = (Name ?? string.Empty).Trim();
             var icon = (Icon ?? string.Empty).Trim();
-            return icon.Length == 0 ? name : $"{icon} {name}";
+            return icon.Length == 0 || HasIconImage ? name : $"{icon} {name}";
         }
     }
 

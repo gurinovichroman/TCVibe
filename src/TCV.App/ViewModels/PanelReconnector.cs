@@ -94,7 +94,11 @@ public sealed class PanelReconnector
         return true;
     }
 
-    /// <summary>Stops the reconnect; the error stays on screen. False when none runs.</summary>
+    /// <summary>
+    /// Stops the reconnect; the error stays on screen. A listing a try left under way stops with it: it
+    /// would keep "Loading..." up until the server's timeout, and its failure, with no session left to
+    /// take it, would start the reconnect all over (TRAP-96). False when none runs.
+    /// </summary>
     public bool Stop()
     {
         if (_session is not { } session)
@@ -104,6 +108,7 @@ public sealed class PanelReconnector
 
         session.StoppedByUser = true;
         session.Cts.Cancel();
+        _fileList.StopLoading(keepError: true);
         End(session, ReconnectOutcome.Cancelled);
         return true;
     }

@@ -19,10 +19,7 @@
 
     <!-- File list columns -->
     <sys:String x:Key="Col_Name">Name</sys:String>
-    <sys:String x:Key="Col_Ext">Erw.</sys:String>
     <sys:String x:Key="Col_Size">Größe</sys:String>
-    <sys:String x:Key="Col_Date">Datum</sys:String>
-    <sys:String x:Key="Col_Attr">Attr.</sys:String>
     <sys:String x:Key="Col_Computed">gemessen</sys:String>
     <sys:String x:Key="Col_Reset">Spalten zurücksetzen</sys:String>
 
@@ -103,6 +100,8 @@
     <!-- Comparing and synchronising directories, editing a remote file (6.23) -->
     <sys:String x:Key="Cmp_Title">Verzeichnisse vergleichen</sys:String>
     <sys:String x:Key="Cmp_NothingTicked">Es ist nichts zum Kopieren angehakt. Zeilen anhaken oder mit dem Pfeil in einer Zeile deren Richtung festlegen.</sys:String>
+    <sys:String x:Key="Cmp_Verifying">es wird geprüft, ob sich nichts geändert hat…</sys:String>
+    <sys:String x:Key="Cmp_ChangedSince">Seit dem Vergleich geändert: {0} {0:plural:Datei|Dateien}, zuerst {1}. Es wurde nichts kopiert. Klicken Sie auf „Vergleichen“, um die Ordner im aktuellen Zustand zu sehen.</sys:String>
     <sys:String x:Key="Cmp_Compare">Vergleichen</sys:String>
     <sys:String x:Key="Cmp_Recursive">Unterverzeichnisse einbeziehen</sys:String>
     <sys:String x:Key="Cmp_ShowSame">Identische anzeigen</sys:String>
@@ -125,8 +124,15 @@
     <sys:String x:Key="Cmp_Synchronize">Synchronisieren</sys:String>
     <sys:String x:Key="Cmp_ConfirmSync">Die angehakten Einträge kopieren? Insgesamt {0}. Vorhandene Dateien werden überschrieben.</sys:String>
     <sys:String x:Key="RemoteEdit_Title">Remote-Datei bearbeiten</sys:String>
-    <sys:String x:Key="RemoteEdit_Started">"{0}" wurde als temporäre Kopie geöffnet. Jedes Speichern wird zurückgeladen.&#x0a;{1}</sys:String>
+    <sys:String x:Key="RemoteEdit_Started" xml:space="preserve">"{0}" wurde als temporäre Kopie geöffnet. Jedes Speichern wird zurückgeladen.&#x0a;{1}</sys:String>
     <sys:String x:Key="RemoteEdit_Failed">Die Datei konnte nicht abgerufen werden, oder die Quelle ist schreibgeschützt.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushTitle">Änderungen werden hochgeladen</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushMessage">Gespeicherte Änderungen sind auf dem Weg zum Server. Das Programm schließt, sobald sie angekommen sind.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStopHint">Wenn Sie nicht warten, geht nichts verloren: Die Änderungen bleiben in der lokalen Kopie, und das Programm sagt Ihnen, wo sie liegt.</sys:String>
+    <sys:String x:Key="RemoteEdit_FlushStop">Abbrechen und Kopien behalten</sys:String>
+    <sys:String x:Key="RemoteEdit_ServerMayBePartial">Ein Upload wurde nicht abgeschlossen: Die Datei auf dem Server ist möglicherweise unvollständig.</sys:String>
+    <sys:String x:Key="Fetch_Title">Datei wird geholt</sys:String>
+    <sys:String x:Key="Fetch_ArchivePanelMoved">{0} wurde geholt, aber das Panel ist inzwischen woanders. Drücken Sie dort erneut die Eingabetaste, um sie zu öffnen.</sys:String>
 
     <!-- Saved operations, the drop stack and gadgets (6.22 / 6.24) -->
     <sys:String x:Key="SavedOp_Title">Gespeicherte Operationen</sys:String>
@@ -245,7 +251,7 @@
     <sys:String x:Key="Git_WtNew">Neuer Worktree für eine Aufgabe…</sys:String>
     <sys:String x:Key="Git_WtRemove">Worktree entfernen</sys:String>
     <sys:String x:Key="Git_WtRemoveButton">Entfernen</sys:String>
-    <sys:String x:Key="Git_WtRemoveConfirm">Worktree "{0}" und sein Verzeichnis entfernen?&#x0a;{1}</sys:String>
+    <sys:String x:Key="Git_WtRemoveConfirm" xml:space="preserve">Worktree "{0}" und sein Verzeichnis entfernen?&#x0a;{1}</sys:String>
     <sys:String x:Key="Git_WtDirtyWarning">Achtung: {0} nicht committete {0:plural:Änderung geht|Änderungen gehen} endgültig verloren.</sys:String>
     <sys:String x:Key="Git_WtRemoved">Worktree "{0}" entfernt.</sys:String>
     <sys:String x:Key="Git_WtRemoveFailed">Der Worktree konnte nicht entfernt werden: {0}</sys:String>
@@ -268,7 +274,7 @@
     <sys:String x:Key="Git_WtTitleNoSlug">Aus diesem Titel lässt sich kein Branch-Name ableiten: Er enthält keine lateinischen oder kyrillischen Buchstaben oder Ziffern. Branch und Verzeichnis von Hand eingeben.</sys:String>
     <sys:String x:Key="Git_WtPathNotEmpty">Das Verzeichnis ist nicht leer: {0}</sys:String>
     <sys:String x:Key="Git_WtCreateFailed">Der Worktree konnte nicht erstellt werden: {0}</sys:String>
-    <sys:String x:Key="Git_WtCreated">Worktree auf "{0}" erstellt: {1}&#x0a;Übernommene Dateien: {2}</sys:String>
+    <sys:String x:Key="Git_WtCreated" xml:space="preserve">Worktree auf "{0}" erstellt: {1}&#x0a;Übernommene Dateien: {2}</sys:String>
 
     <!-- Git: index, commit, branches, stash -->
     <sys:String x:Key="Git_CommitTitle">Commit</sys:String>
@@ -376,7 +382,7 @@
     <sys:String x:Key="WsProps_PictureRemove">Entfernen</sys:String>
     <sys:String x:Key="WsProps_PictureNone">keins</sys:String>
     <sys:String x:Key="WsProps_PictureFound">Im Projekt gefunden:</sys:String>
-    <sys:String x:Key="WsProps_PictureHint">Steht in der Arbeitsbereich-Leiste anstelle des Symbols und der Buchstaben. Solange ein Arbeitsbereich weder Bild noch Symbol hat, wird das Logo oder Favicon seines Repositorys von selbst eingesetzt; sobald Sie wählen – ein Bild, ein Symbol oder keins –, wird nicht mehr gesucht.</sys:String>
+    <sys:String x:Key="WsProps_PictureHint">Steht anstelle des Symbols und der Buchstaben in der Arbeitsbereichsleiste und vor dem Namen im Menü, im Umschalter und in der Titelleiste. Solange ein Arbeitsbereich weder Bild noch Symbol hat, wird das Logo oder Favicon seines Repositorys von selbst eingesetzt; sobald Sie wählen – ein Bild, ein Symbol oder keins –, wird nicht mehr gesucht.</sys:String>
     <sys:String x:Key="WsProps_PictureChoose">Bild des Arbeitsbereichs</sys:String>
     <sys:String x:Key="WsProps_PictureFiles">Bilder</sys:String>
     <sys:String x:Key="WsProps_PictureUnreadable">Diese Datei lässt sich nicht als Bild lesen.</sys:String>
@@ -537,7 +543,7 @@
     <sys:String x:Key="Settings_AgentMcpEnabled">MCP-Server aktivieren</sys:String>
     <sys:String x:Key="Settings_AgentMcpAutoStart">Mit der Anwendung starten</sys:String>
     <sys:String x:Key="Settings_AgentMcpPort">Port (0 = einen freien wählen):</sys:String>
-    <sys:String x:Key="Settings_AgentApprovalTimeout">Wartezeit auf eine Schreibentscheidung, s:</sys:String>
+    <sys:String x:Key="Settings_AgentApprovalTimeout">Schreibentscheidung abwarten, s:</sys:String>
     <sys:String x:Key="Settings_AgentRemotePanels">Agenten das Lesen von Verbindungen (Server und Cloud-Speicher) erlauben, die in den Panels geöffnet sind</sys:String>
     <sys:String x:Key="Settings_AgentMcpHint">Der Server lauscht nur auf 127.0.0.1 und verlangt ein Token; Adresse und Token werden in mcp-endpoint.json im Datenordner des Programms geschrieben (data\ bei einer portablen Kopie). Verzeichnisse werden unter «Agent-Änderungen» ({gesture:AgentChanges}) freigegeben.</sys:String>
     <sys:String x:Key="Settings_AgentLlm">Sprachmodell (OpenAI-kompatibler Endpunkt)</sys:String>
@@ -600,6 +606,8 @@
     <sys:String x:Key="Ws_PinTitle">Arbeitsbereich anheften</sys:String>
     <sys:String x:Key="Ws_RenameTaken">Ein Arbeitsbereich namens “{0}” existiert bereits.</sys:String>
     <sys:String x:Key="Ws_RenameFailed">Der Arbeitsbereich konnte nicht umbenannt werden: workspaces.json ist gerade nicht les- oder schreibbar.</sys:String>
+    <sys:String x:Key="Ws_PicturesLeftOut">Nicht in die Datei geschriebene Bilder: {0}. Sie fehlen hier oder überschreiten die Größengrenze.</sys:String>
+    <sys:String x:Key="Ws_PicturesRefused">Nicht aus der Datei übernommene Bilder: {0}. Akzeptiert wird ein PNG mit 64×64 bis 24 KB.</sys:String>
     <sys:String x:Key="Ws_StoreTitle">Arbeitsbereiche</sys:String>
     <sys:String x:Key="Ws_StoreDamaged">workspaces.json war beschädigt, daher wurde die vorherige Kopie (workspaces.json.bak) geladen. Die beschädigte Datei wurde neben dem Programm als {0} aufbewahrt.</sys:String>
     <sys:String x:Key="Ws_TerminalConfirm" xml:space="preserve">Dieser Arbeitsbereich ist so eingestellt, dass er den folgenden Befehl in {1} ausführt. Er wurde nicht auf diesem Rechner eingegeben (er kann aus einer Projektdatei stammen), daher vor der Ausführung prüfen.&#10;&#10;{0}&#10;&#10;Ausführen?</sys:String>
@@ -670,7 +678,7 @@
     <sys:String x:Key="Git_BranchDeleteConfirm">Den lokalen Branch &quot;{0}&quot; löschen? Remote-Branches bleiben unberührt.</sys:String>
     <sys:String x:Key="Git_BranchDeleteUnmerged">Der Branch &quot;{0}&quot; enthält Commits, die es sonst nirgends gibt. Beim Löschen gehen sie endgültig verloren. Trotzdem löschen?</sys:String>
     <sys:String x:Key="Git_BranchDeleted">Branch &quot;{0}&quot; gelöscht.</sys:String>
-    <sys:String x:Key="Git_BranchDirtyOffer">Es gibt nicht committete Änderungen, daher kann Git nicht zu &quot;{0}&quot; wechseln.&#x0a;&#x0a;Sie stashen (nicht verfolgte Dateien eingeschlossen) und wechseln? Mit Stash pop ({gesture:GitStashPop}) lassen sie sich zurückholen.</sys:String>
+    <sys:String x:Key="Git_BranchDirtyOffer" xml:space="preserve">Es gibt nicht committete Änderungen, daher kann Git nicht zu &quot;{0}&quot; wechseln.&#x0a;&#x0a;Sie stashen (nicht verfolgte Dateien eingeschlossen) und wechseln? Mit Stash pop ({gesture:GitStashPop}) lassen sie sich zurückholen.</sys:String>
     <sys:String x:Key="Git_BranchStashMessage">vor dem Wechsel zu {0}</sys:String>
     <sys:String x:Key="Git_CellConflict">Ungelöster Merge-Konflikt</sys:String>
     <sys:String x:Key="Git_CellFolderChanged">Enthält Änderungen</sys:String>
@@ -698,7 +706,7 @@
     <sys:String x:Key="Git_Discard">Verwerfen</sys:String>
     <sys:String x:Key="Git_DiscardHint">Verwirft die ausgewählten Änderungen im Arbeitsbaum und stellt die zuletzt committete Version wieder her. Kann nicht rückgängig gemacht werden.</sys:String>
     <sys:String x:Key="Git_DiscardTitle">Änderungen verwerfen</sys:String>
-    <sys:String x:Key="Git_DiscardConfirm">Die Änderungen in {0} {0:plural:Datei|Dateien} verwerfen und die zuletzt committete Version wiederherstellen?&#x0a;&#x0a;{1}&#x0a;&#x0a;Das kann nicht rückgängig gemacht werden.</sys:String>
+    <sys:String x:Key="Git_DiscardConfirm" xml:space="preserve">Die Änderungen in {0} {0:plural:Datei|Dateien} verwerfen und die zuletzt committete Version wiederherstellen?&#x0a;&#x0a;{1}&#x0a;&#x0a;Das kann nicht rückgängig gemacht werden.</sys:String>
     <sys:String x:Key="Git_DiscardAlsoStaged">{0} davon sind auch gestaged; auch deren gestagete Änderungen werden verworfen.</sys:String>
     <sys:String x:Key="Git_DiscardSkipped">{0} nicht verfolgte {0:plural:Datei wird|Dateien werden} übersprungen: {0:plural:Sie hat|Sie haben} keine committete Version, zu der sich zurückkehren ließe. {0:plural:Sie lässt|Sie lassen} sich mit {gesture:Delete} löschen.</sys:String>
     <sys:String x:Key="Git_DiscardUntracked">Nicht verfolgte Dateien lassen sich hier nicht verwerfen (es gibt nichts wiederherzustellen). Mit {gesture:Delete} löschen.</sys:String>
@@ -843,17 +851,17 @@
     <sys:String x:Key="CS_Status_Missing">Fehlt</sys:String>
     <sys:String x:Key="CS_Status_Error">Lesefehler</sys:String>
     <sys:String x:Key="Menu_Files">_Datei</sys:String>
-    <sys:String x:Key="Menu_Commands">_Befehle</sys:String>
+    <sys:String x:Key="Menu_Commands">Be_fehle</sys:String>
     <sys:String x:Key="Menu_Settings">_Einstellungen</sys:String>
     <sys:String x:Key="Menu_Bookmarks">_Lesezeichen</sys:String>
-    <sys:String x:Key="Menu_Workspaces">_Arbeitsbereiche</sys:String>
+    <sys:String x:Key="Menu_Workspaces">A_rbeitsbereiche</sys:String>
     <sys:String x:Key="Menu_Help">_Hilfe</sys:String>
     <sys:String x:Key="Git_Menu_Worktrees">_Worktree-Übersicht…</sys:String>
     <sys:String x:Key="Git_Menu_NewWorktree">_Neuer Worktree für eine Aufgabe…</sys:String>
     <sys:String x:Key="Git_Menu_Commit">_Commit…</sys:String>
     <sys:String x:Key="Git_Menu_Branches">_Branches…</sys:String>
-    <sys:String x:Key="Git_Menu_Stage">Auswahl _stagen</sys:String>
-    <sys:String x:Key="Git_Menu_Unstage">Auswahl _unstagen</sys:String>
+    <sys:String x:Key="Git_Menu_Stage">Markierung _stagen</sys:String>
+    <sys:String x:Key="Git_Menu_Unstage">Markierung _unstagen</sys:String>
     <sys:String x:Key="Git_Menu_Stash">S_tash…</sys:String>
     <sys:String x:Key="Git_Menu_StashPop">Stash _pop</sys:String>
     <sys:String x:Key="Git_Menu_Diff">_Diff anzeigen</sys:String>
@@ -989,6 +997,7 @@
     <sys:String x:Key="Op_AccessDenied">Zugriff verweigert.</sys:String>
     <sys:String x:Key="Files_NotFound">Dieser Ordner existiert nicht.</sys:String>
     <sys:String x:Key="Files_LoadFailed">Dieser Ordner kann nicht gelesen werden: {0}</sys:String>
+    <sys:String x:Key="Files_LoadStopped">Das Lesen des Ordners wurde abgebrochen.</sys:String>
     <sys:String x:Key="Files_Empty">Dieser Ordner ist leer</sys:String>
     <sys:String x:Key="Files_NoMatches">Keine Namen passen zum eingegebenen Filter (Esc löscht ihn)</sys:String>
     <sys:String x:Key="Progress_Elapsed">Verstrichen:</sys:String>
@@ -1042,6 +1051,49 @@
     <sys:String x:Key="Mask_TitleUnselect">Markierung nach Maske aufheben</sys:String>
     <sys:String x:Key="Mask_PromptSelect">Maske zum Markieren (z. B. *.txt; *.md):</sys:String>
     <sys:String x:Key="Mask_PromptUnselect">Maske zum Aufheben der Markierung (z. B. *.bak):</sys:String>
+    <sys:String x:Key="Sel_Template">_Vorlage:</sys:String>
+    <sys:String x:Key="Sel_TemplateName">Vorlage</sys:String>
+    <sys:String x:Key="Sel_DeleteTemplate">_Löschen</sys:String>
+    <sys:String x:Key="Sel_Mask">_Maske:</sys:String>
+    <sys:String x:Key="Sel_MaskHint">Masken mit ; trennen. Nach | folgen Ausschlüsse, eine Maske mit \ am Ende steht für Ordner: *.cs;*.md | *.g.cs, bin\</sys:String>
+    <sys:String x:Key="Sel_IncludeFolders">_Ordner einbeziehen</sys:String>
+    <sys:String x:Key="Sel_Age">_Alter:</sys:String>
+    <sys:String x:Key="Sel_AgeName">Alter</sys:String>
+    <sys:String x:Key="Sel_AgeAmount">Anzahl</sys:String>
+    <sys:String x:Key="Sel_AgeUnit">Einheit</sys:String>
+    <sys:String x:Key="Sel_AgeAny">beliebig</sys:String>
+    <sys:String x:Key="Sel_AgeOlder">älter als</sys:String>
+    <sys:String x:Key="Sel_AgeNewer">neuer als</sys:String>
+    <sys:String x:Key="Sel_UnitMinutes">Minuten</sys:String>
+    <sys:String x:Key="Sel_UnitHours">Stunden</sys:String>
+    <sys:String x:Key="Sel_UnitDays">Tage</sys:String>
+    <sys:String x:Key="Sel_GitChanged">Nur in _Git geändert</sys:String>
+    <sys:String x:Key="Sel_GitChangedTip">Geändert, vorgemerkt, nicht verfolgt oder mit Konflikt. Funktioniert in einem Ordner auf dem Datenträger.</sys:String>
+    <sys:String x:Key="Sel_AgentChanged">Nur von einem Age_nten geändert</sys:String>
+    <sys:String x:Key="Sel_AgentChangedTip">Was die Agentenänderungen des Projekts einem Agenten zuschreiben. Funktioniert in einem Ordner auf dem Datenträger.</sys:String>
+    <sys:String x:Key="Sel_SaveGroup">Als Vorlage speichern</sys:String>
+    <sys:String x:Key="Sel_TemplateNameLabel">Nam_e:</sys:String>
+    <sys:String x:Key="Sel_HotkeyLabel">_Taste:</sys:String>
+    <sys:String x:Key="Sel_Hotkey">Taste</sys:String>
+    <sys:String x:Key="Sel_HotkeyTip">Eine Kombination mit Strg, Alt oder Umschalt. Eine Taste, die schon ein anderer Befehl nutzt, wird ignoriert.</sys:String>
+    <sys:String x:Key="Sel_SaveTemplate">_Speichern</sys:String>
+    <sys:String x:Key="Sel_NeedsDisk">Git- und Agentenbedingungen funktionieren nur in einem Ordner auf dem Datenträger.</sys:String>
+    <sys:String x:Key="Sel_NothingMatched">Nichts passt.</sys:String>
+    <sys:String x:Key="Sel_NoExtensionHere">Setzen Sie den Cursor auf eine Datei, um nach ihrer Endung zu markieren.</sys:String>
+    <sys:String x:Key="Sel_NothingToRestore">Es gibt keine frühere Markierung zum Wiederherstellen.</sys:String>
+    <sys:String x:Key="Sel_RestoreNoneHere">Keiner der zuvor markierten Namen ist in diesem Ordner.</sys:String>
+    <sys:String x:Key="Sel_PaletteTitle">Markieren: {0}</sys:String>
+    <sys:String x:Key="SelTpl_Code">Quellcode</sys:String>
+    <sys:String x:Key="SelTpl_Config">Konfigurationsdateien</sys:String>
+    <sys:String x:Key="SelTpl_Docs">Dokumente</sys:String>
+    <sys:String x:Key="SelTpl_Images">Bilder</sys:String>
+    <sys:String x:Key="SelTpl_Archives">Archive</sys:String>
+    <sys:String x:Key="SelTpl_Junk">Temporäre Dateien und Logs</sys:String>
+    <sys:String x:Key="SelTpl_BuildOutput">Build-Ausgabeordner</sys:String>
+    <sys:String x:Key="SelTpl_GitChanged">In Git geändert</sys:String>
+    <sys:String x:Key="SelTpl_AgentChanged">Von einem Agenten geändert</sys:String>
+    <sys:String x:Key="SelTpl_LastDay">In den letzten 24 Stunden geändert</sys:String>
+    <sys:String x:Key="SelTpl_OlderThan2Days">Älter als 2 Tage</sys:String>
     <sys:String x:Key="Log_Title">Vorgangsprotokoll</sys:String>
     <sys:String x:Key="Log_ColTime">Zeit</sys:String>
     <sys:String x:Key="Log_ColOperation">Vorgang</sys:String>
@@ -1055,10 +1107,12 @@
     <sys:String x:Key="Log_ClearConfirm">Das gesamte Vorgangsprotokoll löschen? Es ist die Aufzeichnung dessen, was der Dateimanager und Agenten getan haben, und lässt sich nicht wiederherstellen.</sys:String>
     <sys:String x:Key="Log_ClearButton">Protokoll leeren</sys:String>
     <sys:String x:Key="Log_UndoRename">Umbenennen rückgängig</sys:String>
-    <sys:String x:Key="Log_UndoRenameTip">Gibt den Dateien des ausgewählten Umbenennungsstapels (KI-Umbenennung) ihre früheren Namen zurück. Prüft den Ordner und fragt vorher nach.</sys:String>
+    <sys:String x:Key="Log_UndoRenameTip">Gibt den Dateien des ausgewählten Umbenennungsstapels ihre früheren Namen zurück. Prüft den Ordner und fragt vorher nach.</sys:String>
     <sys:String x:Key="Log_UndoRenameConfirm">{0} {0:plural:Datei|Dateien} in {1} auf {0:plural:den Namen|die Namen} von vor dieser Umbenennung zurücksetzen?</sys:String>
     <sys:String x:Key="Log_UndoRenameSkipped">{0} {0:plural:Datei bleibt|Dateien bleiben} {0:plural:wie sie ist|wie sie sind}: seitdem umbenannt, verschoben oder gelöscht, oder der alte Name ist von einer anderen Datei belegt.</sys:String>
     <sys:String x:Key="Log_UndoRenameNothing">In {0} kann nichts zurückbenannt werden: Die Dateien tragen nicht mehr die Namen, die dieser Stapel ihnen gab, oder ihre alten Namen sind belegt.</sys:String>
+    <sys:String x:Key="Log_UndoRenameConnect">Dieser Stapel wurde auf dem Server {0} umbenannt. Verbinden Sie ein Panel mit diesem Server und versuchen Sie es erneut.</sys:String>
+    <sys:String x:Key="Log_UndoRenameOpenArchive">Dieser Stapel wurde im Archiv {0} umbenannt. Öffnen Sie dieses Archiv in einem Panel und versuchen Sie es erneut.</sys:String>
     <sys:String x:Key="Log_RecycleBin">Papierkorb</sys:String>
     <sys:String x:Key="Log_KindCopy">Kopieren</sys:String>
     <sys:String x:Key="Log_KindMove">Verschieben</sys:String>
@@ -1144,6 +1198,7 @@
     <sys:String x:Key="Fc_PasteIncomplete">Einige Elemente wurden nicht verschoben; sie bleiben, wo sie waren.</sys:String>
     <sys:String x:Key="Fc_PasteArchiveIncomplete">Einige Elemente wurden dem Archiv nicht hinzugefügt; die Originale blieben an ihrem Platz.</sys:String>
     <sys:String x:Key="Fc_MoveKeptInArchive">Das Archivformat kann nicht geändert werden: Die Dateien wurden entpackt, bleiben aber auch im Archiv.</sys:String>
+    <sys:String x:Key="Fc_MoveKeptInTemporaryCopy">Die Dateien wurden entpackt, bleiben aber im Archiv: Es wurde von einem Server oder aus einem anderen Archiv geöffnet, und hier ist nur eine temporäre Kopie davon geöffnet.</sys:String>
     <sys:String x:Key="Fc_PropertiesUnavailable">Eigenschaften sind nicht verfügbar</sys:String>
     <sys:String x:Key="Fc_UnpackUnavailable">Entpacken ist nicht verfügbar</sys:String>
     <sys:String x:Key="Fc_UnpackDestinationOnDisk">Im anderen Panel einen normalen Ordner auf dem lokalen Datenträger als Ziel wählen.</sys:String>
@@ -1167,71 +1222,76 @@
     <sys:String x:Key="Menu_NewFolder">_Neuer Ordner…</sys:String>
     <sys:String x:Key="Menu_Delete">_Löschen</sys:String>
     <sys:String x:Key="Menu_SelectByMask">Nach _Maske markieren…</sys:String>
-    <sys:String x:Key="Menu_UnselectByMask">Markierung nach Maske a_ufheben…</sys:String>
+    <sys:String x:Key="Menu_UnselectByMask">Markierung nach Maske au_fheben…</sys:String>
+    <sys:String x:Key="Menu_SelectionSub">_Markierung</sys:String>
+    <sys:String x:Key="Menu_SelectSameExtension">Gleiche _Endung markieren</sys:String>
+    <sys:String x:Key="Menu_UnselectSameExtension">Markierung gleicher Endung _aufheben</sys:String>
+    <sys:String x:Key="Menu_RestoreSelection">Markierung _wiederherstellen</sys:String>
+    <sys:String x:Key="Menu_SelectionTemplates">_Vorlagen</sys:String>
     <sys:String x:Key="Menu_CopyFullPath">Vollständigen _Pfad kopieren</sys:String>
-    <sys:String x:Key="Menu_CopyNames">N_amen kopieren</sys:String>
+    <sys:String x:Key="Menu_CopyNames">Namen kopie_ren</sys:String>
     <sys:String x:Key="Menu_CopyReadLink">L_ink kopieren</sys:String>
     <sys:String x:Key="Link_ForHour">Für 1 Stunde</sys:String>
     <sys:String x:Key="Link_ForDay">Für 1 Tag</sys:String>
     <sys:String x:Key="Link_ForWeek">Für 7 Tage</sys:String>
     <sys:String x:Key="Menu_Properties">Eigen_schaften</sys:String>
     <sys:String x:Key="Menu_FolderSizes">Ordner_größen</sys:String>
-    <sys:String x:Key="Menu_Pack">_Packen…</sys:String>
-    <sys:String x:Key="Menu_Unpack">_Entpacken…</sys:String>
+    <sys:String x:Key="Menu_Pack">Pa_cken…</sys:String>
+    <sys:String x:Key="Menu_Unpack">En_tpacken…</sys:String>
     <sys:String x:Key="Menu_Exit">Be_enden</sys:String>
     <sys:String x:Key="Menu_NewFile">Neue _Datei…</sys:String>
     <sys:String x:Key="Menu_DeletePermanent">Endgültig lösc_hen</sys:String>
     <sys:String x:Key="Menu_NameSearch">Datei _überall finden…</sys:String>
-    <sys:String x:Key="Menu_QuickFilter">_Schnellfilter</sys:String>
-    <sys:String x:Key="Menu_CompareDirs">Verzeichnisse ver_gleichen…</sys:String>
-    <sys:String x:Key="Menu_SavedOps">Ge_speicherte Operationen…</sys:String>
-    <sys:String x:Key="Menu_SavedOpsManage">Gespeicherte Operationen ver_walten…</sys:String>
-    <sys:String x:Key="Menu_DropStackAdd">Ablagestapel: Auswahl _hinzufügen</sys:String>
-    <sys:String x:Key="Menu_DropStackShow">A_blagestapel…</sys:String>
+    <sys:String x:Key="Menu_QuickFilter">S_chnellfilter</sys:String>
+    <sys:String x:Key="Menu_CompareDirs">Ve_rzeichnisse vergleichen…</sys:String>
+    <sys:String x:Key="Menu_SavedOps">Gespeicherte _Operationen…</sys:String>
+    <sys:String x:Key="Menu_SavedOpsManage">Gespeicherte Operationen verwalten…</sys:String>
+    <sys:String x:Key="Menu_DropStackAdd">Ablagestapel: Markierung _hinzufügen</sys:String>
+    <sys:String x:Key="Menu_DropStackShow">_Ablagestapel…</sys:String>
     <sys:String x:Key="Menu_RunGadget">_Gadget ausführen…</sys:String>
-    <sys:String x:Key="Menu_GadgetsManage">Gadgets ver_walten…</sys:String>
+    <sys:String x:Key="Menu_GadgetsManage">Gadgets verwalten…</sys:String>
     <sys:String x:Key="Menu_Agents">_Agenten</sys:String>
     <sys:String x:Key="Menu_AgentChanges">Agent-_Änderungen…</sys:String>
-    <sys:String x:Key="Menu_AgentLaunch">Agent für eine _Aufgabe starten…</sys:String>
+    <sys:String x:Key="Menu_AgentLaunch">Agent _für eine Aufgabe starten…</sys:String>
     <sys:String x:Key="Menu_AiRename">_KI-Umbenennung…</sys:String>
     <sys:String x:Key="Menu_SemanticSearch">_Semantische Suche…</sys:String>
     <sys:String x:Key="Menu_FolderTree">_Ordnerbaum</sys:String>
     <sys:String x:Key="Menu_HideIgnored">_Gitignored-Dateien ausblenden</sys:String>
     <sys:String x:Key="Menu_ShowHidden">Versteckte Dateien a_nzeigen</sys:String>
-    <sys:String x:Key="Menu_ShowExtensions">Datei_erweiterungen anzeigen</sys:String>
+    <sys:String x:Key="Menu_ShowExtensions">Dateie_rweiterungen anzeigen</sys:String>
     <sys:String x:Key="Menu_FoldersFirst">Ordner _zuerst</sys:String>
     <sys:String x:Key="Menu_Columns">_Spalten…</sys:String>
-    <sys:String x:Key="Menu_ExportSettings">Einstellungen _exportieren…</sys:String>
+    <sys:String x:Key="Menu_ExportSettings">Einstellungen e_xportieren…</sys:String>
     <sys:String x:Key="Menu_ImportSettings">Einstellungen _importieren…</sys:String>
-    <sys:String x:Key="Menu_FindInProject">Datei im _Projekt suchen…</sys:String>
+    <sys:String x:Key="Menu_FindInProject">Datei im Pro_jekt suchen…</sys:String>
     <sys:String x:Key="Menu_FindFiles">Dateien _suchen…</sys:String>
     <sys:String x:Key="Menu_MultiRename">_Mehrfach-Umbenennung…</sys:String>
-    <sys:String x:Key="Menu_Checksums">Prüf_summen…</sys:String>
+    <sys:String x:Key="Menu_Checksums">_Prüfsummen…</sys:String>
     <sys:String x:Key="Menu_OperationLog">_Vorgangsprotokoll…</sys:String>
-    <sys:String x:Key="Menu_BackgroundOperations">Vorgänge _im Hintergrund</sys:String>
-    <sys:String x:Key="Menu_Terminal">_Terminal öffnen</sys:String>
-    <sys:String x:Key="Menu_ShellsManage">_Befehlszeilen-Shells…</sys:String>
-    <sys:String x:Key="Menu_OpenInEditor">Im _Editor öffnen</sys:String>
+    <sys:String x:Key="Menu_BackgroundOperations">Vorg_änge im Hintergrund</sys:String>
+    <sys:String x:Key="Menu_Terminal">Terminal _öffnen</sys:String>
+    <sys:String x:Key="Menu_ShellsManage">Befehlszeilen-Shells…</sys:String>
+    <sys:String x:Key="Menu_OpenInEditor">_Im Editor öffnen</sys:String>
     <sys:String x:Key="Menu_OpenInEditorPicker">Im E_ditor öffnen…</sys:String>
     <sys:String x:Key="Menu_RunAgent">_Agent hier starten</sys:String>
-    <sys:String x:Key="Menu_RunAgentPicker">Agent hier st_arten…</sys:String>
-    <sys:String x:Key="Menu_GoRoot">Zum _Stammverzeichnis</sys:String>
+    <sys:String x:Key="Menu_RunAgentPicker">Agent _hier starten…</sys:String>
+    <sys:String x:Key="Menu_GoRoot">_Zum Stammverzeichnis</sys:String>
     <sys:String x:Key="Menu_GoHome">Zum _Benutzerordner</sys:String>
-    <sys:String x:Key="Menu_GoClipboard">Zu Pfad aus der Zwi_schenablage</sys:String>
-    <sys:String x:Key="Menu_EditPath">Pfad _eingeben</sys:String>
+    <sys:String x:Key="Menu_GoClipboard">Zum Pfad aus der Zwischenablage</sys:String>
+    <sys:String x:Key="Menu_EditPath">P_fad eingeben</sys:String>
     <sys:String x:Key="Menu_OpenExplorer">Im E_xplorer öffnen</sys:String>
-    <sys:String x:Key="Menu_UserTools">_Benutzerwerkzeuge…</sys:String>
-    <sys:String x:Key="Menu_ConnectionManager">Ver_bindungsmanager…</sys:String>
+    <sys:String x:Key="Menu_UserTools">Benutzerwer_kzeuge…</sys:String>
+    <sys:String x:Key="Menu_ConnectionManager">Verbi_ndungsmanager…</sys:String>
     <sys:String x:Key="Menu_Disconnect">Verbindung _trennen</sys:String>
-    <sys:String x:Key="Menu_QueueTransfer">Zur Übertragungs_warteschlange hinzufügen</sys:String>
+    <sys:String x:Key="Menu_QueueTransfer">Zur Übertragungswarteschlange hinzufügen</sys:String>
     <sys:String x:Key="Menu_TransferQueue">Übertragungs_warteschlange…</sys:String>
     <sys:String x:Key="Menu_Options">_Einstellungen…</sys:String>
-    <sys:String x:Key="Menu_Hotkeys">_Tastenkürzel…</sys:String>
-    <sys:String x:Key="Menu_PluginManager">_Plug-in-Manager…</sys:String>
+    <sys:String x:Key="Menu_Hotkeys">_Tastenkombinationen…</sys:String>
+    <sys:String x:Key="Menu_PluginManager">_Plugin-Manager…</sys:String>
     <sys:String x:Key="Menu_SplitVertical">Panels _vertikal teilen</sys:String>
-    <sys:String x:Key="Menu_SwapPanels">Panels ver_tauschen</sys:String>
+    <sys:String x:Key="Menu_SwapPanels">Pane_ls vertauschen</sys:String>
     <sys:String x:Key="Menu_ToggleTheme">Helles / dunkles _Design</sys:String>
-    <sys:String x:Key="Menu_ViewMode">Ansicht_smodus</sys:String>
+    <sys:String x:Key="Menu_ViewMode">_Ansichtsmodus</sys:String>
     <sys:String x:Key="Menu_ViewDetails">_Details</sys:String>
     <sys:String x:Key="Menu_ViewBrief">_Kurz</sys:String>
     <sys:String x:Key="Menu_ViewThumbnails">_Miniaturen</sys:String>
@@ -1241,7 +1301,7 @@
     <sys:String x:Key="Menu_Ws_Save">Als Arbeitsbereich _speichern…</sys:String>
     <sys:String x:Key="Menu_Ws_New">_Neuer Arbeitsbereich…</sys:String>
     <sys:String x:Key="Menu_Ws_Switch">Arbeitsbereich _wechseln…</sys:String>
-    <sys:String x:Key="Menu_Ws_Notes">_Notizen zum Arbeitsbereich…</sys:String>
+    <sys:String x:Key="Menu_Ws_Notes">Notizen _zum Arbeitsbereich…</sys:String>
     <sys:String x:Key="Menu_Ws_Terminal">_Terminal des Arbeitsbereichs</sys:String>
     <sys:String x:Key="Menu_Ws_NewWindow">In neuem Fenster _öffnen</sys:String>
     <sys:String x:Key="Menu_Ws_Properties">_Eigenschaften des Arbeitsbereichs…</sys:String>
@@ -1251,7 +1311,7 @@
     <sys:String x:Key="Menu_Ws_ExportDefinition">Projektdatei (.tcvproj) spei_chern…</sys:String>
     <sys:String x:Key="Menu_Ws_SwitchTo">_Wechseln zu</sys:String>
     <sys:String x:Key="Menu_Ws_Pin">An die Arbeitsbereichsleiste _anheften</sys:String>
-    <sys:String x:Key="Menu_Ws_Unpin">Von der Arbeitsbereichsleiste _lösen</sys:String>
+    <sys:String x:Key="Menu_Ws_Unpin">_Von der Arbeitsbereichsleiste lösen</sys:String>
     <sys:String x:Key="Menu_Ws_PropertiesItem">_Eigenschaften: Name, Symbol, Farbe, Gruppe, Terminal…</sys:String>
     <sys:String x:Key="Menu_Ws_NotesItem">_Notizen…</sys:String>
     <sys:String x:Key="Menu_Ws_TerminalItem">_Terminal</sys:String>
@@ -1260,7 +1320,7 @@
     <sys:String x:Key="Menu_Ws_Delete">_Löschen</sys:String>
     <sys:String x:Key="Menu_Palette">_Befehlspalette…</sys:String>
     <sys:String x:Key="Menu_CheckUpdates">Nach _Updates suchen…</sys:String>
-    <sys:String x:Key="Menu_ReportBug">_Fehler melden…</sys:String>
+    <sys:String x:Key="Menu_ReportBug">Fehler _melden…</sys:String>
     <sys:String x:Key="Menu_Discussions">_Fragen und Ideen…</sys:String>
     <sys:String x:Key="Menu_OpenLogFolder">_Protokollordner öffnen</sys:String>
     <sys:String x:Key="Feedback_Title">Feedback</sys:String>
@@ -1294,6 +1354,7 @@
     <sys:String x:Key="Update_InstallMessage" xml:space="preserve">Version {0} ist verfügbar.&#10;&#10;{1}&#10;&#10;Jetzt installieren? Das Programm wird geschlossen, aktualisiert sich selbst und öffnet sich wieder. Einstellungen und Arbeitsbereiche bleiben erhalten.</sys:String>
     <sys:String x:Key="Update_InstallFromMain">Version {0} ist verfügbar. Aus dem Hauptfenster installieren: Es schließt die Arbeitsbereichsfenster und startet neu.</sys:String>
     <sys:String x:Key="Update_Busy">Das Update schließt das Programm, und es laufen noch Vorgänge oder Übertragungen. Warten, bis sie fertig sind, und erneut versuchen.</sys:String>
+    <sys:String x:Key="Update_EditsNotUploaded" xml:space="preserve">Das Update wurde nicht installiert: Änderungen an Dateien auf einem Server wurden nicht hochgeladen. Sie sind sicher in:&#10;{0}&#10;&#10;Speichern Sie sie im Editor erneut und versuchen Sie es dann noch einmal.</sys:String>
     <sys:String x:Key="Update_Downloading">Update wird heruntergeladen… {0}%</sys:String>
     <sys:String x:Key="Update_DownloadFailed">Das Update konnte nicht heruntergeladen werden: {0}</sys:String>
     <sys:String x:Key="Update_WindowsStillOpen">Nicht alle Arbeitsbereichsfenster wurden geschlossen. Sie schließen und das Update erneut versuchen.</sys:String>
@@ -1301,7 +1362,7 @@
     <sys:String x:Key="Update_NotInstalled">Version {0} wurde heruntergeladen, aber nicht installiert: Die Installation wurde unterbrochen, oder ein anderes Programm (zum Beispiel ein Virenscanner) hielt die Dateien des Programms fest. Die vorherige Version läuft. Zum Installieren: Hilfe → Nach Updates suchen.</sys:String>
     <sys:String x:Key="Update_FeedNeedsPortable">Ein Update-Feed-Ordner oder eine -URL funktioniert nur bei einer portablen Kopie; diese kann nur ein GitHub-Repository (owner/name) prüfen.</sys:String>
     <sys:String x:Key="Checksum_Unavailable">Prüfsummen sind hier nicht verfügbar</sys:String>
-    <sys:String x:Key="UserTools_NotLoaded">Das Plug-in für Benutzerwerkzeuge ist nicht geladen.</sys:String>
+    <sys:String x:Key="UserTools_NotLoaded">Das Plugin für Benutzerwerkzeuge ist nicht geladen.</sys:String>
     <sys:String x:Key="Settings_ExtCommand">Befehl</sys:String>
     <sys:String x:Key="Settings_ExtArguments">Argumente</sys:String>
     <sys:String x:Key="Settings_ExtInTerminal">Im Terminal</sys:String>
@@ -1346,8 +1407,6 @@
     <sys:String x:Key="MR_ColNew">Neuer Name</sys:String>
     <sys:String x:Key="MR_ColConflict">Problem</sys:String>
     <sys:String x:Key="MR_Rename">Umbenennen</sys:String>
-    <sys:String x:Key="MR_Undo">Rückgängig</sys:String>
-    <sys:String x:Key="MR_UndoTip">Den eben umbenannten Dateien ihre alten Namen zurückgeben</sys:String>
     <sys:String x:Key="MR_Conflict_Duplicate">Eine andere Datei erhält denselben Namen</sys:String>
     <sys:String x:Key="MR_Conflict_Empty">Leerer Name</sys:String>
     <sys:String x:Key="MR_Conflict_InvalidName">Ungültiger Name</sys:String>
@@ -1356,9 +1415,6 @@
     <sys:String x:Key="MR_NothingConflicts">Nichts umzubenennen. Konflikte: {0}.</sys:String>
     <sys:String x:Key="MR_NothingToRename">Nichts umzubenennen: keine Namensänderungen.</sys:String>
     <sys:String x:Key="MR_Error">Fehler: {0}</sys:String>
-    <sys:String x:Key="MR_Undone">Namen wiederhergestellt: {0}.</sys:String>
-    <sys:String x:Key="MR_UndonePartly">{0} von {1} wiederhergestellt; {2} fehlgeschlagen.</sys:String>
-    <sys:String x:Key="MR_UndoError">Rückgängigmachen fehlgeschlagen: {0}</sys:String>
     <sys:String x:Key="MR_Renamed">Dateien umbenannt: {0}.</sys:String>
     <sys:String x:Key="MR_SkippedConflicts">Wegen Konflikten übersprungen: {0}.</sys:String>
     <sys:String x:Key="MR_Failed">Fehlgeschlagen: {0} (zum Beispiel "{1}": {2}).</sys:String>
@@ -1381,10 +1437,11 @@
     <sys:String x:Key="Conn_Protocol">_Protokoll:</sys:String>
     <sys:String x:Key="Conn_AuthMethod">_Anmelden mit:</sys:String>
     <sys:String x:Key="Conn_KeyFile">_Schlüsseldatei:</sys:String>
-    <sys:String x:Key="Conn_Passphrase">Pass_phrase:</sys:String>
+    <sys:String x:Key="Conn_Passphrase">Passp_hrase:</sys:String>
     <sys:String x:Key="Conn_Browse">Durchsuchen…</sys:String>
     <sys:String x:Key="Conn_Test">Verbindung testen</sys:String>
     <sys:String x:Key="Conn_Connecting">Verbindung wird hergestellt…</sys:String>
+    <sys:String x:Key="Conn_ConnectingTo">Verbindung zu „{0}“ wird hergestellt…</sys:String>
     <sys:String x:Key="Conn_TestOk">Verbindung erfolgreich.</sys:String>
     <sys:String x:Key="Conn_TestCancelled">Test abgebrochen.</sys:String>
     <sys:String x:Key="Conn_TestFailed">Fehlgeschlagen: {0}</sys:String>
@@ -1403,10 +1460,10 @@
     <sys:String x:Key="Conn_Failed">Verbindung nicht möglich</sys:String>
     <sys:String x:Key="Conn_FailedMessage">{0} ({1}): {2}</sys:String>
     <sys:String x:Key="Conn_DirNotFound">Der Ordner "{0}" wurde auf dem Server nicht gefunden.</sys:String>
-    <sys:String x:Key="Conn_HostKeyChanged">Die Identität von {0} hat sich GEÄNDERT. Erwartet wurde {1}, der Server hat jedoch {2} vorgelegt. Das kann bedeuten, dass der Server neu installiert wurde — oder dass jemand die Verbindung abfängt. Die Verbindung wurde nicht hergestellt. Wenn Sie sicher sind, dass die Änderung rechtmäßig ist, wählen Sie im Verbindungs-Manager "Serverschlüssel vergessen" und verbinden Sie erneut.</sys:String>
+    <sys:String x:Key="Conn_HostKeyChanged">Die Identität von {0} hat sich GEÄNDERT. Erwartet wurde {1}, der Server hat jedoch {2} vorgelegt. Das kann bedeuten, dass der Server neu installiert wurde — oder dass jemand die Verbindung abfängt. Die Verbindung wurde nicht hergestellt. Wenn Sie sicher sind, dass die Änderung rechtmäßig ist, wählen Sie im Verbindungsmanager "Serverschlüssel vergessen" und verbinden Sie erneut.</sys:String>
     <sys:String x:Key="Conn_ClearTextTitle">Unsichere Verbindung</sys:String>
     <sys:String x:Key="Conn_ClearTextConfirm">"{0}" sendet sein Kennwort unverschlüsselt über das Netzwerk. Fortfahren?</sys:String>
-    <sys:String x:Key="ConnMgr_Title">Verbindungs-Manager</sys:String>
+    <sys:String x:Key="ConnMgr_Title">Verbindungsmanager</sys:String>
     <sys:String x:Key="ConnMgr_New">Neu</sys:String>
     <sys:String x:Key="ConnMgr_Port">Port:</sys:String>
     <sys:String x:Key="ConnMgr_Delete">Löschen</sys:String>
@@ -1443,12 +1500,12 @@
     <sys:String x:Key="Conn_Protocol_Smb">Windows-Freigabe (SMB)</sys:String>
     <sys:String x:Key="Conn_OpenLeft">linkes Panel</sys:String>
     <sys:String x:Key="Conn_OpenRight">rechtes Panel</sys:String>
-    <sys:String x:Key="Conn_NeedsClientId">„{0}“: Die Client-ID einer beim Anbieter registrierten App eingeben (Verbindungs-Manager, {gesture:ConnectionManager}).</sys:String>
+    <sys:String x:Key="Conn_NeedsClientId">„{0}“: Die Client-ID einer beim Anbieter registrierten App eingeben (Verbindungsmanager, {gesture:ConnectionManager}).</sys:String>
     <sys:String x:Key="Conn_QuickTitle">Schnellverbindung</sys:String>
     <sys:String x:Key="Conn_QuickPrompt">Adresse eines Servers oder Speichers: sftp://user@host:22/path, ftp://…, davs://…, s3://bucket/prefix</sys:String>
     <sys:String x:Key="Conn_QuickNotAnAddress">„{0}“ ist keine Verbindungsadresse. Zum Beispiel: sftp://user@host/path, s3://bucket.</sys:String>
     <sys:String x:Key="Menu_Reconnect">_Erneut verbinden</sys:String>
-    <sys:String x:Key="Menu_QuickConnect">_Schnellverbindung…</sys:String>
+    <sys:String x:Key="Menu_QuickConnect">Schne_llverbindung…</sys:String>
     <sys:String x:Key="Conn_Saved">Verbindung „{0}“ gespeichert.</sys:String>
     <sys:String x:Key="Conn_NeedsShare">„{0}“: Die Freigabe angeben — einen Pfad wie /share oder /share/folder.</sys:String>
     <sys:String x:Key="Conn_ShareInUse">Windows hat die Verbindung zu {0} nicht geschlossen: {1} Die von dieser Freigabe geöffneten Dateien schließen und es erneut versuchen.</sys:String>
@@ -1476,7 +1533,7 @@
     <sys:String x:Key="Chip_Save">Verbindung speichern</sys:String>
     <sys:String x:Key="Chip_CopyAddress">Adresse kopieren</sys:String>
     <sys:String x:Key="Chip_NoneSaved">Keine gespeicherten Verbindungen</sys:String>
-    <sys:String x:Key="Chip_More">…und {0} weitere im Verbindungs-Manager</sys:String>
+    <sys:String x:Key="Chip_More">…und {0} weitere im Verbindungsmanager</sys:String>
     <sys:String x:Key="Conn_SignedInAs">Angemeldet als {0}</sys:String>
     <sys:String x:Key="Conn_SignedInUnknown">einem Konto</sys:String>
     <sys:String x:Key="Conn_SignInHint">Beim ersten Verbinden öffnet sich der Browser zur Anmeldung; danach verbindet sich das Programm selbstständig.</sys:String>
@@ -1529,7 +1586,7 @@
     <sys:String x:Key="SshImport_Note_DefaultKey">keine IdentityFile: der Standardschlüssel</sys:String>
     <sys:String x:Key="SshImport_Note_KeyFileMissing">die Schlüsseldatei ist auf diesem Computer nicht vorhanden</sys:String>
     <sys:String x:Key="SshImport_Note_NoKey">kein Schlüssel: es wird nach einem Kennwort gefragt</sys:String>
-    <sys:String x:Key="SshImport_Note_ProxyIgnored">ProxyJump und ProxyCommand werden nicht unterstützt: direkte Verbindung</sys:String>
+    <sys:String x:Key="SshImport_Note_ProxyIgnored">Erreichbar über {0}, aber Tunnel werden hier nicht unterstützt: Wenn ausgewählt, wird direkt verbunden, daran vorbei</sys:String>
     <sys:String x:Key="SshImport_Warn_MatchSkipped">Match-Blöcke können hier nicht ausgewertet werden; ihre Einstellungen wurden nicht angewendet ({0}).</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeMissing">Include {0}: Datei nicht vorhanden.</sys:String>
     <sys:String x:Key="SshImport_Warn_IncludeFailed">Include nicht gelesen: {0}</sys:String>
@@ -1583,9 +1640,17 @@
     <sys:String x:Key="Transfer_Dir_Download">Download</sys:String>
     <sys:String x:Key="Transfer_Dir_Upload">Upload</sys:String>
     <sys:String x:Key="Transfer_Empty">Die Warteschlange ist leer. Dateien auf einem Server markieren und {gesture:QueueTransfer} drücken.</sys:String>
+    <sys:String x:Key="Transfer_Planning">Wird zur Warteschlange hinzugefügt</sys:String>
+    <sys:String x:Key="Transfer_PlanningCount">{0} {0:plural:Datei|Dateien} gefunden</sys:String>
+    <sys:String x:Key="Transfer_PlanSkipped">Nicht eingereiht: {0} {0:plural:Element|Elemente}.</sys:String>
+    <sys:String x:Key="Transfer_Skip_Link">{0}: ein Link, ihm wird nicht gefolgt</sys:String>
+    <sys:String x:Key="Transfer_Skip_Cycle">{0}: gleicher Inhalt wie ein Ordner darüber, vermutlich eine Link-Schleife</sys:String>
+    <sys:String x:Key="Transfer_Skip_TooDeep">{0}: zu tief verschachtelt</sys:String>
+    <sys:String x:Key="Transfer_Skip_Unreadable">{0}: konnte nicht gelesen werden: {1}</sys:String>
+    <sys:String x:Key="Transfer_Skip_BadName">{0}: dieser Name ist am Ziel nicht möglich</sys:String>
+    <sys:String x:Key="Transfer_Skip_KindClash">{0}: eine Datei und ein Ordner hätten denselben Namen</sys:String>
     <sys:String x:Key="Transfer_NeedRemote">In einem der Panels eine Verbindung zu einem Server oder Speicher öffnen — die Warteschlange arbeitet nur mit diesen.</sys:String>
     <sys:String x:Key="Transfer_LocalOnly">Das andere Panel muss einen lokalen Datenträger zeigen — die Warteschlange überträgt Dateien zwischen einem Server und dem Datenträger.</sys:String>
-    <sys:String x:Key="Transfer_NoFolders">Nur Dateien können eingereiht werden — Ordner mit {gesture:Copy} kopieren.</sys:String>
     <sys:String x:Key="Transfer_ExistsLocal">"{0}" ist bereits vorhanden und wurde nicht verändert.</sys:String>
     <sys:String x:Key="Transfer_ExistsOnServer">"{0}" ist auf dem Server bereits vorhanden und wurde nicht verändert.</sys:String>
     <sys:String x:Key="Transfer_FailedGeneric">Die Übertragung von "{0}" ist fehlgeschlagen.</sys:String>
@@ -1678,7 +1743,7 @@
     <sys:String x:Key="Settings_AccentRed">Rot</sys:String>
     <sys:String x:Key="Settings_AccentCustom">Benutzerdefiniert</sys:String>
     <sys:String x:Key="Settings_FontGroup">Schrift im Dateipanel</sys:String>
-    <sys:String x:Key="Settings_FontFamily">_Schriftart:</sys:String>
+    <sys:String x:Key="Settings_FontFamily">S_chriftart:</sys:String>
     <sys:String x:Key="Settings_FontSize">_Größe:</sys:String>
     <sys:String x:Key="Settings_FontDefault">Standard (Oberflächenschrift)</sys:String>
     <sys:String x:Key="Settings_FontPreview">Dokumente   readme.md   App.config   0123456789</sys:String>
@@ -1690,7 +1755,7 @@
     <sys:String x:Key="Settings_ShowPathBar">Pfadleiste mit den Schaltflächen „Zurück“ und „Vor“</sys:String>
     <sys:String x:Key="Settings_ShowViewToolbar">Ansichtsschaltflächen über der Dateiliste (Ansichtsmodus, versteckte Dateien, Erweiterungen)</sys:String>
     <sys:String x:Key="Settings_ShowStatusBar">Statusleiste unter jedem Panel</sys:String>
-    <sys:String x:Key="Settings_ShowWorkspaceSidebar">Arbeitsbereich-Leiste links</sys:String>
+    <sys:String x:Key="Settings_ShowWorkspaceSidebar">Arbeitsbereichsleiste links</sys:String>
     <sys:String x:Key="Settings_ShowWorkspaceSidebarTip">Die angehefteten Arbeitsbereiche nach Gruppen und der aktuell geöffnete. Klicken zum Wechseln, ziehen zum Umordnen, einen Ordner darauf ablegen, um ihn zum Arbeitsbereich zu machen.</sys:String>
     <sys:String x:Key="Settings_LayoutHint">Die Befehle eines ausgeblendeten Elements funktionieren weiterhin über die Tastatur und die Befehlspalette. Wird beim Speichern angewendet.</sys:String>
     <sys:String x:Key="Hotkeys_Title">Tastenkombinationen</sys:String>
@@ -1743,7 +1808,7 @@
     <sys:String x:Key="Search_PathMissing">Der zu durchsuchende Ordner existiert nicht: {0}</sys:String>
     <sys:String x:Key="Search_BadSize">Ungültige Größe "{0}". Bytes eingeben oder eine Zahl mit KB, MB oder GB (zum Beispiel 10MB).</sys:String>
     <sys:String x:Key="Search_SizeRange">Die Mindestgröße ist größer als die Höchstgröße.</sys:String>
-    <sys:String x:Key="Search_BadDate">Ungültiges Datum "{0}". Einen Tag eingeben, zum Beispiel 2026-10-01 oder 01.10.2026.</sys:String>
+    <sys:String x:Key="Search_BadDate">Ungültiges Datum "{0}". Einen Tag eingeben, zum Beispiel 2026-10-31 oder 31.10.2026.</sys:String>
     <sys:String x:Key="Search_DateRange">Das Anfangsdatum liegt nach dem Enddatum.</sys:String>
     <sys:String x:Key="Search_EncodingAuto">Auto</sys:String>
     <sys:String x:Key="Search_NameRegex">Dateiname ist ein regulärer Ausdruck</sys:String>
@@ -1753,7 +1818,7 @@
     <sys:String x:Key="Search_SizeHint">Bytes oder eine Zahl mit KB / MB / GB: 10MB, 1.5 GB</sys:String>
     <sys:String x:Key="Search_DateFrom">Geändert am oder nach</sys:String>
     <sys:String x:Key="Search_DateTo">Geändert am oder vor</sys:String>
-    <sys:String x:Key="Search_DateHint">Ein Tag: 2026-10-01 oder 01.10.2026. Beide Tage sind eingeschlossen; leer lassen für keine Begrenzung.</sys:String>
+    <sys:String x:Key="Search_DateHint">Ein Tag: 2026-10-31 oder 31.10.2026. Beide Tage sind eingeschlossen; leer lassen für keine Begrenzung.</sys:String>
     <sys:String x:Key="Cmp_Unreadable">konnte nicht gelesen werden</sys:String>
     <sys:String x:Key="Cmp_CaseVariant">Namen unterscheiden sich nur in der Groß-/Kleinschreibung</sys:String>
     <sys:String x:Key="Cmp_CompareContent">Inhalte vergleichen</sys:String>
@@ -1765,6 +1830,8 @@
     <sys:String x:Key="Cmp_FolderMissing">der Ordner existiert nicht</sys:String>
     <sys:String x:Key="Cmp_Failed">Vergleich fehlgeschlagen: {0}</sys:String>
     <sys:String x:Key="Cmp_UnreadableFolders"> · {0} Ordner konnten nicht gelesen werden und wurden ausgelassen</sys:String>
+    <sys:String x:Key="Cmp_LeftTakesNoCopies">die linke Seite kann nicht geändert werden, daher wird nichts dorthin kopiert</sys:String>
+    <sys:String x:Key="Cmp_RightTakesNoCopies">die rechte Seite kann nicht geändert werden, daher wird nichts dorthin kopiert</sys:String>
     <sys:String x:Key="Cmp_TickRow">Diese Zeile einbeziehen</sys:String>
     <sys:String x:Key="Cmp_DirectionButton">Kopierrichtung</sys:String>
     <sys:String x:Key="Cmp_DirectionHint">Klicken, um die Richtung zu ändern: → nach rechts kopieren, ← nach links kopieren, = nichts tun</sys:String>
@@ -1773,7 +1840,7 @@
     <sys:String x:Key="Cmp_ConfirmReplaced">Dateien, die ersetzt werden:</sys:String>
     <sys:String x:Key="Cmp_ConfirmMore">… und {0} weitere</sys:String>
     <sys:String x:Key="Cmp_ConfirmBin">Ersetzte Dateien kommen zuerst in den Papierkorb und können so wiederhergestellt werden.</sys:String>
-    <sys:String x:Key="Cmp_ConfirmNoBin">Einige ersetzte Dateien liegen auf einem Server, der keinen Papierkorb hat: Diese können nicht wiederhergestellt werden.</sys:String>
+    <sys:String x:Key="Cmp_ConfirmNoBin">Einige ersetzte Dateien liegen auf einem Server oder in einem Archiv, die keinen Papierkorb haben: Diese können nicht wiederhergestellt werden.</sys:String>
     <sys:String x:Key="Cmp_ConfirmNewer">ACHTUNG: {0} der ersetzten Dateien sind NEUER als die Kopie, die sie ersetzt:</sys:String>
     <sys:String x:Key="Cmp_ConfirmSkipped">{0} Einträge werden übersprungen: eine Datei auf der einen Seite und ein Ordner auf der anderen.</sys:String>
     <sys:String x:Key="Cmp_ConfirmQuestion">Synchronisieren?</sys:String>
@@ -1786,23 +1853,23 @@
     <sys:String x:Key="Cmp_FailRecycle">{0}: Die vorhandene Datei konnte nicht in den Papierkorb verschoben werden, sie blieb unverändert</sys:String>
     <sys:String x:Key="Cmp_FailCopy">{0}: Das Kopieren wurde nicht abgeschlossen</sys:String>
     <sys:String x:Key="Cmp_Unstamped">Bei {0} kopierten Dateien konnte die Änderungszeit der Quelle nicht übernommen werden (der Server erlaubt es nicht). Sie tragen die Zeit des Kopierens, daher zeigt der nächste Vergleich sie als neuer an — vor dem Zurücksynchronisieren "Inhalte vergleichen" verwenden.</sys:String>
-    <sys:String x:Key="RemoteEdit_KeptOnExit">Einige per Fernzugriff bearbeitete Dateien wurden vor dem Schließen nicht hochgeladen. Ihre Änderungen bleiben erhalten in:
+    <sys:String x:Key="RemoteEdit_KeptOnExit" xml:space="preserve">Einige per Fernzugriff bearbeitete Dateien wurden vor dem Schließen nicht hochgeladen. Ihre Änderungen bleiben erhalten in:
 
 {0}</sys:String>
     <sys:String x:Key="RemoteEdit_Uploaded">{0} auf den Server hochgeladen</sys:String>
-    <sys:String x:Key="RemoteEdit_UploadFailed">{0} konnte nicht hochgeladen werden: {1}
+    <sys:String x:Key="RemoteEdit_UploadFailed" xml:space="preserve">{0} konnte nicht hochgeladen werden: {1}
 
 Ihre Änderungen sind in der lokalen Kopie sicher, die erhalten bleibt:
 {2}
 
 Die Datei auf dem Server ist möglicherweise unvollständig. Zum Wiederholen im Editor erneut speichern.</sys:String>
-    <sys:String x:Key="RemoteEdit_Declined">{0} wurde nicht hochgeladen: Die Kopie auf dem Server hat sich geändert, nachdem Sie die Datei geöffnet haben, und Sie haben sich gegen das Überschreiben entschieden.
+    <sys:String x:Key="RemoteEdit_Declined" xml:space="preserve">{0} wurde nicht hochgeladen: Die Kopie auf dem Server hat sich geändert, nachdem Sie die Datei geöffnet haben, und Sie haben sich gegen das Überschreiben entschieden.
 
 Ihre Änderungen bleiben erhalten in:
 {1}
 
 Zum erneuten Nachfragen im Editor erneut speichern.</sys:String>
-    <sys:String x:Key="RemoteEdit_Conflict">{0} hat sich auf dem Server geändert, nachdem Sie die Datei geöffnet haben.
+    <sys:String x:Key="RemoteEdit_Conflict" xml:space="preserve">{0} hat sich auf dem Server geändert, nachdem Sie die Datei geöffnet haben.
 
 Beim Öffnen: {1:N0} Bytes, {2}
 Jetzt: {3:N0} Bytes, {4}
@@ -1887,14 +1954,17 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Cmd_View">Öffnet die Datei im integrierten Viewer: hervorgehobener Code, Markdown, Text, HEX oder ein Bild. Er bietet Zeichensatzauswahl, Zeilenumbruch, Suche, blockweises Blättern in riesigen Dateien und die Tasten N und P für die Nachbardateien des Panels. Funktioniert in Archiven und auf Servern.</sys:String>
     <sys:String x:Key="Help_Cmd_Edit">Öffnet die Datei zum Bearbeiten in dem Programm, das unter Einstellungen → Dateien → Editor festgelegt ist, oder, wenn keines festgelegt ist, mit der Windows-Aktion „Bearbeiten“ für ihren Typ (oder Notepad). Eine Datei auf einem Server wird über eine temporäre Kopie geöffnet, die bei jedem Speichern wieder hochgeladen wird, wobei geprüft wird, dass die Datei zwischenzeitlich niemand geändert hat. Dateien in einem Archiv können so nicht bearbeitet werden — zuerst entpacken.</sys:String>
     <sys:String x:Key="Help_Cmd_Properties">Zeigt den Standarddialog „Eigenschaften“ von Windows für das Element unter dem Cursor. Nur Dateien auf dem Datenträger.</sys:String>
-    <sys:String x:Key="Help_Cmd_CalculateFolderSizes">Berechnet die Größe jedes Ordners im aktiven Panel und zeigt sie in der Spalte „Größe“ an; ein nach Größe sortiertes Panel wird neu sortiert, die größten oben (node_modules, bin, .git). Läuft im Hintergrund und funktioniert auch in Archiven und auf Servern; Verknüpfungen (Junctions, Symlinks) werden nicht verfolgt. „≥“ vor einer Größe bedeutet, dass einige Unterordner nicht gelesen werden konnten. {gesture:SelectToggleSize} berechnet einen Ordner.</sys:String>
+    <sys:String x:Key="Help_Cmd_CalculateFolderSizes">Berechnet die Größe jedes Ordners im aktiven Panel und zeigt sie in der Spalte „Größe“ an; ein nach Größe sortiertes Panel wird neu sortiert, die größten oben (node_modules, bin, .git). Läuft im Hintergrund und funktioniert auch in Archiven und auf Servern; Links (Junctions, Symlinks) werden nicht verfolgt. „≥“ vor einer Größe bedeutet, dass einige Unterordner nicht gelesen werden konnten. {gesture:SelectToggleSize} berechnet einen Ordner.</sys:String>
     <sys:String x:Key="Help_Cmd_SelectToggleSize">Dasselbe wie {gesture:SelectToggle}, und ein damit markierter Ordner wird auch berechnet: Seine Größe erscheint in der Spalte „Größe“ und in der Summe der Markierung in der Statuszeile (wie die Leertaste in Total Commander). Alle Ordner auf einmal: {gesture:CalculateFolderSizes}.</sys:String>
     <sys:String x:Key="Help_Cmd_SelectToggle">Markiert das Element unter dem Cursor oder hebt die Markierung auf und geht eine Zeile nach unten. Kopieren, Löschen und die anderen Befehle wirken auf die markierten Dateien oder auf die unter dem Cursor, wenn nichts markiert ist.</sys:String>
     <sys:String x:Key="Help_Cmd_SelectAll">Markiert alle sichtbaren Dateien und Ordner (unter Beachtung des Schnellfilters).</sys:String>
     <sys:String x:Key="Help_Cmd_DeselectAll">Hebt alle Markierungen im aktiven Panel auf.</sys:String>
     <sys:String x:Key="Help_Cmd_InvertSelection">Kehrt die Markierung um: Markierte Elemente werden nicht mehr markiert, die übrigen werden markiert (Ordner eingeschlossen).</sys:String>
-    <sys:String x:Key="Help_Cmd_SelectByMask">Markiert Elemente, deren Namen zu einer Maske passen, z. B. *.cs; *.md. Masken mit ;, Komma oder Leerzeichen trennen; *.* passt auf alles, Ordner eingeschlossen.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectByMask">Markiert Elemente nach einer Maske oder Vorlage, z. B. *.cs;*.md | *.g.cs. Masken werden mit ; getrennt, nach | folgen Ausschlüsse, eine Maske mit \ am Ende steht für Ordner. Eine Vorlage kann zusätzlich ein Alter (älter oder neuer als), eine Änderung in Git oder eine Änderung durch einen Agenten verlangen.</sys:String>
     <sys:String x:Key="Help_Cmd_UnselectByMask">Hebt die Markierung der Elemente auf, deren Namen zur Maske passen.</sys:String>
+    <sys:String x:Key="Help_Cmd_SelectSameExtension">Markiert alle Dateien mit derselben Endung wie die Datei unter dem Cursor.</sys:String>
+    <sys:String x:Key="Help_Cmd_UnselectSameExtension">Hebt die Markierung aller Dateien mit derselben Endung wie die Datei unter dem Cursor auf.</sys:String>
+    <sys:String x:Key="Help_Cmd_RestoreSelection">Markiert erneut die Namen, die vor dem letzten Aufheben der Markierung, Löschen oder Ordnerwechsel markiert waren — in diesem Ordner oder in einem anderen mit denselben Namen.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCopy">Legt die markierten Dateien in die Zwischenablage, um sie hier ({gesture:ClipboardPaste}) oder im Explorer einzufügen. Funktioniert auf dem Datenträger, in Archiven (diese lassen sich nur innerhalb der App einfügen) und in Suchergebnissen; nicht auf Servern — dort {gesture:Copy} verwenden.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardCut">Wie „In die Zwischenablage kopieren“, aber beim Einfügen werden die Dateien verschoben; die Originale werden erst entfernt, nachdem alles angekommen ist.</sys:String>
     <sys:String x:Key="Help_Cmd_ClipboardPaste">Fügt hier oder im Explorer kopierte oder ausgeschnittene Dateien in den aktuellen Ordner (oder in ein geöffnetes ZIP) ein. Fragt bei Namenskonflikten nach; eine Kopie in denselben Ordner wird zu „file (1)“.</sys:String>
@@ -1913,7 +1983,7 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Cmd_ToggleSplit">Schaltet die Panels zwischen nebeneinander und übereinander um. Die Wahl wird gemerkt.</sys:String>
     <sys:String x:Key="Help_Cmd_FindFiles">Sofortige unscharfe Suche nach einer Datei über Name und Pfad innerhalb des Projekts — ab dem Stamm des Git-Repositorys, sonst ab dem aktuellen Ordner; auch in Archiven. Alle durch Leerzeichen getrennten Wörter müssen passen, Tab grenzt auf den hervorgehobenen Ordner ein, Enter bringt das Panel zur Datei. Häufig gewählte Dateien stehen weiter oben.</sys:String>
     <sys:String x:Key="Help_Cmd_NameSearch">Findet sofort eine Datei oder einen Ordner anhand eines Namensteils auf allen lokalen Laufwerken, mithilfe eines vorab erstellten Index. Der Index wird bei der ersten Verwendung im Hintergrund erstellt und aktualisiert, wenn er älter als 6 Stunden ist; Systemordner, .git und node_modules werden ausgelassen.</sys:String>
-    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Durchsucht die Laufwerke für „Datei überall suchen“ erneut — nach Dateiänderungen außerhalb der App verwenden. Läuft im Hintergrund; ein erneuter Aufruf während des Neuaufbaus bietet an, ihn abzubrechen.</sys:String>
+    <sys:String x:Key="Help_Cmd_RebuildNameIndex">Durchsucht die Laufwerke für „Datei überall finden“ erneut — nach Dateiänderungen außerhalb der App verwenden. Läuft im Hintergrund; ein erneuter Aufruf während des Neuaufbaus bietet an, ihn abzubrechen.</sys:String>
     <sys:String x:Key="Help_Cmd_FolderTree">Zeigt oder verbirgt links von den Panels einen Baum aus Laufwerken und Ordnern. Ein Klick auf einen Ordner öffnet ihn im aktiven Panel; der Baum folgt dem aktiven Panel zu dessen Ordner. Er aktualisiert sich selbst anhand dessen, was die Panels zeigen; {gesture:RefreshTab} liest alle seine geöffneten Ordner neu ein.</sys:String>
     <sys:String x:Key="Help_Cmd_QuickFilter">Öffnet den Schnellfilter des aktiven Panels, ohne den ersten Buchstaben zu tippen (wie die Schnellsuchtaste von Total Commander); ist er offen, gibt es ihm die Tastatur zurück. Der passende Teil jedes Namens wird hervorgehoben, Enter öffnet das Element unter dem Cursor, Esc schließt den Filter. Die Baumansicht hat keinen Filter: Buchstaben führen zu dem Ordner, dessen Name damit beginnt.</sys:String>
     <sys:String x:Key="Help_Cmd_ToggleHiddenFiles">Zeigt versteckte Dateien und Systemdateien im aktiven Panel oder blendet sie wieder aus. Die Einstellung wird pro Panel gemerkt. Derselbe Schalter ist ein Rechtsklick auf die Ansichtsschaltflächen in der Statuszeile des Panels und im Menü der Spaltenüberschrift.</sys:String>
@@ -1935,8 +2005,8 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Cmd_ToggleLockTab">Sperrt den Tab auf seinen Ordner (Schlosssymbol): Er lässt sich nicht schließen und öffnet bei jeder Rückkehr wieder diesen Ordner. Erneut ausführen zum Entsperren.</sys:String>
     <sys:String x:Key="Help_Cmd_RenameTab">Gibt dem Tab einen eigenen Namen statt des Ordnernamens (auch Doppelklick auf den Tab). Ein leerer Name stellt den Ordnernamen wieder her.</sys:String>
     <sys:String x:Key="Help_Cmd_Search">Dateisuche: nach Namensmaske oder regulärem Ausdruck, nach Inhalt, Größe und Attributen, auch in Archiven und unter Beachtung von .gitignore; Kriterien können als Vorgaben gespeichert werden. „Im Panel anzeigen“ listet die Treffer im aktiven Panel auf, wo die üblichen Befehle auf sie wirken. Durchsucht lokale Datenträger.</sys:String>
-    <sys:String x:Key="Help_Cmd_MultiRename">Stapelumbenennung mit einer Vorlage ([N] Name, [E] Erweiterung, [C] Zähler, [D] und [T] Datum und Uhrzeit, [P] Ordner), Ersetzen mit regulären Ausdrücken, Einfügen und Löschen von Zeichen sowie Groß-/Kleinschreibung. Die Vorschau zeigt Konflikte sofort; nach „Umbenennen“ können Sie bei geöffnetem Fenster auf „Rückgängig“ klicken. In einem ZIP-Archiv ist der ganze Stapel ein einziges Neuschreiben des Archivs, ganz oder gar nicht; andere Archivformate sind schreibgeschützt.</sys:String>
-    <sys:String x:Key="Help_Cmd_OperationLog">Verlauf der Dateivorgänge, Ihrer und der von Agenten: Kopieren, Verschieben, Löschen, Umbenennen, Erstellen, Packen und Entpacken, Downloads und Uploads (die Übertragungswarteschlange und das Speichern einer von einem Server geöffneten Datei), mit Ergebnis und Fehlern. Eine Zeile kann als wiederverwendbare Operation gespeichert werden. Das Einzige, was das Protokoll rückgängig machen kann, ist ein Umbenennungsstapel der KI-Umbenennung (Umbenennung rückgängig); für alles andere ist der Weg zurück der Papierkorb.</sys:String>
+    <sys:String x:Key="Help_Cmd_MultiRename">Stapelumbenennung mit einer Vorlage ([N] Name, [E] Erweiterung, [C] Zähler, [D] und [T] Datum und Uhrzeit, [P] Ordner), Ersetzen mit regulären Ausdrücken, Einfügen und Löschen von Zeichen sowie Groß-/Kleinschreibung. Die Vorschau zeigt Konflikte sofort; „Umbenennen“ schließt das Fenster, und der Stapel läuft im Hintergrund; „Umbenennen rückgängig“ im Vorgangsprotokoll stellt die alten Namen wieder her (auf einem Server, sobald ein Panel mit ihm verbunden ist). In einem ZIP-Archiv ist der ganze Stapel ein einziges Neuschreiben des Archivs, ganz oder gar nicht; andere Archivformate sind schreibgeschützt.</sys:String>
+    <sys:String x:Key="Help_Cmd_OperationLog">Verlauf der Dateivorgänge, Ihrer und der von Agenten: Kopieren, Verschieben, Löschen, Umbenennen, Erstellen, Packen und Entpacken, Downloads und Uploads (die Übertragungswarteschlange und das Speichern einer von einem Server geöffneten Datei), mit Ergebnis und Fehlern. Eine Zeile kann als wiederverwendbare Operation gespeichert werden. Das Einzige, was das Protokoll rückgängig machen kann, ist ein Umbenennungsstapel der KI-Umbenennung (Umbenennen rückgängig); für alles andere ist der Weg zurück der Papierkorb.</sys:String>
     <sys:String x:Key="Help_Cmd_BackgroundOperations">Zeigt die mit „Im Hintergrund“ ausgeblendeten Fortschrittsfenster wieder an. Kopieren, Verschieben oder Löschen läuft bei ausgeblendetem Fenster weiter; die Statusleiste zeigt, wie viele Vorgänge im Hintergrund laufen und wie weit sie sind, und ein Klick darauf listet sie auf, jeden mit seinem Fortschritt oder „wartet“, um sein Fenster anzuzeigen oder ihn abzubrechen. Vorgänge mit einem Server auf einer Seite laufen neben denen auf dem Datenträger, sodass ein langer Download kein lokales Kopieren aufhält.</sys:String>
     <sys:String x:Key="Help_Cmd_AddBookmark">Fügt den aktuellen Ordner des aktiven Panels unter einem von Ihnen gewählten Namen zu den Lesezeichen hinzu. Die Lesezeichen stehen im Menü „Lesezeichen“.</sys:String>
     <sys:String x:Key="Help_Cmd_BookmarksManager">Lesezeichen-Editor: Name, Pfad, Reihenfolge und Gruppe (Gruppen werden zu Untermenüs des Menüs „Lesezeichen“), Import und Export als JSON. Änderungen gelten nach OK.</sys:String>
@@ -1972,21 +2042,21 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Cmd_SemanticSearch">Suche nach Bedeutung: Eine Frage in Worten („wo wird das Token geprüft?“) findet passende Codefragmente. Zuerst „Indizieren“ wählen — der Dateitext wird an das Embedding-Modell gesendet, und der Index bleibt auf diesem Rechner. Benötigt ein Embedding-Modell unter Einstellungen → Agentenebene.</sys:String>
     <sys:String x:Key="Help_Cmd_ConnectionManager">Gespeicherte Verbindungen: SFTP (Kennwort oder Schlüssel), FTP und FTPS, WebDAV, S3 und kompatible Speicher (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex…), Azure Blob, Google Drive, Dropbox, OneDrive und Windows-Freigaben. Links die Liste mit Suche und einer Markierung bei einer geöffneten Verbindung; rechts ihre Felder: bearbeiten, testen, Farbmarkierung, schreibgeschützt. Eine oben eingefügte Adresse füllt die Felder aus. Kennwörter, Schlüssel und Anmelde-Token werden für Ihr Windows-Konto verschlüsselt gespeichert. „Importieren“ fügt die Hosts aus ~/.ssh/config als SFTP-Verbindungen hinzu, nachdem es zeigt, was hinzugefügt wird; bereits gespeicherte werden ausgelassen.</sys:String>
     <sys:String x:Key="Help_Cmd_Disconnect">Schließt die Serververbindung (im aktiven Panel oder im anderen, wenn das aktive keine hat) und bringt das Panel zum Ordner auf dem Datenträger zurück, den es zuvor zeigte.</sys:String>
-    <sys:String x:Key="Help_Cmd_QueueTransfer">Reiht die markierten Dateien für eine Hintergrundübertragung zwischen einem Server und dem Datenträger ein: ein Download, wenn das Server-Panel aktiv ist, sonst ein Upload vom Datenträger auf den Server im anderen Panel. Übertragungen lassen sich anhalten und fortsetzen; nur Dateien, keine Ordner.</sys:String>
+    <sys:String x:Key="Help_Cmd_QueueTransfer">Reiht die markierten Dateien für eine Hintergrundübertragung zwischen einem Server und dem Datenträger ein: ein Download, wenn das Server-Panel aktiv ist, sonst ein Upload vom Datenträger auf den Server im anderen Panel. Ein Ordner kommt mit allem, was darin liegt; Links wird nicht gefolgt, und was ausgelassen wird, wird genannt. Übertragungen lassen sich anhalten und fortsetzen.</sys:String>
     <sys:String x:Key="Help_Cmd_TransferQueue">Das Fenster der Übertragungswarteschlange: Fortschritt pro Datei, Anhalten, Fortsetzen, Abbrechen, Wiederholen nach einem Fehler und Entfernen abgeschlossener Einträge. Es blockiert die Panels nicht; die Warteschlange bleibt, bis Sie das Programm schließen.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceSwitcher">Eine durchsuchbare Liste gespeicherter Arbeitsbereiche: einen Teil des Namens tippen und Enter drücken, und beide Panels mit ihren Tabs und dem Layout kehren zum Zustand dieses Projekts zurück. Die Gruppe und die Markierung „angeheftet“ stehen rechts.</sys:String>
-    <sys:String x:Key="Help_Cmd_NewWorkspace">Erstellt einen leeren Arbeitsbereich. Ein Fenster fragt nach Name, Symbol, Farbe und Gruppe, dann öffnen sich beide Panels in Ihrem Benutzerordner mit je einem Tab. Der Arbeitsbereich, in dem Sie waren, wird gespeichert, wie bei jedem Wechsel. Der neue Arbeitsbereich wird sofort an die Arbeitsbereich-Leiste angeheftet (im Fenster das Häkchen entfernen, wenn Sie das nicht möchten). Ein auf die Arbeitsbereich-Leiste abgelegter Ordner öffnet dasselbe Fenster, und dann öffnen sich beide Dateipanels in diesem Ordner. Um die aktuellen Panels unter neuem Namen zu kopieren, {gesture:SaveWorkspace} verwenden.</sys:String>
-    <sys:String x:Key="Help_Cmd_SaveWorkspace">Speichert den aktuellen Zustand beider Panels (Tabs, Ordner, Ansicht, Layout) als Arbeitsbereich. Der Name des aktiven Arbeitsbereichs ist vorausgefüllt, sodass Enter ihn einfach aktualisiert; ein anderer Name erstellt einen neuen, an die Arbeitsbereich-Leiste angehefteten. Um mit leeren Panels zu beginnen, {gesture:NewWorkspace} verwenden.</sys:String>
+    <sys:String x:Key="Help_Cmd_NewWorkspace">Erstellt einen leeren Arbeitsbereich. Ein Fenster fragt nach Name, Symbol, Farbe und Gruppe, dann öffnen sich beide Panels in Ihrem Benutzerordner mit je einem Tab. Der Arbeitsbereich, in dem Sie waren, wird gespeichert, wie bei jedem Wechsel. Der neue Arbeitsbereich wird sofort an die Arbeitsbereichsleiste angeheftet (im Fenster das Häkchen entfernen, wenn Sie das nicht möchten). Ein auf die Arbeitsbereichsleiste abgelegter Ordner öffnet dasselbe Fenster, und dann öffnen sich beide Dateipanels in diesem Ordner. Um die aktuellen Panels unter neuem Namen zu kopieren, {gesture:SaveWorkspace} verwenden.</sys:String>
+    <sys:String x:Key="Help_Cmd_SaveWorkspace">Speichert den aktuellen Zustand beider Panels (Tabs, Ordner, Ansicht, Layout) als Arbeitsbereich. Der Name des aktiven Arbeitsbereichs ist vorausgefüllt, sodass Enter ihn einfach aktualisiert; ein anderer Name erstellt einen neuen, an die Arbeitsbereichsleiste angehefteten. Um mit leeren Panels zu beginnen, {gesture:NewWorkspace} verwenden.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceNotes">Notizen zum Arbeitsbereich (Markdown): woran Sie im Projekt gearbeitet haben und was als Nächstes ansteht. Sie werden als Datei neben dem Programm aufbewahrt; das Fenster zeigt, wo. Der Befehl, mit dem das Projekt gestartet wird, wird in den Eigenschaften des Arbeitsbereichs festgelegt.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceTerminal">Öffnet ein Terminal und führt den Befehl des Arbeitsbereichs aus (ohne Befehl nur ein Terminal). Befehl und Ordner werden in den Eigenschaften des Arbeitsbereichs festgelegt ({gesture:WorkspaceProperties}); ohne Ordner öffnet sich das Terminal im Ordner des aktiven Panels des Arbeitsbereichs. Ein Befehl, der aus der Projektdatei eines anderen stammt, wird zuerst angezeigt und bestätigt.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceNewWindow">Öffnet den Arbeitsbereich in einem eigenen Fenster des Programms, um zwei Projekte nebeneinander zu halten. Dieses Fenster ändert die gemeinsamen Einstellungen nicht.</sys:String>
-    <sys:String x:Key="Help_Cmd_WorkspaceSidebar">Zeigt oder verbirgt die Arbeitsbereich-Leiste links: die angehefteten Arbeitsbereiche (nach Gruppen) und den aktuell geöffneten. Ein Klick auf einen Arbeitsbereich wechselt das Projekt; ein Rechtsklick zeigt seine Aktionen. Einen Arbeitsbereich nach oben oder unten ziehen, um ihn innerhalb seiner Gruppe umzuordnen; ein auf die Leiste abgelegter Ordner wird zu einem neuen Arbeitsbereich.</sys:String>
-    <sys:String x:Key="Help_Cmd_WorkspaceRailExpand">Klappt die Arbeitsbereich-Leiste über dem Fenster auf und zeigt statt der Buchstaben den vollen Namen jedes Arbeitsbereichs. Die Wahl eines Arbeitsbereichs, Esc oder ein Klick neben die Leiste klappt sie wieder zu. Funktioniert auch bei ausgeblendeter Leiste.</sys:String>
+    <sys:String x:Key="Help_Cmd_WorkspaceSidebar">Zeigt oder verbirgt die Arbeitsbereichsleiste links: die angehefteten Arbeitsbereiche (nach Gruppen) und den aktuell geöffneten. Ein Klick auf einen Arbeitsbereich wechselt das Projekt; ein Rechtsklick zeigt seine Aktionen. Einen Arbeitsbereich nach oben oder unten ziehen, um ihn innerhalb seiner Gruppe umzuordnen; ein auf die Leiste abgelegter Ordner wird zu einem neuen Arbeitsbereich.</sys:String>
+    <sys:String x:Key="Help_Cmd_WorkspaceRailExpand">Klappt die Arbeitsbereichsleiste über dem Fenster auf und zeigt statt der Buchstaben den vollen Namen jedes Arbeitsbereichs. Die Wahl eines Arbeitsbereichs, Esc oder ein Klick neben die Leiste klappt sie wieder zu. Funktioniert auch bei ausgeblendeter Leiste.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceOpenDefinition">Öffnet eine .tcvproj-Projektdatei — eine Beschreibung eines Arbeitsbereichs, die Sie im Repository aufbewahren können: Ordner, Farbe, Gruppe, Terminalbefehl. Pfade sind relativ zur Datei, daher genügt es nach einem clone, sie zu öffnen.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceExportDefinition">Speichert den Arbeitsbereich als .tcvproj-Datei neben dem Projekt, um sie zu committen und auf einem anderen Rechner zu öffnen. Es kommen nur die teilbaren Teile hinein: Ordner, Erscheinungsbild, Terminalbefehl.</sys:String>
     <sys:String x:Key="Help_Cmd_Workspace1">Wechselt direkt zum Arbeitsbereich mit dieser Nummer in der Liste. Angeheftete Arbeitsbereiche stehen zuerst und erhalten daher die ersten Nummern.</sys:String>
-    <sys:String x:Key="Help_Cmd_WorkspaceProperties">Ein Fenster für Name, Symbol, Farbe, Gruppe, Anheften und Terminal des aktiven Arbeitsbereichs (jeden anderen über das Menü „Arbeitsbereiche“). Eine Farbe aus dem Satz oder mit der Systemauswahl wählen; die Gruppe ist eine Überschrift über dem Arbeitsbereich in der Arbeitsbereich-Leiste; der Terminalbefehl ist das, was {gesture:WorkspaceTerminal} ausführt; die Vorschau zeigt das Ergebnis sofort.</sys:String>
-    <sys:String x:Key="Help_Cmd_WorkspacePin">Heftet den aktiven Arbeitsbereich an oder löst ihn. Ein angehefteter ist immer in der Arbeitsbereich-Leiste und steht zuerst in der Liste (er erhält {gesture:Workspace1}, {gesture:Workspace2}…); die Leiste schaltet sich beim Anheften von selbst ein. Ein nicht angehefteter erscheint dort nur, solange er geöffnet ist.</sys:String>
+    <sys:String x:Key="Help_Cmd_WorkspaceProperties">Ein Fenster für Name, Symbol, Farbe, Gruppe, Anheften und Terminal des aktiven Arbeitsbereichs (jeden anderen über das Menü „Arbeitsbereiche“). Eine Farbe aus dem Satz oder mit der Systemauswahl wählen; die Gruppe ist eine Überschrift über dem Arbeitsbereich in der Arbeitsbereichsleiste; der Terminalbefehl ist das, was {gesture:WorkspaceTerminal} ausführt; die Vorschau zeigt das Ergebnis sofort.</sys:String>
+    <sys:String x:Key="Help_Cmd_WorkspacePin">Heftet den aktiven Arbeitsbereich an oder löst ihn. Ein angehefteter ist immer in der Arbeitsbereichsleiste und steht zuerst in der Liste (er erhält {gesture:Workspace1}, {gesture:Workspace2}…); die Leiste schaltet sich beim Anheften von selbst ein. Ein nicht angehefteter erscheint dort nur, solange er geöffnet ist.</sys:String>
     <sys:String x:Key="Help_Cmd_WorkspaceDelete">Löscht den Arbeitsbereich samt seinen Notizen (nach Bestätigung). Die Ordner und Dateien des Projekts werden nicht angetastet.</sys:String>
     <sys:String x:Key="Help_Cmd_CommandPalette">Die Befehlspalette: jeder Befehl des Programms und Ihrer Werkzeuge, mit den aktuellen Tasten. Beginnen Sie, einen Namen zu tippen (wahlweise mit seiner Kategorie, z. B. „Tab schließen“); Enter führt den hervorgehobenen Befehl aus. Die zuletzt geöffneten Verbindungen stehen zuerst („Verbinden: Name“): Enter öffnet eine im aktiven Panel.</sys:String>
     <sys:String x:Key="Help_Cmd_Help">Dieses Fenster: ein Leitfaden zum Programm und zu jedem Befehl mit Taste, Menüposition und Beschreibung. „Ausführen“ führt den Befehl im Hauptfenster aus, und die Hilfe bleibt geöffnet.</sys:String>
@@ -2005,16 +2075,16 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Help_Topic_Start_Body" xml:space="preserve">## Zwei Panels&#10;Das Fenster hat zwei Dateipanels. Beim aktiven ist der Tab unterstrichen und in der Statuszeile steht ein Punkt: Befehle wirken auf dieses, und das andere Panel ist das Ziel für Kopieren und Verschieben. Wechseln mit {gesture:SwitchPanel} oder per Mausklick.&#10;• Der Cursor ist die Zeile, auf der Sie stehen. Markierungen sind die für einen Vorgang gewählten Dateien: {gesture:SelectToggle} markiert eine Datei und geht nach unten, {gesture:SelectToggleSize} tut dasselbe und berechnet zusätzlich die Größe eines Ordners, {gesture:SelectAll} markiert alles. Ein Klick mit Ctrl markiert oder entmarkiert eine Datei und lässt den Rest; ein Klick mit Shift und die Pfeile mit Shift markieren einen Bereich, und die Pfeile mit Shift, auf einer markierten Datei begonnen, heben die Markierung stattdessen auf. Ist nichts markiert, wirken Befehle auf die Datei unter dem Cursor.&#10;• Beginnen Sie zu tippen, um den Schnellfilter zu öffnen: Die Liste behält die Namen, die den Text enthalten, und der Cursor landet auf dem besten Treffer (ein Name, der damit beginnt, dann ein Wort im Namen). ↑ und ↓ gehen durch die Treffer, {gesture:OpenFile} öffnet den gefundenen, und {gesture:View}, {gesture:Copy} und die anderen Befehle wirken direkt aus dem Feld darauf; Esc leert den Filter. Text mit * oder ? ist eine Maske für den ganzen Namen: *.cs sind nur C#-Dateien.&#10;• {gesture:OpenFile} öffnet einen Ordner oder eine Datei, {gesture:NavigateUp} geht eine Ebene nach oben.&#10;## Schaltflächen unten&#10;Sie folgen dem klassischen Total Commander: {gesture:View} anzeigen, {gesture:Edit} bearbeiten, {gesture:Copy} kopieren, {gesture:Move} verschieben, {gesture:NewFolder} neuer Ordner, {gesture:Delete} löschen, {gesture:Terminal} Terminal, {gesture:Quit} beenden. {gesture:Rename} benennt um; das Menü öffnet sich mit Alt.&#10;## Die Befehlszeile&#10;Unter den Panels ist die Befehlszeile. cd Pfad bewegt das aktive Panel; alles andere läuft in einem Terminal im Ordner des Panels, in der links von der Zeile gewählten Shell: cmd, PowerShell, Git Bash, WSL. Enter in einer leeren Zeile öffnet die Shell selbst. Eigene Shells fügen Sie unter Befehle → Befehlszeilen-Shells… hinzu.&#10;## Jeden Befehl finden&#10;• {gesture:CommandPalette} ist die Befehlspalette: einen Namen tippen, Enter führt ihn aus. Sie enthält alles, was das Programm kann, mit den aktuellen Tasten.&#10;• {gesture:Help} ist diese Hilfe: was jeder Befehl tut und wo er in den Menüs steht.&#10;• Jede Taste lässt sich neu zuweisen: Menü „Einstellungen“ → Tastenkombinationen.&#10;## Wofür das Programm gedacht ist&#10;Es ist für die Arbeit neben LLM-Agenten gebaut: schnell sehen, was ein Agent geändert hat ({gesture:AgentChanges}), den diff ansehen ({gesture:GitDiff}), zurücksetzen, was Sie nicht wollen, und sofort zwischen Projekten wechseln — Arbeitsbereiche ({gesture:WorkspaceSwitcher}).</sys:String>
     <sys:String x:Key="Help_Topic_Panels">Panels, Tabs und Dateisuche</sys:String>
     <sys:String x:Key="Help_Topic_Panels_Body" xml:space="preserve">## Pfad und Laufwerke&#10;• Über jedem Panel stehen die Laufwerksliste und die Pfadleiste. Ein Klick auf einen Teil des Pfads führt dorthin; ein Klick auf den leeren Teil der Leiste oder {gesture:EditPath} erlaubt es, einen Pfad mit Vorschlägen zu tippen. In einem Archiv oder auf einem Server ist der erste Teil sein Name (archive.zip, sftp://user@host) und führt zu seiner Wurzel.&#10;• Bei einer Netzwerkfreigabe (\\server\share) zeigt die Laufwerksliste die Freigabe statt eines Laufwerks. Die Liste folgt den Laufwerken, wie sie kommen und gehen (USB, verbundene Netzlaufwerke).&#10;• {gesture:NavigateBack} und {gesture:NavigateForward} bewegen sich durch den Verlauf des Panels.&#10;• {gesture:GoToRoot} geht zur Laufwerkswurzel, {gesture:GoHome} zu Ihrem Benutzerordner, {gesture:GoToClipboardPath} zum Pfad in der Zwischenablage.&#10;## Tabs&#10;• Jedes Panel hat seine eigenen Tabs: {gesture:NewTab} neu, {gesture:CloseTab} schließen, {gesture:NextTab} nächster. Doppelklick auf einen Tab benennt ihn um, Mittelklick schließt ihn, Rechtsklick öffnet ein Menü (duplizieren, sperren, andere schließen). Passen die Tabs nicht hinein, scrollt das Mausrad sie, und die Schaltfläche ▾ rechts listet sie alle auf.&#10;• Der aktuelle Git-Branch steht neben dem Namen des Tabs.&#10;## Ansicht&#10;• Ansichtsschaltflächen in der Statuszeile des Panels: Details (Spalten), Kurz, Miniaturen, Baum. Rechtsklick darauf für versteckte Dateien ({gesture:ToggleHiddenFiles}), Erweiterungen und Ordner zuerst; dieselben Schalter stehen im Menü „Einstellungen“ und im Menü der Spaltenüberschrift. Die Ansichten haben auch Tasten: {gesture:ViewModeDetails}, {gesture:ViewModeBrief}, {gesture:ViewModeThumbnails}, {gesture:ViewModeTree}.&#10;• Pos1 und Ende gehen in jeder Ansicht zur ersten und letzten Zeile; mit Shift markieren sie alles auf dem Weg oder heben die Markierung auf, wenn sie auf einer markierten Zeile begonnen wurden.&#10;• Sortiert wird per Klick auf eine Spaltenüberschrift. Spalten wählen Sie mit {gesture:ColumnSettings}; die Git-Spalte zeigt den Status jeder Datei.&#10;• {gesture:ToggleIgnored} blendet durch .gitignore ausgeschlossene Dateien aus (bin, obj, node_modules). {gesture:FolderTree} zeigt links einen Ordnerbaum. {gesture:ToggleSplit} stellt die Panels nebeneinander oder übereinander.&#10;## Eine Datei finden&#10;• In der Liste getippte Buchstaben öffnen den Schnellfilter, und {gesture:QuickFilter} öffnet ihn vor dem ersten Buchstaben: Die Liste verengt sich auf die passenden Namen, der passende Teil jedes Namens wird hervorgehoben, und Enter öffnet das Element unter dem Cursor. Einstellungen → Dateien machen daraus einen Sprung: Die Liste bleibt vollständig, der Cursor geht zum Treffer, ↑ und ↓ gehen zu den nächsten. Text, der nichts trifft, wird rot. In der Baumansicht gehen Buchstaben zum sichtbaren Ordner, dessen Name damit beginnt.&#10;• {gesture:FindFiles} — nach Name innerhalb des aktuellen Projekts: unscharf und sofort.&#10;• {gesture:NameSearch} — nach Name auf allen Laufwerken, aus einem Index.&#10;• {gesture:Search} — die vollständige Suche: nach Maske, Inhalt, Größe, in Archiven; Treffer lassen sich in einem Panel auflisten.&#10;• {gesture:SemanticSearch} — nach Bedeutung, mithilfe eines Sprachmodells.&#10;## Archive und Suchergebnisse&#10;{gesture:OpenFile} auf einem Archiv öffnet es als Ordner. ZIP lässt sich ändern; andere Formate sind schreibgeschützt. In einem Panel aufgelistete Suchtreffer sind echte Dateien: Sie können sie kopieren, löschen, umbenennen, packen und bearbeiten, im Explorer anzeigen und Werkzeuge darauf ausführen, aber in dieser Liste lässt sich nichts erstellen. Aus der Liste gestartete Werkzeuge, Editoren und Agenten arbeiten in dem Ordner, über dem sie geöffnet wurde. Ein Archiv oder die Ergebnisse verlassen Sie mit {gesture:NavigateUp} an ihrer Wurzel.</sys:String>
-    <sys:String x:Key="Help_Topic_Files">Dateivorgänge und Rückgängigmachen</sys:String>
-    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Kopieren und Verschieben&#10;{gesture:Copy} und {gesture:Move} senden die markierten Elemente in den Ordner des anderen Panels. Im Dialog können Sie das Ziel ändern und festlegen, was bei Namenskonflikten geschieht. Vorgänge laufen im Hintergrund mit Fortschritt, Anhalten und Abbrechen; bei einem Fehler an einer Datei werden Wiederholen, Überspringen oder Abbrechen angeboten.&#10;## Löschen&#10;Auf einem lokalen Datenträger (Suchtreffer eingeschlossen) schickt {gesture:Delete} Dateien in den Papierkorb; anderswo (Wechseldatenträger, Netzwerk, Server, Archive) löscht es endgültig — die Bestätigung sagt immer, was zutrifft. {gesture:DeletePermanent} umgeht den Papierkorb immer.&#10;## Zwischenablage und Drag-and-drop&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} und {gesture:ClipboardPaste} funktionieren mit Dateien und arbeiten mit dem Explorer zusammen.&#10;• {gesture:CopyFullPath} kopiert Pfade als Text, {gesture:CopyNames} kopiert Namen.&#10;• Dateien lassen sich zwischen den Panels und von und zum Explorer ziehen; zum Verschieben Shift gedrückt halten oder mit der rechten Maustaste ziehen. Dateien eines Server- oder Cloud-Panels gelangen auf dieselbe Weise in das andere Panel. Einträge eines geöffneten Archivs, die auf dem anderen Panel abgelegt werden, werden dort entpackt, und auf der Zeile „..“ an der Wurzel des Archivs abgelegt in den Ordner, in dem das Archiv liegt.&#10;## Das Protokoll und was sich rückgängig machen lässt&#10;• Jeder Vorgang — Ihrer und der von Agenten — wird im Protokoll festgehalten ({gesture:OperationLog}).&#10;• Es gibt kein allgemeines Rückgängigmachen. Die Wege zurück sind: der Papierkorb für das, was von einem lokalen Datenträger gelöscht wurde; „Rückgängig“ in der Mehrfach-Umbenennung, solange ihr Fenster offen ist; „Rückgängig“ in der KI-Umbenennung und später „Umbenennung rückgängig“ im Protokoll; Dateien auf den letzten Git-commit zurücksetzen ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Wiederholbare Aktionen&#10;• {gesture:SavedOperations} — gespeicherte Operationen, erstellt aus dem Protokoll oder unter Befehle → Gespeicherte Operationen verwalten….&#10;• {gesture:DropStackAdd} sammelt Dateien aus mehreren Ordnern in einem Stapel; {gesture:DropStackShow} kopiert oder verschiebt sie alle auf einmal.&#10;• {gesture:MultiRename} benennt nach einer Vorlage um, {gesture:CompareDirectories} vergleicht und synchronisiert zwei Ordner.</sys:String>
+    <sys:String x:Key="Help_Topic_Files">Dateivorgänge, Rückgängig</sys:String>
+    <sys:String x:Key="Help_Topic_Files_Body" xml:space="preserve">## Kopieren und Verschieben&#10;{gesture:Copy} und {gesture:Move} senden die markierten Elemente in den Ordner des anderen Panels. Im Dialog können Sie das Ziel ändern und festlegen, was bei Namenskonflikten geschieht. Vorgänge laufen im Hintergrund mit Fortschritt, Anhalten und Abbrechen; bei einem Fehler an einer Datei werden Wiederholen, Überspringen oder Abbrechen angeboten.&#10;## Löschen&#10;Auf einem lokalen Datenträger (Suchtreffer eingeschlossen) schickt {gesture:Delete} Dateien in den Papierkorb; anderswo (Wechseldatenträger, Netzwerk, Server, Archive) löscht es endgültig — die Bestätigung sagt immer, was zutrifft. {gesture:DeletePermanent} umgeht den Papierkorb immer.&#10;## Zwischenablage und Drag-and-drop&#10;• {gesture:ClipboardCopy}, {gesture:ClipboardCut} und {gesture:ClipboardPaste} funktionieren mit Dateien und arbeiten mit dem Explorer zusammen.&#10;• {gesture:CopyFullPath} kopiert Pfade als Text, {gesture:CopyNames} kopiert Namen.&#10;• Dateien lassen sich zwischen den Panels und von und zum Explorer ziehen; zum Verschieben Shift gedrückt halten oder mit der rechten Maustaste ziehen. Dateien eines Server- oder Cloud-Panels gelangen auf dieselbe Weise in das andere Panel. Einträge eines geöffneten Archivs, die auf dem anderen Panel abgelegt werden, werden dort entpackt, und auf der Zeile „..“ an der Wurzel des Archivs abgelegt in den Ordner, in dem das Archiv liegt.&#10;## Das Protokoll und was sich rückgängig machen lässt&#10;• Jeder Vorgang — Ihrer und der von Agenten — wird im Protokoll festgehalten ({gesture:OperationLog}).&#10;• Es gibt kein allgemeines Rückgängigmachen. Die Wege zurück sind: der Papierkorb für das, was von einem lokalen Datenträger gelöscht wurde; „Rückgängig“ in der Mehrfach-Umbenennung, solange ihr Fenster offen ist; „Rückgängig“ in der KI-Umbenennung und später „Umbenennen rückgängig“ im Protokoll; Dateien auf den letzten Git-commit zurücksetzen ({gesture:AgentChanges}, {gesture:GitCommit}).&#10;## Wiederholbare Aktionen&#10;• {gesture:SavedOperations} — gespeicherte Operationen, erstellt aus dem Protokoll oder unter Befehle → Gespeicherte Operationen verwalten….&#10;• {gesture:DropStackAdd} sammelt Dateien aus mehreren Ordnern in einem Stapel; {gesture:DropStackShow} kopiert oder verschiebt sie alle auf einmal.&#10;• {gesture:MultiRename} benennt nach einer Vorlage um, {gesture:CompareDirectories} vergleicht und synchronisiert zwei Ordner.</sys:String>
     <sys:String x:Key="Help_Topic_Workspaces">Arbeitsbereiche</sys:String>
-    <sys:String x:Key="Help_Topic_Workspaces_Body" xml:space="preserve">## Was das ist&#10;Ein Arbeitsbereich ist der gespeicherte Zustand eines ganzen Projekts: beide Panels mit allen Tabs und Ordnern, die Ansicht und das Layout. Der Wechsel zu einem Arbeitsbereich bringt alles so zurück, wie es war — schneller als mit Tabs und Lesezeichen.&#10;## Erstellen, speichern, wechseln&#10;• {gesture:NewWorkspace} erstellt einen leeren Arbeitsbereich: beide Panels in Ihrem Benutzerordner. Der, in dem Sie waren, wird gespeichert.&#10;• {gesture:SaveWorkspace} speichert den aktuellen Zustand unter einem Namen (oder aktualisiert den aktiven Arbeitsbereich).&#10;• {gesture:WorkspaceSwitcher} ist eine durchsuchbare Liste der Arbeitsbereiche; {gesture:Workspace1}, {gesture:Workspace2}… springen direkt zum Arbeitsbereich mit dieser Nummer.&#10;• Wenn Sie einen Arbeitsbereich verlassen (wegwechseln oder das Programm schließen), werden seine aktuellen Tabs automatisch gespeichert.&#10;## Eigenschaften: Name, Symbol, Farbe, Gruppe&#10;{gesture:WorkspaceProperties} öffnet ein Fenster mit allen Eigenschaften des aktiven Arbeitsbereichs; für jeden anderen das Menü „Arbeitsbereiche“ → der Arbeitsbereich → Eigenschaften verwenden.&#10;• Das Symbol ist ein Emoji, das im Menü, in der Auswahl und im Fenstertitel vor dem Namen steht; in der Arbeitsbereich-Leiste steht es anstelle der Buchstaben.&#10;• Die Farbe ist ein Streifen unter dem Menü, der Rahmen des aktiven Panels und ein Punkt in der Arbeitsbereich-Leiste. Wählen Sie eine aus dem Satz oder drücken Sie „Andere…“. Sie unterscheidet Fenster verschiedener Projekte.&#10;• Die Gruppe ist eine Überschrift über den angehefteten Arbeitsbereichen in der Arbeitsbereich-Leiste und eine Beschriftung in der Auswahl, z. B. „Arbeit“ und „OSS“. Arbeitsbereiche ohne Gruppe stehen zuerst, dann die Gruppen von A bis Z. Eine Gruppe ist erst wichtig, wenn viele Arbeitsbereiche angeheftet sind.&#10;## Die Arbeitsbereich-Leiste und das Anheften&#10;Die Arbeitsbereich-Leiste links zeigt die angehefteten Arbeitsbereiche und den aktuell geöffneten. Ein angehefteter ist immer da und steht zuerst in der Liste. Ein nicht angehefteter erscheint nur, solange er geöffnet ist: Er steht unter einer Trennlinie nach den angehefteten und verlässt die Leiste, wenn Sie wegwechseln. Ein neuer Arbeitsbereich wird sofort angeheftet. Zum Anheften oder Lösen den Arbeitsbereich in der Leiste mit der rechten Maustaste anklicken oder das Menü „Arbeitsbereiche“ → der Arbeitsbereich verwenden; die Leiste schaltet sich beim Anheften von selbst ein. Aus- oder einblenden mit {gesture:WorkspaceSidebar}.&#10;## Reihenfolge und ein neuer Ordner&#10;• Die Reihenfolge bestimmen Sie: einen Arbeitsbereich in der Leiste innerhalb seiner Gruppe nach oben oder unten ziehen. Die Nummern {gesture:Workspace1}, {gesture:Workspace2}… zählen die Leiste abwärts, und das Menü und die Auswahl listen die Arbeitsbereiche in derselben Reihenfolge. Ein gerade angehefteter oder in eine andere Gruppe verschobener Arbeitsbereich kommt an deren Ende.&#10;• Ein auf der Leiste abgelegter Ordner (aus einer Dateiliste oder dem Explorer) wird zu einem neuen Arbeitsbereich: Das Eigenschaftenfenster öffnet sich, und dann öffnen sich beide Dateipanels in diesem Ordner. Ist der Ordner bereits in einem Panel irgendeines Arbeitsbereichs geöffnet, wechseln Sie einfach dorthin.&#10;## Notizen und Terminal&#10;{gesture:WorkspaceNotes} enthält Notizen zum Projekt: woran Sie gearbeitet haben und was als Nächstes ansteht. {gesture:WorkspaceTerminal} öffnet ein Terminal und führt den Befehl des Projekts aus (npm run dev, dotnet watch…). Befehl und Ordner werden in den Eigenschaften des Arbeitsbereichs festgelegt ({gesture:WorkspaceProperties}); das Menü „Arbeitsbereiche“ zeigt den Befehl neben dem Eintrag.&#10;## Mehrere Fenster und die Projektdatei&#10;• {gesture:WorkspaceNewWindow} öffnet einen Arbeitsbereich in einem eigenen Fenster.&#10;• {gesture:WorkspaceExportDefinition} speichert die Beschreibung des Arbeitsbereichs als .tcvproj-Datei, die Sie committen können; {gesture:WorkspaceOpenDefinition} öffnet eine solche Datei — zum Beispiel nach einem clone.</sys:String>
+    <sys:String x:Key="Help_Topic_Workspaces_Body" xml:space="preserve">## Was das ist&#10;Ein Arbeitsbereich ist der gespeicherte Zustand eines ganzen Projekts: beide Panels mit allen Tabs und Ordnern, die Ansicht und das Layout. Der Wechsel zu einem Arbeitsbereich bringt alles so zurück, wie es war — schneller als mit Tabs und Lesezeichen.&#10;## Erstellen, speichern, wechseln&#10;• {gesture:NewWorkspace} erstellt einen leeren Arbeitsbereich: beide Panels in Ihrem Benutzerordner. Der, in dem Sie waren, wird gespeichert.&#10;• {gesture:SaveWorkspace} speichert den aktuellen Zustand unter einem Namen (oder aktualisiert den aktiven Arbeitsbereich).&#10;• {gesture:WorkspaceSwitcher} ist eine durchsuchbare Liste der Arbeitsbereiche; {gesture:Workspace1}, {gesture:Workspace2}… springen direkt zum Arbeitsbereich mit dieser Nummer.&#10;• Wenn Sie einen Arbeitsbereich verlassen (wegwechseln oder das Programm schließen), werden seine aktuellen Tabs automatisch gespeichert.&#10;## Eigenschaften: Name, Symbol, Farbe, Gruppe&#10;{gesture:WorkspaceProperties} öffnet ein Fenster mit allen Eigenschaften des aktiven Arbeitsbereichs; für jeden anderen das Menü „Arbeitsbereiche“ → der Arbeitsbereich → Eigenschaften verwenden.&#10;• Das Symbol ist ein Emoji, das im Menü, in der Auswahl und im Fenstertitel vor dem Namen steht; in der Arbeitsbereichsleiste steht es anstelle der Buchstaben.&#10;• Die Farbe ist ein Streifen unter dem Menü, der Rahmen des aktiven Panels und ein Punkt in der Arbeitsbereichsleiste. Wählen Sie eine aus dem Satz oder drücken Sie „Andere…“. Sie unterscheidet Fenster verschiedener Projekte.&#10;• Die Gruppe ist eine Überschrift über den angehefteten Arbeitsbereichen in der Arbeitsbereichsleiste und eine Beschriftung in der Auswahl, z. B. „Arbeit“ und „OSS“. Arbeitsbereiche ohne Gruppe stehen zuerst, dann die Gruppen von A bis Z. Eine Gruppe ist erst wichtig, wenn viele Arbeitsbereiche angeheftet sind.&#10;## Die Arbeitsbereichsleiste und das Anheften&#10;Die Arbeitsbereichsleiste links zeigt die angehefteten Arbeitsbereiche und den aktuell geöffneten. Ein angehefteter ist immer da und steht zuerst in der Liste. Ein nicht angehefteter erscheint nur, solange er geöffnet ist: Er steht unter einer Trennlinie nach den angehefteten und verlässt die Leiste, wenn Sie wegwechseln. Ein neuer Arbeitsbereich wird sofort angeheftet. Zum Anheften oder Lösen den Arbeitsbereich in der Leiste mit der rechten Maustaste anklicken oder das Menü „Arbeitsbereiche“ → der Arbeitsbereich verwenden; die Leiste schaltet sich beim Anheften von selbst ein. Aus- oder einblenden mit {gesture:WorkspaceSidebar}.&#10;## Reihenfolge und ein neuer Ordner&#10;• Die Reihenfolge bestimmen Sie: einen Arbeitsbereich in der Leiste innerhalb seiner Gruppe nach oben oder unten ziehen. Die Nummern {gesture:Workspace1}, {gesture:Workspace2}… zählen die Leiste abwärts, und das Menü und die Auswahl listen die Arbeitsbereiche in derselben Reihenfolge. Ein gerade angehefteter oder in eine andere Gruppe verschobener Arbeitsbereich kommt an deren Ende.&#10;• Ein auf der Leiste abgelegter Ordner (aus einer Dateiliste oder dem Explorer) wird zu einem neuen Arbeitsbereich: Das Eigenschaftenfenster öffnet sich, und dann öffnen sich beide Dateipanels in diesem Ordner. Ist der Ordner bereits in einem Panel irgendeines Arbeitsbereichs geöffnet, wechseln Sie einfach dorthin.&#10;## Notizen und Terminal&#10;{gesture:WorkspaceNotes} enthält Notizen zum Projekt: woran Sie gearbeitet haben und was als Nächstes ansteht. {gesture:WorkspaceTerminal} öffnet ein Terminal und führt den Befehl des Projekts aus (npm run dev, dotnet watch…). Befehl und Ordner werden in den Eigenschaften des Arbeitsbereichs festgelegt ({gesture:WorkspaceProperties}); das Menü „Arbeitsbereiche“ zeigt den Befehl neben dem Eintrag.&#10;## Mehrere Fenster und die Projektdatei&#10;• {gesture:WorkspaceNewWindow} öffnet einen Arbeitsbereich in einem eigenen Fenster.&#10;• {gesture:WorkspaceExportDefinition} speichert die Beschreibung des Arbeitsbereichs als .tcvproj-Datei, die Sie committen können; {gesture:WorkspaceOpenDefinition} öffnet eine solche Datei — zum Beispiel nach einem clone.</sys:String>
     <sys:String x:Key="Help_Topic_Git">Git</sys:String>
     <sys:String x:Key="Help_Topic_Git_Body" xml:space="preserve">## Den Zustand sehen&#10;• Der aktuelle Branch steht am Tab neben seinem Namen.&#10;• Die Git-Spalte ({gesture:ColumnSettings}) zeigt den Status jeder Datei in den Buchstaben von git status --short: rot Konflikt, bernsteinfarben geändert, grün staged, grau nicht verfolgt.&#10;• {gesture:GitDiff} zeigt den diff der Datei oder des Ordners unter dem Cursor.&#10;## Änderungen festhalten&#10;{gesture:GitStage} und {gesture:GitUnstage} fügen die markierten Elemente dem index hinzu und nehmen sie heraus, {gesture:GitCommit} öffnet das commit-Fenster, {gesture:GitBranch} die Branches, {gesture:GitStash} und {gesture:GitStashPop} legen Änderungen beiseite und holen sie zurück. push und pull fehlen bewusst — dafür das Terminal verwenden.&#10;## Ein worktree für eine Aufgabe&#10;Ein worktree ist ein zweiter Arbeitsordner desselben Repositorys auf einem anderen Branch. Er ist eine praktische Möglichkeit, einem Agenten seine eigene Kopie des Projekts zu geben: {gesture:GitNewWorktree} erstellt einen worktree mit einem Branch, kopiert lokale Konfigurationsdateien und erstellt einen Arbeitsbereich; {gesture:GitWorktrees} listet alle worktrees auf und entfernt die, die Sie nicht mehr brauchen.&#10;## Klonen&#10;{gesture:GitClone} klont ein Repository von einer https-URL; enthält es eine .tcvproj-Datei, bietet das Programm an, sie als Arbeitsbereich zu öffnen.</sys:String>
     <sys:String x:Key="Help_Topic_Agents">Arbeiten mit Agenten</sys:String>
     <sys:String x:Key="Help_Topic_Agents_Body" xml:space="preserve">## Einen Agenten starten&#10;• {gesture:RunAgentHere} startet einen Agenten (Claude Code, Codex, Gemini, Aider und andere) in einem Terminal im aktuellen Ordner; {gesture:RunAgentPicker} lässt Sie den Agenten wählen.&#10;• {gesture:AgentLaunch} startet einen Agenten für eine Aufgabe, wahlweise in einem eigenen worktree mit eigenem Branch und Arbeitsbereich.&#10;• Ein Start aus dem Programm wird als Sitzung aufgezeichnet: Alles, was sich unter ihrem Ordner ändert, wird als „wahrscheinlich ein Agent“ markiert. Schließen Sie die Sitzung, wenn der Agent fertig ist, sonst werden ihm auch Ihre eigenen Änderungen zugeschrieben.&#10;## Prüfen und zurücksetzen&#10;{gesture:AgentChanges} zeigt jede nicht committete Änderung im Repository und wer sie gemacht hat. Sie können eine Änderung ansehen (diff), stagen oder zurücksetzen; vor dem Zurücksetzen wird die Datei im Ordner agent-revert-backups neben dem Programm gesichert.&#10;## Der MCP-Server: der Agent sieht die Panels&#10;• Der MCP-Server lässt einen Agenten lesen, was in den Panels geöffnet ist: die Markierung, Dateilisten, Inhalte (auch in Archiven), die Suche und das Vorgangsprotokoll.&#10;• Einschalten unter Einstellungen → Agentenebene oder auf der Registerkarte „MCP-Server“ von „Agent-Änderungen“, die auch den Registrierungsbefehl für den Agenten enthält. Der Server lauscht nur auf 127.0.0.1 und verlangt ein Token.&#10;• Ein Agent erreicht nur die von Ihnen freigegebenen Ordner. Dürfen Agenten Änderungen vorschlagen, kommt jedes Kopieren, Verschieben oder Löschen durch einen Agenten in ein Genehmigungsfenster, mit „Ablehnen“ als Standard.&#10;## Sprachmodell&#10;KI-Umbenennung ({gesture:AiRename}), semantische Suche ({gesture:SemanticSearch}), der Entwurf der commit-Nachricht und die Zusammenfassung des Viewers verwenden Ihr Modell (Ollama, LM Studio oder ein Cloud-Modell). Adresse und Modelle stellen Sie unter Einstellungen → Agentenebene ein; solange die Adresse leer ist, nimmt das Programm mit niemandem Kontakt auf.</sys:String>
     <sys:String x:Key="Help_Topic_Remote">Server und Cloud</sys:String>
-    <sys:String x:Key="Help_Topic_Remote_Body" xml:space="preserve">## Verbindungen&#10;Die Schaltfläche „Verbindungen“ in der Laufwerksleiste verbindet genau dieses Panel: Ihre Liste enthält die gespeicherten Verbindungen (die geöffneten mit Häkchen), die Schnellverbindung ({gesture:QuickConnect}) und den Manager ({gesture:ConnectionManager}). Eine Adresse wie sftp://user@host/path oder s3://bucket lässt sich auch direkt in die Pfadleiste tippen.&#10;Solange das Panel auf einer Verbindung ist, zeigt die Schaltfläche deren Namen, Farbmarkierung und einen Statuspunkt: grün, der Server antwortet; bernsteinfarben, eine Liste wird geladen; rot, der Server hat nicht geantwortet (im Menü steht dann „Erneut verbinden“). Bricht die Verbindung ab, verbindet sich das Panel von selbst erneut — nach 1, 2, 5, 10, 20 und dann 30 Sekunden, insgesamt acht Versuche — und die Liste zeigt den Countdown mit „Jetzt wiederholen“ und „Erneutes Verbinden beenden“; eine abgelehnte Anmeldung oder ein geänderter Serverschlüssel wird nicht wiederholt. Die Verbindungen von Tabs im Hintergrund werden am Leben gehalten, sodass sie noch offen sind, wenn Sie zurückkehren. Trennen ({gesture:Disconnect}) steht daneben.&#10;## Tabs&#10;Eine Verbindung lebt in dem Tab, in dem sie geöffnet wurde: Der Tab ist nach ihr benannt, und ein Wechsel zu einem anderen Tab und zurück schließt sie nicht. Ein anderer Server öffnet sich in einem neuen Tab; ein bereits geöffneter wird dort gezeigt, wo er ist. Das Schließen des Tabs schließt die Verbindung; der Wechsel des Arbeitsbereichs schließt alle.&#10;## Dateien auf einem Server&#10;• {gesture:Copy} und {gesture:Move} kopieren zwischen dem Server und dem Datenträger, {gesture:View} zeigt eine Datei an Ort und Stelle.&#10;• {gesture:Edit} bearbeitet eine Datei über eine temporäre Kopie: Jedes Speichern wird zurückgeladen.&#10;• {gesture:QueueTransfer} reiht Dateien für eine Hintergrundübertragung ein, die sich anhalten und fortsetzen lässt; das Fenster der Warteschlange ist {gesture:TransferQueue}.&#10;• Löschen auf einem Server ist endgültig (Google Drive und OneDrive verschieben die Datei in ihren eigenen Papierkorb).&#10;• Eine schreibgeschützte Verbindung lässt nichts ändern — weder durch Sie noch durch einen Agenten.&#10;## Cloud-Speicher&#10;S3 und kompatible Speicher (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex Object Storage, Google Cloud Storage mit HMAC-Schlüsseln) verbinden sich mit einem Zugriffsschlüssel oder einem AWS-Profil; die Wahl des Anbieters füllt Endpunkt und Region aus. Azure Blob verwendet den Kontoschlüssel oder ein SAS-Token. Google Drive, Dropbox und OneDrive melden sich über den Browser an und brauchen die Client-ID einer beim Anbieter registrierten App.&#10;## Sicherheit&#10;Bei der ersten SFTP-Verbindung zeigt das Programm den Fingerabdruck des Serverschlüssels und fragt, ob ihm vertraut werden soll. Ändert sich der Schlüssel später, wird die Verbindung abgelehnt — das kann ein Abfangen bedeuten; ist die Änderung rechtmäßig, im Verbindungs-Manager „Serverschlüssel vergessen“ verwenden. Kennwörter, Schlüssel und Anmelde-Token werden für Ihr Windows-Konto verschlüsselt gespeichert.&#10;## Windows-Netzwerkordner&#10;Pfade wie \\server\share öffnen sich, wenn man sie in die Pfadleiste tippt; verbundene Netzlaufwerke stehen in der Laufwerksliste. Eine Freigabe, die eine eigene Anmeldung braucht, im Manager als Windows-Freigabe (SMB) speichern.</sys:String>
+    <sys:String x:Key="Help_Topic_Remote_Body" xml:space="preserve">## Verbindungen&#10;Die Schaltfläche „Verbindungen“ in der Laufwerksleiste verbindet genau dieses Panel: Ihre Liste enthält die gespeicherten Verbindungen (die geöffneten mit Häkchen), die Schnellverbindung ({gesture:QuickConnect}) und den Manager ({gesture:ConnectionManager}). Eine Adresse wie sftp://user@host/path oder s3://bucket lässt sich auch direkt in die Pfadleiste tippen.&#10;Solange das Panel auf einer Verbindung ist, zeigt die Schaltfläche deren Namen, Farbmarkierung und einen Statuspunkt: grün, der Server antwortet; bernsteinfarben, eine Liste wird geladen; rot, der Server hat nicht geantwortet (im Menü steht dann „Erneut verbinden“). Bricht die Verbindung ab, verbindet sich das Panel von selbst erneut — nach 1, 2, 5, 10, 20 und dann 30 Sekunden, insgesamt acht Versuche — und die Liste zeigt den Countdown mit „Jetzt wiederholen“ und „Erneutes Verbinden beenden“; eine abgelehnte Anmeldung oder ein geänderter Serverschlüssel wird nicht wiederholt. Die Verbindungen von Tabs im Hintergrund werden am Leben gehalten, sodass sie noch offen sind, wenn Sie zurückkehren. Trennen ({gesture:Disconnect}) steht daneben.&#10;## Tabs&#10;Eine Verbindung lebt in dem Tab, in dem sie geöffnet wurde: Der Tab ist nach ihr benannt, und ein Wechsel zu einem anderen Tab und zurück schließt sie nicht. Ein anderer Server öffnet sich in einem neuen Tab; ein bereits geöffneter wird dort gezeigt, wo er ist. Das Schließen des Tabs schließt die Verbindung; der Wechsel des Arbeitsbereichs schließt alle.&#10;## Dateien auf einem Server&#10;• {gesture:Copy} und {gesture:Move} kopieren zwischen dem Server und dem Datenträger, {gesture:View} zeigt eine Datei an Ort und Stelle.&#10;• {gesture:Edit} bearbeitet eine Datei über eine temporäre Kopie: Jedes Speichern wird zurückgeladen.&#10;• {gesture:QueueTransfer} reiht Dateien für eine Hintergrundübertragung ein, die sich anhalten und fortsetzen lässt; das Fenster der Warteschlange ist {gesture:TransferQueue}.&#10;• Löschen auf einem Server ist endgültig (Google Drive und OneDrive verschieben die Datei in ihren eigenen Papierkorb).&#10;• Eine schreibgeschützte Verbindung lässt nichts ändern — weder durch Sie noch durch einen Agenten.&#10;## Cloud-Speicher&#10;S3 und kompatible Speicher (Cloudflare R2, Backblaze B2, MinIO, Wasabi, Yandex Object Storage, Google Cloud Storage mit HMAC-Schlüsseln) verbinden sich mit einem Zugriffsschlüssel oder einem AWS-Profil; die Wahl des Anbieters füllt Endpunkt und Region aus. Azure Blob verwendet den Kontoschlüssel oder ein SAS-Token. Google Drive, Dropbox und OneDrive melden sich über den Browser an und brauchen die Client-ID einer beim Anbieter registrierten App.&#10;## Sicherheit&#10;Bei der ersten SFTP-Verbindung zeigt das Programm den Fingerabdruck des Serverschlüssels und fragt, ob ihm vertraut werden soll. Ändert sich der Schlüssel später, wird die Verbindung abgelehnt — das kann ein Abfangen bedeuten; ist die Änderung rechtmäßig, im Verbindungsmanager „Serverschlüssel vergessen“ verwenden. Kennwörter, Schlüssel und Anmelde-Token werden für Ihr Windows-Konto verschlüsselt gespeichert.&#10;## Windows-Netzwerkordner&#10;Pfade wie \\server\share öffnen sich, wenn man sie in die Pfadleiste tippt; verbundene Netzlaufwerke stehen in der Laufwerksliste. Eine Freigabe, die eine eigene Anmeldung braucht, im Manager als Windows-Freigabe (SMB) speichern.</sys:String>
     <sys:String x:Key="Help_Topic_Customize">Anpassen</sys:String>
     <sys:String x:Key="Help_Topic_Customize_Body" xml:space="preserve">## Was wo eingestellt wird&#10;• Einstellungen ({gesture:Settings}): Design und Sprache, welche Teile des Fensters angezeigt werden, Verhalten beim Löschen und Kopieren, Farbregeln für Dateien, Editoren und Agenten, Befehlszeilen-Shells, worktrees, Gadgets, der MCP-Server und das Sprachmodell.&#10;• Tasten: Menü „Einstellungen“ → Tastenkombinationen. Auch ein Zweitasten-Akkord lässt sich zuweisen.&#10;• Ihre eigenen Befehle: Benutzerwerkzeuge (Menü „Befehle“) sind Menüeinträge, die ein Programm mit Argumenten starten; Gadgets ({gesture:RunGadget}) sind benannte Befehlszeilen.&#10;• Umzug auf einen anderen Rechner: {gesture:ExportSettings} und {gesture:ImportSettings}.&#10;## Wo die Daten liegen&#10;Das Programm ist portabel: Einstellungen, Arbeitsbereiche, Notizen, das Protokoll, Verbindungen und Plugins liegen in seinem Ordner; die Registry und AppData werden nicht verwendet. Der Ordner lässt sich als Ganzes verschieben; Kennwörter und der Modellschlüssel sind für Ihr Windows-Konto verschlüsselt und müssen auf einem anderen Rechner neu eingegeben werden.</sys:String>
     <sys:String x:Key="Help_Title">Hilfe</sys:String>
@@ -2047,7 +2117,7 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Tool_Search">Suchen</sys:String>
     <sys:String x:Key="Tool_SearchTip">Dateien suchen ({gesture:Search})</sys:String>
     <sys:String x:Key="Tool_Connections">Verbindungen</sys:String>
-    <sys:String x:Key="Tool_ConnectionsTip">Verbindungs-Manager ({gesture:ConnectionManager})</sys:String>
+    <sys:String x:Key="Tool_ConnectionsTip">Verbindungsmanager ({gesture:ConnectionManager})</sys:String>
     <sys:String x:Key="Tool_Log">Vorgangsprotokoll</sys:String>
     <sys:String x:Key="Tool_LogTip">Vorgangsprotokoll ({gesture:OperationLog})</sys:String>
     <sys:String x:Key="Tool_BranchTip">Der Branch des aktiven Panels und wie viele Dateien in seinem Repository geändert wurden</sys:String>
@@ -2114,6 +2184,7 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Shell_ShellBoxTip">Die Shell, in der der Befehl läuft. Per Klick ändern oder mit Alt+↓ in der Zeile</sys:String>
     <sys:String x:Key="Shell_ShellsManage">Shells konfigurieren…</sys:String>
     <sys:String x:Key="Shell_CdNotFound">Ordner nicht gefunden: {0}</sys:String>
+    <sys:String x:Key="Shell_CdNotOnPanel">"{1}" ist ein Pfad innerhalb von {0}: Das Panel öffnet nur Windows-Ordner.</sys:String>
     <sys:String x:Key="Shell_SwapMounted">Die Panels können nicht getauscht werden, solange eines davon in einem Archiv, auf einem Server oder in Suchergebnissen ist.</sys:String>
     <sys:String x:Key="Shell_Changes">{0} {0:plural:Änderung|Änderungen}</sys:String>
     <sys:String x:Key="Shell_OperationsIdle">Alle Vorgänge abgeschlossen</sys:String>
@@ -2150,6 +2221,7 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Palette_Title">Befehlspalette</sys:String>
     <sys:String x:Key="Palette_Placeholder">Befehl eingeben…</sys:String>
     <sys:String x:Key="Palette_UserTools">Benutzerwerkzeuge</sys:String>
+    <sys:String x:Key="Palette_SelectionTemplates">Markierungsvorlagen</sys:String>
     <!-- Titles of the palette commands, their categories and the file-list columns: English and Russian
          keep them in CommandCatalog / ColumnCatalog, every other language here (Cmd_<Id>, CmdCat_<Category>,
          ColTitle_<Id>). -->
@@ -2186,6 +2258,9 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Cmd_InvertSelection">Markierung umkehren</sys:String>
     <sys:String x:Key="Cmd_SelectByMask">Nach Maske markieren…</sys:String>
     <sys:String x:Key="Cmd_UnselectByMask">Markierung nach Maske aufheben…</sys:String>
+    <sys:String x:Key="Cmd_SelectSameExtension">Gleiche Endung markieren</sys:String>
+    <sys:String x:Key="Cmd_UnselectSameExtension">Markierung gleicher Endung aufheben</sys:String>
+    <sys:String x:Key="Cmd_RestoreSelection">Markierung wiederherstellen</sys:String>
     <sys:String x:Key="Cmd_ClipboardCopy">In die Zwischenablage kopieren</sys:String>
     <sys:String x:Key="Cmd_ClipboardCut">In die Zwischenablage ausschneiden</sys:String>
     <sys:String x:Key="Cmd_ClipboardPaste">Aus der Zwischenablage einfügen</sys:String>
@@ -2202,10 +2277,10 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Cmd_OpenInExplorer">Im Explorer öffnen</sys:String>
     <sys:String x:Key="Cmd_SwitchPanel">Panel wechseln</sys:String>
     <sys:String x:Key="Cmd_ToggleSplit">Teilungsrichtung umschalten</sys:String>
-    <sys:String x:Key="Cmd_SwapPanels">Panels tauschen</sys:String>
+    <sys:String x:Key="Cmd_SwapPanels">Panels vertauschen</sys:String>
     <sys:String x:Key="Cmd_FindFiles">Datei im Projekt suchen…</sys:String>
     <sys:String x:Key="Cmd_QuickFilter">Schnellfilter</sys:String>
-    <sys:String x:Key="Cmd_NameSearch">Datei überall suchen…</sys:String>
+    <sys:String x:Key="Cmd_NameSearch">Datei überall finden…</sys:String>
     <sys:String x:Key="Cmd_RebuildNameIndex">Namensindex neu aufbauen</sys:String>
     <sys:String x:Key="Cmd_FolderTree">Ordnerbaum ein-/ausblenden</sys:String>
     <sys:String x:Key="Cmd_ToggleIgnored">Gitignored-Dateien ausblenden</sys:String>
@@ -2260,11 +2335,11 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Cmd_GitStashPop">Git: stash pop</sys:String>
     <sys:String x:Key="Cmd_GitClone">Git: clone von URL…</sys:String>
     <sys:String x:Key="Cmd_AgentChanges">Agent-Änderungen…</sys:String>
-    <sys:String x:Key="Cmd_AgentLaunch">Agent mit einer Aufgabe starten…</sys:String>
+    <sys:String x:Key="Cmd_AgentLaunch">Agent für eine Aufgabe starten…</sys:String>
     <sys:String x:Key="Cmd_AiRename">KI-Umbenennung…</sys:String>
     <sys:String x:Key="Cmd_SemanticSearch">Semantische Suche…</sys:String>
-    <sys:String x:Key="Cmd_ConnectionManager">Verbindungs-Manager…</sys:String>
-    <sys:String x:Key="Cmd_Disconnect">Trennen</sys:String>
+    <sys:String x:Key="Cmd_ConnectionManager">Verbindungsmanager…</sys:String>
+    <sys:String x:Key="Cmd_Disconnect">Verbindung trennen</sys:String>
     <sys:String x:Key="Cmd_Reconnect">Erneut verbinden</sys:String>
     <sys:String x:Key="Cmd_QuickConnect">Schnellverbindung per Adresse…</sys:String>
     <sys:String x:Key="Cmd_QueueTransfer">Zur Übertragungswarteschlange hinzufügen</sys:String>
@@ -2272,11 +2347,11 @@ Beim Hochladen werden diese Änderungen auf dem Server ersetzt. Die Kopie auf de
     <sys:String x:Key="Cmd_WorkspaceSwitcher">Arbeitsbereich wechseln…</sys:String>
     <sys:String x:Key="Cmd_NewWorkspace">Neuer Arbeitsbereich…</sys:String>
     <sys:String x:Key="Cmd_SaveWorkspace">Aktuellen als Arbeitsbereich speichern…</sys:String>
-    <sys:String x:Key="Cmd_WorkspaceNotes">Arbeitsbereich-Notizen…</sys:String>
+    <sys:String x:Key="Cmd_WorkspaceNotes">Notizen zum Arbeitsbereich…</sys:String>
     <sys:String x:Key="Cmd_WorkspaceTerminal">Arbeitsbereich-Terminal starten</sys:String>
     <sys:String x:Key="Cmd_WorkspaceNewWindow">Arbeitsbereich in neuem Fenster öffnen</sys:String>
-    <sys:String x:Key="Cmd_WorkspaceSidebar">Arbeitsbereich-Leiste ein-/ausblenden</sys:String>
-    <sys:String x:Key="Cmd_WorkspaceRailExpand">Arbeitsbereich-Leiste auf-/zuklappen</sys:String>
+    <sys:String x:Key="Cmd_WorkspaceSidebar">Arbeitsbereichsleiste ein-/ausblenden</sys:String>
+    <sys:String x:Key="Cmd_WorkspaceRailExpand">Arbeitsbereichsleiste auf-/zuklappen</sys:String>
     <sys:String x:Key="Cmd_WorkspaceOpenDefinition">Projektdatei (.tcvproj) öffnen…</sys:String>
     <sys:String x:Key="Cmd_WorkspaceExportDefinition">Projektdatei (.tcvproj) speichern…</sys:String>
     <sys:String x:Key="Cmd_Workspace1">Zu Arbeitsbereich 1 wechseln</sys:String>

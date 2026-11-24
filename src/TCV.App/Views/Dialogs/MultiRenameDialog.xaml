@@ -236,11 +236,6 @@
                     IsDefault="True"
                     MinWidth="110"
                     Margin="0,0,8,0"/>
-            <Button Content="{DynamicResource MR_Undo}"
-                    Command="{Binding UndoCommand}"
-                    MinWidth="110"
-                    ToolTip="{DynamicResource MR_UndoTip}"
-                    Margin="0,0,8,0"/>
             <Button Content="{DynamicResource Close}" Click="CloseButton_Click" IsCancel="True" MinWidth="90"/>
         </StackPanel>
     </Grid>

@@ -13,6 +13,9 @@ public sealed partial class AzureBlobFileSystem
     /// <summary>The most blocks one blob may be committed from.</summary>
     private const int MaxBlocks = 50_000;
 
+    /// <summary>The type a blob is stored with, on Put Blob and on Put Block List alike.</summary>
+    private const string BlobContentTypeHeader = "x-ms-blob-content-type";
+
     /// <summary>
     /// A write stream that uploads its contents when it is committed or disposed. A Put Blob states its
     /// length up front, so the body goes to a temporary file first (not to memory: a multi-gigabyte
@@ -42,39 +45,52 @@ public sealed partial class AzureBlobFileSystem
             ? PutBlobAsync(location, body, overwrite, progress, ct)
             : PutBlocksAsync(location, body, overwrite, progress, ct);
 
+    /// <summary>One Put Blob, tried again when the line failed, like a block; each try reads the temporary file from its start.</summary>
     private async Task PutBlobAsync(
         AzureBlobLocation location, FileStream body, bool overwrite, IProgress<long>? progress, CancellationToken ct)
     {
         var name = LeafName(location.Blob);
-        body.Position = 0;
-        using var content = new ProgressStreamContent(body, progress);
-        using var request = new HttpRequestMessage(HttpMethod.Put, _endpoint.Blob(location.Container!, location.Blob, null))
+        var file = body.SafeFileHandle;
+        var length = body.Length;
+        var sent = new PartProgress(progress, 1);
+        await PartedTransfer.WithRetriesAsync(PartRetries, attempt => PartedTransfer.WithStallLimitAsync(StallLimit, async watch =>
         {
-            Content = content,
-        };
-        request.Headers.TryAddWithoutValidation("x-ms-blob-type", "BlockBlob");
-        if (!overwrite)
-        {
-            request.Headers.TryAddWithoutValidation("If-None-Match", "*");
-        }
+            using var content = new ProgressStreamContent(new FileSegmentStream(file, 0, length, watch.Alive), sent.For(0));
+            using var request = new HttpRequestMessage(HttpMethod.Put, _endpoint.Blob(location.Container!, location.Blob, null))
+            {
+                Content = content,
+            };
+            request.Headers.TryAddWithoutValidation("x-ms-blob-type", "BlockBlob");
+            request.Headers.TryAddWithoutValidation(BlobContentTypeHeader, ContentTypes.ForName(name));
+            if (!overwrite)
+            {
+                request.Headers.TryAddWithoutValidation("If-None-Match", "*");
+            }
 
-        using var response = await SendAsync(request, HttpCompletionOption.ResponseContentRead, ct);
-        if (!overwrite && IsAlreadyExists(response))
-        {
-            throw AlreadyExists(name);
-        }
+            using var response = await SendAsync(request, HttpCompletionOption.ResponseContentRead, watch.Token);
+            if (!overwrite && IsAlreadyExists(response))
+            {
+                throw AlreadyExists(name);
+            }
 
-        await EnsureSuccessAsync(response, name, ct);
+            await EnsureSuccessAsync(response, name, watch.Token);
+            return true;
+        }, attempt), ct);
     }
 
     /// <summary>
-    /// Stages the body block by block (Put Block), then commits the list (Put Block List): the blob
-    /// appears, or changes, only at that commit, so a failure midway leaves the old one untouched.
+    /// Stages the body block by block (Put Block), <see cref="PartConcurrency"/> at a time and each block
+    /// tried again when the line failed, then commits the list (Put Block List) in file order: the blob
+    /// appears, or changes, only at that commit, so a failure midway leaves the old one untouched. A
+    /// block read from the temporary file by offset, from its start on each try, carries the same bytes
+    /// when it is sent again under its id; only a buffer per block is in memory. Blocks of a failed
+    /// upload need no cleaning up: the service drops uncommitted blocks by itself after a week.
     /// </summary>
     private async Task PutBlocksAsync(
         AzureBlobLocation location, FileStream body, bool overwrite, IProgress<long>? progress, CancellationToken ct)
     {
         var name = LeafName(location.Blob);
+        var file = body.SafeFileHandle;
         var length = body.Length;
         var blockSize = BlockSizeFor(length);
         var count = (int)((length + blockSize - 1) / blockSize);
@@ -82,24 +98,26 @@ public sealed partial class AzureBlobFileSystem
         // Ids are unique to this upload, so a commit cannot pick up blocks an abandoned earlier upload
         // left staged — and all of one length, which the service requires of a blob's blocks.
         var upload = Guid.NewGuid().ToString("N")[..8];
-        var ids = new List<string>(count);
-        for (var index = 0; index < count; index++)
-        {
-            ct.ThrowIfCancellationRequested();
-            var id = Convert.ToBase64String(Encoding.ASCII.GetBytes(
-                upload + "-" + index.ToString("D6", CultureInfo.InvariantCulture)));
-            ids.Add(id);
+        var ids = Enumerable.Range(0, count)
+            .Select(index => Convert.ToBase64String(Encoding.ASCII.GetBytes(
+                upload + "-" + index.ToString("D6", CultureInfo.InvariantCulture))))
+            .ToList();
 
+        var sent = new PartProgress(progress, count);
+        await PartedTransfer.RunAsync(count, PartConcurrency, PartRetries, (index, attempt) => PartedTransfer.WithStallLimitAsync(StallLimit, async watch =>
+        {
             var offset = index * blockSize;
-            using var content = new FileRangeContent(body, offset, Math.Min(blockSize, length - offset), progress, offset);
+            var size = Math.Min(blockSize, length - offset);
+            using var content = new FileRangeContent(new FileSegmentStream(file, offset, size, watch.Alive), 0, size, sent.For(index));
             using var request = new HttpRequestMessage(HttpMethod.Put,
-                _endpoint.Blob(location.Container!, location.Blob, "comp=block&blockid=" + Uri.EscapeDataString(id)))
+                _endpoint.Blob(location.Container!, location.Blob, "comp=block&blockid=" + Uri.EscapeDataString(ids[index])))
             {
                 Content = content,
             };
-            using var response = await SendAsync(request, HttpCompletionOption.ResponseContentRead, ct);
-            await EnsureSuccessAsync(response, name, ct);
-        }
+            using var response = await SendAsync(request, HttpCompletionOption.ResponseContentRead, watch.Token);
+            await EnsureSuccessAsync(response, name, watch.Token);
+            return true;
+        }, attempt), ct);
 
         var list = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?><BlockList>");
         foreach (var id in ids)
@@ -114,6 +132,9 @@ public sealed partial class AzureBlobFileSystem
         {
             Content = new ByteArrayContent(Encoding.UTF8.GetBytes(list.ToString())),
         };
+
+        // Content-Type of this request describes the XML; the blob's own type has a header of its own.
+        commit.Headers.TryAddWithoutValidation(BlobContentTypeHeader, ContentTypes.ForName(name));
         if (!overwrite)
         {
             commit.Headers.TryAddWithoutValidation("If-None-Match", "*");

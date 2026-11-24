@@ -137,6 +137,48 @@ public sealed class S3ResponseTests
     }
 
     [Fact]
+    public void ParseError_BodyOpeningWithSpaces_IsStillTheError()
+    {
+        // What S3 documents for a long copy: 200 at once, spaces to keep the connection open, then the outcome.
+        var error = S3Response.ParseError("   \n  <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>InternalError</Code><Message>Try again.</Message></Error>");
+
+        error.Should().NotBeNull();
+        error!.Code.Should().Be("InternalError");
+    }
+
+    [Fact]
+    public void ParseError_TemporaryRedirect_NamesTheEndpoint()
+    {
+        var error = S3Response.ParseError("<Error><Code>TemporaryRedirect</Code><Message>Re-send</Message><Endpoint>bucket.s3-eu-west-1.amazonaws.com</Endpoint></Error>");
+
+        error!.Endpoint.Should().Be("bucket.s3-eu-west-1.amazonaws.com");
+    }
+
+    [Theory]
+    [InlineData("<CopyPartResult><LastModified>2026-01-01T00:00:00.000Z</LastModified><ETag>&quot;abc&quot;</ETag></CopyPartResult>", "\"abc\"")]
+    [InlineData("<?xml version=\"1.0\"?><CopyPartResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><ETag>\"abc\"</ETag></CopyPartResult>", "\"abc\"")]
+    [InlineData("  \n <?xml version=\"1.0\"?>\n <CopyPartResult><ETag>\"abc\"</ETag></CopyPartResult>", "\"abc\"")]
+    [InlineData("", null)]
+    [InlineData("   ", null)]
+    [InlineData("not xml", null)]
+    [InlineData("<CopyPartResult/>", null)]
+    [InlineData("<CopyObjectResult><ETag>\"abc\"</ETag></CopyObjectResult>", null)]
+    [InlineData("<Error><Code>InternalError</Code></Error>", null)]
+    public void ParseCopiedPartETag_AnAnswer_IsTheETagOnlyOfACopyPartResult(string body, string? expected)
+    {
+        S3Response.ParseCopiedPartETag(body).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TemporaryRedirect, "TemporaryRedirect", "*elsewhere for now*TemporaryRedirect*")]
+    [InlineData(HttpStatusCode.PreconditionFailed, "PreconditionFailed", "\"k\" was changed on the server meanwhile (412).")]
+    public void Describe_CodesOfLargeTransfers_SayWhatHappened(HttpStatusCode status, string code, string expected)
+    {
+        S3Exception.Describe(status, new S3Error(code, "server words", null), "b", "k", anonymous: false)
+            .Should().Match(expected);
+    }
+
+    [Fact]
     public void Describe_HeadRefusedWithoutBody_StillNamesTheLikelyCauses()
     {
         S3Exception.Describe(HttpStatusCode.Forbidden, null, "b", "k", anonymous: false)

@@ -20,9 +20,12 @@ namespace TCV.Core.Domain;
 /// </remarks>
 public static class ShellQuoting
 {
-    /// <summary>Characters that force quoting: separators for the argv parser plus cmd.exe operators.</summary>
+    /// <summary>
+    /// Characters that force quoting: separators for the argv parser plus cmd.exe operators. A line break
+    /// separates arguments for a Cygwin program (Git's bash), unlike for <c>CommandLineToArgvW</c>.
+    /// </summary>
     private static readonly char[] NeedsQuoting =
-        [' ', '\t', '"', '&', '|', '<', '>', '^', '(', ')', '%', '!', ',', ';', '=', '\''];
+        [' ', '\t', '\r', '\n', '"', '&', '|', '<', '>', '^', '(', ')', '%', '!', ',', ';', '=', '\''];
 
     /// <summary>Always wraps <paramref name="value"/> in quotes, escaping it for the argv parser.</summary>
     public static string QuoteArgument(string value) => "\"" + EscapeInsideQuotes(value) + "\"";

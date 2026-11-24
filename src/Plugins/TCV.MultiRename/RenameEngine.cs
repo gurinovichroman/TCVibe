@@ -48,10 +48,17 @@ public sealed class RenameEngine
     };
 
     private readonly IVirtualFileSystem _fileSystem;
+    private readonly Func<Exception, string> _describeError;
 
-    public RenameEngine(IVirtualFileSystem fileSystem)
+    /// <param name="fileSystem">Where the files are renamed.</param>
+    /// <param name="describeError">
+    /// The reason a rename failed, in words for <see cref="RenameFailure.Error"/>: a file system's own
+    /// messages are English, and this library has no dictionary. By default, the exception's message.
+    /// </param>
+    public RenameEngine(IVirtualFileSystem fileSystem, Func<Exception, string>? describeError = null)
     {
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _describeError = describeError ?? (ex => ex.Message);
     }
 
     // ── Preview ───────────────────────────────────────────────────────────────
@@ -223,10 +230,12 @@ public sealed class RenameEngine
     /// taken: a→b with b→c runs b→c first, and a swap or longer cycle (a→b, b→a) parks one file
     /// under a temporary name for the moment it takes.
     /// </remarks>
+    /// <param name="progress">Told how many have been renamed so far, after each one.</param>
     public async Task<RenameBatchResult> ExecuteBatchAsync(
         IReadOnlyList<IFileEntry> files,
         IReadOnlyList<RenamePreviewItem> previews,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<int>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(previews);
@@ -248,7 +257,7 @@ public sealed class RenameEngine
             steps.Add(new Step(files[i].Path, preview.OldName, preview.NewName));
         }
 
-        return await ApplyAsync(steps, ct);
+        return await ApplyAsync(steps, ct, progress);
     }
 
     /// <summary>
@@ -289,7 +298,7 @@ public sealed class RenameEngine
     private static string Key(VfsPath? parent, string name) =>
         $"{parent?.Value ?? string.Empty}|{name}";
 
-    private async Task<RenameBatchResult> ApplyAsync(List<Step> plan, CancellationToken ct)
+    private async Task<RenameBatchResult> ApplyAsync(List<Step> plan, CancellationToken ct, IProgress<int>? progress = null)
     {
         if (plan.Count > 0 && _fileSystem is IBatchRenameFileSystem { CanRenameAsBatch: true } batch)
         {
@@ -341,7 +350,7 @@ public sealed class RenameEngine
                     }
                     catch (Exception ex)
                     {
-                        failures.Add(new RenameFailure(step.OriginalName, step.NewName, ex.Message));
+                        failures.Add(new RenameFailure(step.OriginalName, step.NewName, _describeError(ex)));
                         held.Remove(selfKey);
                         pending.RemoveAt(i);
                         progressed = true;
@@ -359,6 +368,7 @@ public sealed class RenameEngine
                     performed.Add(new RenameAction(
                         step.Parent is null ? new VfsPath(step.NewName) : step.Parent.Combine(step.NewName),
                         step.OriginalName));
+                    progress?.Report(performed.Count);
                     pending.RemoveAt(i);
                     progressed = true;
                 }
@@ -391,7 +401,7 @@ public sealed class RenameEngine
     /// names above are not needed, and the outcome is all or nothing: everything renamed, or nothing
     /// and every file reported with the one reason.
     /// </summary>
-    private static async Task<RenameBatchResult> ApplyAsOneBatchAsync(
+    private async Task<RenameBatchResult> ApplyAsOneBatchAsync(
         IBatchRenameFileSystem fileSystem, List<Step> plan, CancellationToken ct)
     {
         try
@@ -406,7 +416,7 @@ public sealed class RenameEngine
         catch (Exception ex)
         {
             return new RenameBatchResult(
-                [], plan.Select(s => new RenameFailure(s.OriginalName, s.NewName, ex.Message)).ToList(), Cancelled: false);
+                [], plan.Select(s => new RenameFailure(s.OriginalName, s.NewName, _describeError(ex))).ToList(), Cancelled: false);
         }
 
         // Where each entry is now: its new name, under the new name of any folder above it that the batch
@@ -459,7 +469,7 @@ public sealed class RenameEngine
         }
         catch (Exception ex)
         {
-            failures.Add(new RenameFailure(step.OriginalName, step.NewName, ex.Message));
+            failures.Add(new RenameFailure(step.OriginalName, step.NewName, _describeError(ex)));
             held.Remove(oldKey);
             pending.Remove(step);
             return;
@@ -503,7 +513,7 @@ public sealed class RenameEngine
         catch (Exception ex)
         {
             failures.Add(new RenameFailure(step.OriginalName, step.NewName,
-                $"left under the temporary name \"{step.CurrentName}\": {ex.Message}"));
+                $"left under the temporary name \"{step.CurrentName}\": {_describeError(ex)}"));
         }
     }
 }

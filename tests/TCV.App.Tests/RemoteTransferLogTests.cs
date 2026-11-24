@@ -4,6 +4,8 @@ using TCV.App.Agents;
 using TCV.App.Operations;
 using TCV.App.Services;
 using TCV.App.ViewModels.Dialogs;
+using TCV.Core.Domain;
+using TCV.Core.Interfaces;
 using TCV.Network;
 
 namespace TCV.App.Tests;
@@ -39,6 +41,35 @@ public sealed class RemoteTransferLogTests : IDisposable
         Direction = direction,
         Connection = new ConnectionInfo { Protocol = NetworkProtocol.Sftp, Host = "example.org", Port = 22, Username = "deploy" },
     };
+
+    [Fact]
+    public void Entry_AFolderMadeForATransfer_IsANewFolderLine()
+    {
+        var downloaded = new TransferItem
+        {
+            SourcePath = "/www/sub",
+            DestinationPath = "C:/in/www/sub",
+            Direction = TransferDirection.Download,
+            Connection = new ConnectionInfo { Protocol = NetworkProtocol.Sftp, Host = "example.org", Port = 22, Username = "me" },
+            IsFolder = true,
+        };
+        var uploaded = new TransferItem
+        {
+            SourcePath = @"C:\in\www\sub",
+            DestinationPath = "/www/sub",
+            Direction = TransferDirection.Upload,
+            Connection = new ConnectionInfo { Protocol = NetworkProtocol.Sftp, Host = "example.org", Port = 22, Username = "me" },
+            IsFolder = true,
+        };
+
+        var local = RemoteTransferLog.Entry(new TransferFinishedEventArgs(downloaded, TransferStatus.Complete, null), At)!;
+        var remote = RemoteTransferLog.Entry(new TransferFinishedEventArgs(uploaded, TransferStatus.Complete, null), At)!;
+
+        local.Kind.Should().Be(OperationKind.CreateFolder);
+        local.Source.Should().Be(@"C:\in\www\sub");
+        remote.Kind.Should().Be(OperationKind.CreateFolder);
+        remote.Source.Should().Be("sftp://me@example.org/www/sub");
+    }
 
     // ── The descriptor ────────────────────────────────────────────────────────
 
@@ -221,6 +252,86 @@ public sealed class RemoteTransferLogTests : IDisposable
         entry.Outcome.Should().Be(expected);
         entry.Error.Should().Be(error);
         entry.ItemCount.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData("sftp", "sftp://deploy@example.org", "sftp://deploy@example.org/etc/nginx")]
+    [InlineData("ftp", "bob@example.org", "ftp://bob@example.org/etc/nginx")]
+    [InlineData("ftps", "bob@example.org", "ftps://bob@example.org/etc/nginx")]
+    [InlineData("ftp", "@example.org", "ftp://example.org/etc/nginx")]
+    [InlineData("dav", "example.org:8080", "dav://example.org:8080/etc/nginx")]
+    [InlineData("s3", "my-bucket", "s3://my-bucket/etc/nginx")]
+    public void RemoteSave_NamesTheServerTheSameWayWhateverItsKind(string scheme, string displayName, string expected)
+    {
+        var entry = RemoteTransferLog.RemoteSave(
+            @"C:\Temp\nginx.conf", "/etc/nginx/nginx.conf", RemoteEditOutcome.Uploaded, null, At, new NamedFileSystem(scheme, displayName));
+
+        entry.Destination.Should().Be(expected);
+        entry.ArrivedIn.Should().Be(expected);
+    }
+
+    [Fact]
+    public void RemoteSave_MatchesWhatTheQueueWritesForTheSameServer()
+    {
+        var server = new ConnectionInfo { Protocol = NetworkProtocol.Sftp, Host = "example.org", Port = 22, Username = "deploy" };
+        var queued = RemoteTransferLog.Describe(TransferDirection.Upload, @"C:\Temp\a.txt", "/srv/a.txt", server);
+
+        var saved = RemoteTransferLog.RemoteSave(
+            @"C:\Temp\a.txt", "/srv/a.txt", RemoteEditOutcome.Uploaded, null, At, new NamedFileSystem("sftp", "sftp://deploy@example.org"));
+
+        saved.Destination.Should().Be(queued.Destination);
+    }
+
+    [Fact]
+    public void RemoteSave_FileInTheServersRoot_KeepsTheRoot()
+    {
+        var entry = RemoteTransferLog.RemoteSave(
+            @"C:\Temp\a.txt", "/a.txt", RemoteEditOutcome.Uploaded, null, At, new NamedFileSystem("ftp", "bob@example.org"));
+
+        entry.Destination.Should().Be("ftp://bob@example.org/");
+    }
+
+    [Fact]
+    public void RemoteSave_FindInASearchOnAServer_NamesThatServerNotTheView()
+    {
+        var results = new TCV.App.FileSystem.SearchResultsFileSystem(new NamedFileSystem("ftp", "bob@example.org"), []);
+
+        var entry = RemoteTransferLog.RemoteSave(@"C:\Temp\a.txt", "/srv/a.txt", RemoteEditOutcome.Uploaded, null, At, results);
+
+        entry.Destination.Should().Be("ftp://bob@example.org/srv");
+    }
+
+    [Theory]
+    [InlineData("zip", "archive.zip")]
+    [InlineData("file", "Local File System")]
+    public void RemoteSave_NotAServer_WritesThePathAlone(string scheme, string displayName)
+    {
+        var entry = RemoteTransferLog.RemoteSave(
+            @"C:\Temp\a.txt", "/in/a.txt", RemoteEditOutcome.Uploaded, null, At, new NamedFileSystem(scheme, displayName));
+
+        entry.Destination.Should().Be("/in");
+    }
+
+    /// <summary>All the log asks of a file system is what it calls itself.</summary>
+    private sealed class NamedFileSystem(string scheme, string displayName) : IVirtualFileSystem
+    {
+        public string Scheme => scheme;
+        public string DisplayName => displayName;
+        public event EventHandler<VfsChangedEventArgs>? Changed { add { } remove { } }
+        public Task<IReadOnlyList<IFileEntry>> ListAsync(VfsPath path, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IFileEntry?> GetEntryAsync(VfsPath path, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<Stream> OpenReadAsync(VfsPath path, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<Stream> OpenWriteAsync(VfsPath path, bool overwrite = false, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task CopyAsync(VfsPath source, VfsPath destination, IProgress<FileProgress>? progress, CancellationToken ct) => throw new NotSupportedException();
+        public Task MoveAsync(VfsPath source, VfsPath destination, CancellationToken ct) => throw new NotSupportedException();
+        public Task DeleteAsync(VfsPath path, bool recursive, CancellationToken ct) => throw new NotSupportedException();
+        public Task CreateDirectoryAsync(VfsPath path, CancellationToken ct) => throw new NotSupportedException();
+        public Task RenameAsync(VfsPath path, string newName, CancellationToken ct) => throw new NotSupportedException();
+        public bool SupportsOperation(VfsOperation operation) => false;
+
+        public void Dispose()
+        {
+        }
     }
 
     // ── What the log's readers make of the lines ──────────────────────────────

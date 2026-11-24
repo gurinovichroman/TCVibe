@@ -261,6 +261,7 @@ public sealed class OperationQueue : IOperationQueue, IDisposable
             Origin = b.Origin,
             Renames = d.Renames,
             ArrivedIn = d.ArrivedIn,
+            ChangedArchive = d.ChangedArchive,
         });
     }
 

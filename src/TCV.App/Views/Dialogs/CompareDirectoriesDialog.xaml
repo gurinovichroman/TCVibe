@@ -90,7 +90,7 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="{DynamicResource Col_Name}" Binding="{Binding Name}" Width="220" />
                 <DataGridTextColumn Header="{DynamicResource Cmp_Left}" Binding="{Binding LeftSize}" Width="90" />
-                <DataGridTextColumn Header="{DynamicResource Cmp_LeftModified}" Binding="{Binding LeftModified}" Width="130" />
+                <DataGridTextColumn Header="{DynamicResource Cmp_LeftModified}" Binding="{Binding LeftModified}" Width="Auto" MinWidth="130" />
                 <!-- Click (or Space) steps the row's direction: → ← = -->
                 <DataGridTemplateColumn Width="48">
                     <DataGridTemplateColumn.CellTemplate>
@@ -103,7 +103,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="{DynamicResource Cmp_Right}" Binding="{Binding RightSize}" Width="90" />
-                <DataGridTextColumn Header="{DynamicResource Cmp_RightModified}" Binding="{Binding RightModified}" Width="130" />
+                <DataGridTextColumn Header="{DynamicResource Cmp_RightModified}" Binding="{Binding RightModified}" Width="Auto" MinWidth="130" />
                 <DataGridTemplateColumn Width="28">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

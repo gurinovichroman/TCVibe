@@ -313,11 +313,13 @@ public sealed class AzureBlobFileSystemTests
         await ((IDeferredUploadStream)output).CommitAsync(new SyncProgress(reported.Add), CancellationToken.None);
         await output.DisposeAsync();
 
+        // Blocks go side by side, in no fixed order: the list says how they join up.
         var blocks = fake.Calls.Where(c => c.Q("comp") == "block").ToList();
-        blocks.Select(b => b.Body.Length).Should().Equal(4, 4, 3);
+        blocks.Select(b => b.Body.Length).Should().BeEquivalentTo(new[] { 4, 4, 3 });
         blocks.Select(b => b.Q("blockid")!.Length).Distinct().Should().ContainSingle("all block ids of a blob have one length");
         var list = fake.Calls.Single(c => c.Q("comp") == "blocklist");
-        Encoding.UTF8.GetString(list.Body).Should().Contain(string.Concat(blocks.Select(b => $"<Latest>{b.Q("blockid")}</Latest>")));
+        var listed = System.Xml.Linq.XElement.Parse(Encoding.UTF8.GetString(list.Body)).Elements("Latest").Select(e => e.Value).ToList();
+        listed.Select(id => Encoding.UTF8.GetString(blocks.Single(b => b.Q("blockid") == id).Body)).Should().Equal("hell", "o wo", "rld");
         fake.Text("c", "big.bin").Should().Be("hello world");
         reported.Should().BeInAscendingOrder().And.EndWith(11);
     }

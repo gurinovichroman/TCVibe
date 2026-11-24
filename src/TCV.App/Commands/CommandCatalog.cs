@@ -32,7 +32,8 @@ public sealed record CommandDescriptor(
 
 /// <summary>A ready-to-show palette row: localised title/category plus the current key gesture.</summary>
 /// <param name="Rank">Breaks ties in the ranking, higher first: the recent connections lead an empty query, the most recent on top.</param>
-public sealed record CommandPaletteItem(string Id, string Title, string Category, string Gesture, int Rank = 0);
+/// <param name="Picture">A workspace's picture in the switcher (<see cref="TCV.App.Controls.WorkspaceLabel"/>), beside its <see cref="Id"/>, which is its name; empty on every other row.</param>
+public sealed record CommandPaletteItem(string Id, string Title, string Category, string Gesture, int Rank = 0, string Picture = "");
 
 /// <summary>
 /// Static registry of the commands the command palette can run. Ids match the cases in
@@ -94,6 +95,9 @@ public static class CommandCatalog
         new("InvertSelection", "Invert selection",        "Инвертировать выделение", CatSelection, CatSelectionRu),
         new("SelectByMask",    "Select by mask…",         "Выделить по маске…",      CatSelection, CatSelectionRu),
         new("UnselectByMask",  "Deselect by mask…",       "Снять по маске…",         CatSelection, CatSelectionRu),
+        new("SelectSameExtension",   "Select same extension",   "Выделить то же расширение", CatSelection, CatSelectionRu),
+        new("UnselectSameExtension", "Deselect same extension", "Снять то же расширение",    CatSelection, CatSelectionRu),
+        new("RestoreSelection", "Restore selection",      "Восстановить выделение",  CatSelection, CatSelectionRu),
 
         // ── Clipboard ─────────────────────────────────────────────────────────
         new("ClipboardCopy",   "Copy to clipboard",       "Копировать в буфер",      CatClipboard, CatClipboardRu),

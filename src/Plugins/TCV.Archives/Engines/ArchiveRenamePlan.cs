@@ -28,7 +28,7 @@ public sealed class ArchiveRenamePlan
     /// <param name="renames">The entries to rename and the new name of each.</param>
     /// <exception cref="ArgumentException">A new name that is no name, the archive root, or an entry renamed twice.</exception>
     /// <exception cref="FileNotFoundException">An entry the archive does not have.</exception>
-    /// <exception cref="IOException">A name that would be taken after the batch.</exception>
+    /// <exception cref="ArchiveNameTakenException">A name that would be taken after the batch.</exception>
     public static ArchiveRenamePlan Build(
         IReadOnlyList<string> storedNames, IReadOnlyList<(string EntryPath, string NewName)> renames)
     {
@@ -94,7 +94,7 @@ public sealed class ArchiveRenamePlan
         {
             if (group.FirstOrDefault(f => !string.Equals(f.Node, f.Final, StringComparison.Ordinal)) is { Node: not null } moved)
             {
-                throw new IOException($"The name '{moved.Final}' is already taken in the archive.");
+                throw new ArchiveNameTakenException(moved.Final);
             }
         }
 

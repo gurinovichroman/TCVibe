@@ -120,9 +120,11 @@
                               IsEnabled="{Binding UsesCreateTarget}"
                               IsChecked="{Binding EditCreateTarget}"/>
                     <!-- Moving and deleting always ask (INV-11): the box is shown ticked and locked for them -->
-                    <CheckBox Grid.Row="12" Grid.Column="1" Content="{DynamicResource SavedOp_ConfirmBox}"
+                    <CheckBox Grid.Row="12" Grid.Column="1"
                               IsEnabled="{Binding ConfirmIsOptional}"
-                              IsChecked="{Binding EditConfirm}"/>
+                              IsChecked="{Binding EditConfirm}">
+                        <TextBlock Text="{DynamicResource SavedOp_ConfirmBox}" TextWrapping="Wrap"/>
+                    </CheckBox>
                 </Grid>
             </GroupBox>
         </Grid>

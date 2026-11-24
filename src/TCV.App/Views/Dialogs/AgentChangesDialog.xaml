@@ -62,7 +62,7 @@
                             <GridView>
                                 <GridViewColumn Header="{DynamicResource Agent_ColStatus}" Width="50"
                                                 DisplayMemberBinding="{Binding StatusLabel}" />
-                                <GridViewColumn Header="{DynamicResource Agent_ColStaged}" Width="70"
+                                <GridViewColumn Header="{DynamicResource Agent_ColStaged}" Width="76"
                                                 DisplayMemberBinding="{Binding StagedText}" />
                                 <GridViewColumn Header="{DynamicResource Agent_ColPath}" Width="380"
                                                 DisplayMemberBinding="{Binding RelativePath}" />
@@ -167,7 +167,7 @@
                                                 DisplayMemberBinding="{Binding Root}" />
                                 <GridViewColumn Header="{DynamicResource Agent_ColStarted}" Width="140"
                                                 DisplayMemberBinding="{Binding StartedText}" />
-                                <GridViewColumn Header="{DynamicResource Agent_ColOpen}" Width="60"
+                                <GridViewColumn Header="{DynamicResource Agent_ColOpen}" Width="68"
                                                 DisplayMemberBinding="{Binding OpenText}" />
                             </GridView>
                         </ListView.View>

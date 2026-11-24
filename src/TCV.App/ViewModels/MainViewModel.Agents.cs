@@ -101,7 +101,7 @@ public partial class MainViewModel : IAgentHost
             LocalizationManager.Get("Agent_ConfirmOrigin"), row.OriginText, row.OriginHint);
 
         // The button names the action that happens: a revert, or a delete for an untracked file.
-        return Views.Dialogs.ConfirmDialog.Ask(
+        return _dialogs.Confirm(
             LocalizationManager.Get("Agent_Revert"),
             message,
             LocalizationManager.Get(row.RevertMeansDelete ? "Agent_DeleteButton" : "Agent_RevertButton"),
@@ -147,23 +147,17 @@ public partial class MainViewModel : IAgentHost
     /// Second confirmation for a directory that is too wide to hand to an agent (a drive root, the user
     /// profile). «No» is the default button: a click-through must not approve a whole disk.
     /// </summary>
-    private static bool ConfirmBroadRoot(string folder) =>
-        Views.Dialogs.ConfirmDialog.Ask(
+    private bool ConfirmBroadRoot(string folder) =>
+        _dialogs.Confirm(
             LocalizationManager.Get("Agent_ApproveFolder"),
             string.Format(LocalizationManager.Get("Agent_BroadRootConfirm"), folder),
             isWarning: true);
 
     /// <summary>Asks for a directory to expose to agents. Starts in the active panel, the likely answer.</summary>
-    private string? PickApprovedFolder()
-    {
-        var dlg = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = LocalizationManager.Get("Agent_ApproveFolder"),
-            InitialDirectory = Directory.Exists(ActivePanel.CurrentPath) ? ActivePanel.CurrentPath : string.Empty,
-        };
-
-        return dlg.ShowDialog() == true ? dlg.FolderName : null;
-    }
+    private string? PickApprovedFolder() =>
+        _dialogs.PickFolder(
+            LocalizationManager.Get("Agent_ApproveFolder"),
+            Directory.Exists(ActivePanel.CurrentPath) ? ActivePanel.CurrentPath : null);
 
     // ─────────────────────────── 6.13a — the agent launcher ───────────────────────────
 
@@ -546,12 +540,37 @@ public partial class MainViewModel : IAgentHost
     {
         var title = LocalizationManager.Get("Log_UndoRename");
         var directory = new VfsPath(batch.Directory);
-        var shown = directory.Value.Replace('/', '\\');
 
-        // The AI rename refuses a mounted panel, so its batches are disk folders; a hand-edited line
-        // that is anything else is not something to rename in.
-        var names = Path.IsPathFullyQualified(shown)
-            ? await ListNamesForUndoAsync(directory)
+        // A batch on a server or in an archive (Multi-Rename) is taken back through a panel that has it
+        // open; the log holds only the address. No such panel: say what to do rather than rename elsewhere.
+        var connected = batch.Archive is { } archive ? PanelWithArchiveOpen(archive)
+            : batch.Server is { } server ? PanelConnectedTo(server)
+            : null;
+        if (batch.Archive is not null && connected is null)
+        {
+            await _dialogs.ShowErrorAsync(title, string.Format(LocalizationManager.Get("Log_UndoRenameOpenArchive"), batch.Archive));
+            return;
+        }
+
+        if (batch.Server is not null && connected is null)
+        {
+            await _dialogs.ShowErrorAsync(title, string.Format(LocalizationManager.Get("Log_UndoRenameConnect"), batch.Server));
+            return;
+        }
+
+        // Taken with the lease, in one step: the question below can stay open while the tab closes or the
+        // panel reconnects, and the rename would then go to a closed connection (INV-09, TRAP-81).
+        using var lease = connected?.LeaseActiveVfs();
+        var mountedFs = connected?.ActiveVfs;
+
+        var shown = mountedFs is null ? directory.Value.Replace('/', '\\')
+            : batch.Archive is not null ? batch.Archive + "!" + directory.Value
+            : batch.Server!.TrimEnd('/') + "/" + directory.Value.TrimStart('/');
+
+        // Otherwise the batch is a disk folder; a hand-edited line that is anything else is not something
+        // to rename in. Listed under the hits of a search: their "/" is the list, not the archive's root.
+        var names = mountedFs is not null || Path.IsPathFullyQualified(shown)
+            ? await ListNamesForUndoAsync(mountedFs is null ? _fs : FileSystem.FileSystemIdentity.Underlying(mountedFs), directory)
             : Array.Empty<string>();
 
         var plan = RenameUndoPlan.Build(batch.Pairs, names);
@@ -574,7 +593,7 @@ public partial class MainViewModel : IAgentHost
 
         // Through an open search-results list when there is one (TRAP-28): it forwards to the disk and
         // follows each hit to its restored name. Behind its back the hits read as deleted and leave it.
-        var renameFs = new[] { ActivePanel, OppositePanel }
+        var renameFs = mountedFs ?? new[] { ActivePanel, OppositePanel }
             .Select(p => p.FileList)
             .FirstOrDefault(f => f.IsSearchResults && f.EntriesOnDisk)?.ActiveVfs ?? _fs;
 
@@ -595,12 +614,24 @@ public partial class MainViewModel : IAgentHost
         }
     }
 
+    /// <summary>The list of a panel connected to <paramref name="server"/> (its address), or null.</summary>
+    private FileListViewModel? PanelConnectedTo(string server) =>
+        new[] { ActivePanel, OppositePanel }
+            .Select(p => p.FileList)
+            .FirstOrDefault(f => f.RemoteConnection?.DescribeAddress("/") == server);
+
+    /// <summary>The list of a panel that has the archive file open, directly or under the hits of a search in it, or null.</summary>
+    private FileListViewModel? PanelWithArchiveOpen(string archive) =>
+        new[] { ActivePanel, OppositePanel }
+            .Select(p => p.FileList)
+            .FirstOrDefault(f => string.Equals(ArchiveEditing.ArchiveBehind(f.ActiveVfs), archive, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Every name in <paramref name="directory"/> now; empty when it cannot be read.</summary>
-    private async Task<IReadOnlyList<string>> ListNamesForUndoAsync(VfsPath directory)
+    private async Task<IReadOnlyList<string>> ListNamesForUndoAsync(IVirtualFileSystem fs, VfsPath directory)
     {
         try
         {
-            var entries = await _fs.ListAsync(directory);
+            var entries = await fs.ListAsync(directory);
             return entries.Select(e => e.Name).ToList();
         }
         catch (Exception ex)

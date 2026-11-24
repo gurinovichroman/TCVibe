@@ -29,4 +29,9 @@
     <ProjectReference Include="..\..\src\TCV.App\TCV.App.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The stub of the FTP protocol, for what an operation does with the server's reply. -->
+    <Compile Include="..\TCV.Network.Tests\FtpStubServer.cs" Link="FtpStubServer.cs" />
+  </ItemGroup>
+
 </Project>

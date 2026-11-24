@@ -209,9 +209,8 @@ public sealed partial class FileCommands
             return;
         }
 
-        if (!archiveVfs.Engine.CanWrite)
+        if (await RejectIfArchiveReadOnlyAsync(archiveVfs, "Fc_ArchiveReadOnlyAdd"))
         {
-            await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_ArchiveReadOnlyAdd");
             return;
         }
 
@@ -374,10 +373,10 @@ public sealed partial class FileCommands
 
         if (isMove)
         {
-            if (!engine.CanWrite)
+            if (!ArchiveEditing.CanEditFile(engine, archivePath))
             {
                 // Do not let a move silently degrade into a copy
-                await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_MoveKeptInArchive");
+                await ShowMoveKeptInArchiveAsync(archivePath);
             }
             else if (landed.Count > 0)
             {
@@ -414,15 +413,21 @@ public sealed partial class FileCommands
     {
         var format = _archivePlugin.DetectFormat(archivePath);
         var engine = format is null ? null : _archivePlugin.EngineFactory.Create(format);
+        var first = "/" + ArchiveFileSystem.NormalizePath(entryPaths[0]);
         var descriptor = new OperationLogDescriptor(
             OperationKind.Delete,
-            entryPaths.Count == 1 ? entryPaths[0] : $"{archivePath} ({entryPaths.Count})",
-            archivePath, entryPaths.Count);
+            entryPaths.Count == 1 ? first : $"{new VfsPath(first).Parent?.Value} ({entryPaths.Count})",
+            null, entryPaths.Count)
+        {
+            ChangedArchive = archivePath,
+        };
 
         return RunArchiveMutationAsync(archivePath, "Fc_DeletingFromArchive", descriptor, (self, ct) => Task.Run(async () =>
         {
-            if (engine is null || !engine.CanWrite)
+            if (engine is null || !ArchiveEditing.CanEditFile(engine, archivePath))
+            {
                 throw new IOException(LocalizationManager.Get("Fc_ArchiveReadOnlyDelete"));
+            }
 
             await self.GuardAsync(new VfsPath(archivePath), () =>
             {
@@ -482,9 +487,8 @@ public sealed partial class FileCommands
     {
         if (ActivePanel.FileList.ActiveVfs is not ArchiveFileSystem archiveVfs) return;
 
-        if (!archiveVfs.Engine.CanWrite)
+        if (await RejectIfArchiveReadOnlyAsync(archiveVfs, "Fc_ArchiveReadOnlyAdd"))
         {
-            await ShowErrorKeyAsync("Fc_ArchiveReadOnly", "Fc_ArchiveReadOnlyAdd");
             return;
         }
 
@@ -589,6 +593,13 @@ public sealed partial class FileCommands
         {
             foreach (var group in entries.Where(e => e.ArchivePath is not null).GroupBy(e => e.ArchivePath!))
             {
+                // A cut made in a scratch copy: the original keeps its entries (TRAP-98).
+                if (TemporaryFiles.Holds(group.Key))
+                {
+                    await ShowMoveKeptInArchiveAsync(group.Key);
+                    continue;
+                }
+
                 await DeleteArchiveEntriesAsync(group.Key, group.Select(e => e.SourcePath).ToList());
             }
         }

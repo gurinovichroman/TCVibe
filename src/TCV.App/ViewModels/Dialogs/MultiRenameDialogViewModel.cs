@@ -16,11 +16,7 @@ public partial class MultiRenameDialogViewModel : ObservableObject
     private readonly IReadOnlyList<IFileEntry> _files;
     private readonly IVirtualFileSystem _fileSystem;
     private readonly MultiRenameProfileStore? _profileStore;
-    private readonly OperationQueue? _queue;
     private readonly RenameEngine _engine;
-
-    /// <summary>The renames performed by the last successful Start, kept for Undo.</summary>
-    private IReadOnlyList<RenameAction> _lastActions = Array.Empty<RenameAction>();
 
     /// <summary>
     /// Per folder of the batch (keyed by the folder's path), the names there that are not part of the
@@ -39,21 +35,15 @@ public partial class MultiRenameDialogViewModel : ObservableObject
     /// <summary>Suppresses preview recomputation while a batch of properties is being applied.</summary>
     private bool _suppressRefresh;
 
-    /// <param name="queue">
-    /// When given, a rename run and its undo go through the operation queue and so into the
-    /// operation log (INV-10). Without it (tests) the engine is called directly.
-    /// </param>
     public MultiRenameDialogViewModel(
         IReadOnlyList<IFileEntry> files,
         IVirtualFileSystem fileSystem,
         MultiRenameProfileStore? profileStore = null,
-        OperationQueue? queue = null,
         Func<DateTime>? clock = null)
     {
         _files = files ?? throw new ArgumentNullException(nameof(files));
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _profileStore = profileStore;
-        _queue = queue;
         _engine = new RenameEngine(_fileSystem);
         _referenceDate = (clock ?? (() => DateTime.Now))();
 
@@ -193,25 +183,25 @@ public partial class MultiRenameDialogViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = string.Empty;
 
-    // ── Result / undo state ───────────────────────────────────────────────────
+    // ── Result ────────────────────────────────────────────────────────────────
 
-    /// <summary>True while the last rename batch can still be reverted.</summary>
+    /// <summary>The batch the user confirmed; null while they have not. Read when the window has closed.</summary>
+    public MultiRenameBatch? Accepted { get; private set; }
+
+    /// <summary>The batch is ready: the window closes, and the queue takes it from there (ADR-0038).</summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>True while the folder is being looked at again before committing; the button is off so it cannot start twice.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
-    [NotifyCanExecuteChangedFor(nameof(UndoCommand))]
-    private bool _canUndo;
-
-    /// <summary>True while a rename or an undo is running; the buttons are off so it cannot start twice.</summary>
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
-    [NotifyCanExecuteChangedFor(nameof(UndoCommand))]
     private bool _isBusy;
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Renames the files. Unlike a plain OK, the dialog stays open afterwards (Total Commander
-    /// style) so the batch can be undone; a second Start is blocked until Undo or Close.
+    /// Prepares the batch and closes the window. The renaming runs in the queue, in the background, and may
+    /// have to wait there behind other work: that must not hold the main window (6.96). Taking it back is
+    /// the operation log's «Undo rename».
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanRename))]
     private async Task ConfirmAsync()
@@ -239,12 +229,8 @@ public partial class MultiRenameDialogViewModel : ObservableObject
                 return;
             }
 
-            var result = await RunAsync(ct => _engine.ExecuteBatchAsync(_files, previews, ct), changes);
-
-            // Whatever was renamed stays renamed and stays undoable, even when part of the batch failed.
-            _lastActions = result.Performed;
-            CanUndo = _lastActions.Count > 0;
-            StatusText = DescribeResult(result, conflictCount);
+            Accepted = new MultiRenameBatch(_files, previews, changes, conflictCount);
+            CloseRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -256,60 +242,10 @@ public partial class MultiRenameDialogViewModel : ObservableObject
         }
     }
 
-    private bool CanRename() => !CanUndo && !IsBusy && _files.Count > 0;
+    private bool CanRename() => !IsBusy && _files.Count > 0;
 
-    /// <summary>Reverts the last rename batch, renaming every file back to its original name.</summary>
-    [RelayCommand(CanExecute = nameof(CanUndoNow))]
-    private async Task UndoAsync()
-    {
-        if (_lastActions.Count == 0)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var actions = _lastActions;
-            var result = await RunAsync(ct => _engine.UndoBatchAsync(actions, ct), actions.Count);
-            var count = actions.Count;
-            StatusText = result.Failures.Count == 0
-                ? string.Format(LocalizationManager.Get("MR_Undone"), count)
-                : string.Format(LocalizationManager.Get("MR_UndonePartly"), result.Performed.Count, count, result.Failures.Count);
-            _lastActions = Array.Empty<RenameAction>();
-            CanUndo = false;
-        }
-        catch (Exception ex)
-        {
-            StatusText = string.Format(LocalizationManager.Get("MR_UndoError"), ex.Message);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private bool CanUndoNow() => CanUndo && !IsBusy;
-
-    /// <summary>Runs a batch through the operation queue (so it is logged), or directly when there is none.</summary>
-    private async Task<RenameBatchResult> RunAsync(Func<CancellationToken, Task<RenameBatchResult>> work, int count)
-    {
-        if (_queue is null)
-        {
-            return await work(CancellationToken.None);
-        }
-
-        var source = _files[0].Path.Parent?.Value ?? string.Empty;
-        var operation = new RenameBatchOperation(work, source, count);
-        await _queue.EnqueueAsync(operation);
-
-        // The queue swallows a thrown exception into the operation's state; turn it back into a result.
-        return operation.Result
-               ?? new RenameBatchResult([], [new RenameFailure(string.Empty, string.Empty,
-                   operation.FailureException?.Message ?? "the operation did not run")], operation.State == OperationState.Cancelled);
-    }
-
-    private static string DescribeResult(RenameBatchResult result, int skippedConflicts)
+    /// <summary>The outcome in words: what was renamed, what was left out, what failed and why.</summary>
+    internal static string DescribeResult(RenameBatchResult result, int skippedConflicts)
     {
         var done = result.Performed.Count;
         var text = string.Format(LocalizationManager.Get("MR_Renamed"), done);

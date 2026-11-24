@@ -5,10 +5,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using TCV.App.Localization;
-using TCV.App.Operations.Conflict;
 using TCV.App.Services;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
 using TCV.Network;
@@ -28,7 +26,9 @@ public sealed partial class MountCommands : ObservableObject
     private readonly ILogger _logger;
     private readonly ConnectionBook _connectionBook;
     private readonly TransferQueue _transferQueue;
-    private TransferQueueDialog? _transferQueueWindow;
+
+    /// <summary>The addresses the user has agreed to send a password to unencrypted, in this run.</summary>
+    private readonly ClearTextConsents _clearTextConsents = new();
 
     /// <summary>The connect in progress, if any — one at a time; the chip's cancel stops it.</summary>
     private CancellationTokenSource? _connecting;
@@ -85,7 +85,11 @@ public sealed partial class MountCommands : ObservableObject
     public void ShowConnectionManager(ConnectionInfo? select, string? address = null)
     {
         var vm = new ConnectionManagerDialogViewModel(_connectionBook, DescribeWhereOpen, CloseEverywhere, select?.Id, address,
-            showImport: _dialogs.ShowSshConfigImport);
+            confirm: (title, message) => _dialogs.Confirm(title, message, isWarning: true),
+            showMessage: (title, message) => _dialogs.ShowMessage(title, message, MessageBoxImage.Error),
+            showInfo: (title, message) => _dialogs.ShowMessage(title, message, MessageBoxImage.Information),
+            showImport: _dialogs.ShowSshConfigImport,
+            shareIsWanted: root => !MayCloseAbandonedShare(root, _openShares.Keys, _shareBeingOpened));
         _dialogs.ShowConnectionManager(vm);
 
         if (vm.ConnectRequest is { } requested)
@@ -166,31 +170,9 @@ public sealed partial class MountCommands : ObservableObject
         {
             Mouse.OverrideCursor = Cursors.AppStarting;
 
-            // Off the UI thread: an SFTP key file is parsed and decrypted here (INV-06).
-            vfs = await Task.Run(() => NetworkPlugin.CreateFileSystem(info), cts.Token);
-
-            // The first connect of a drive is a sign-in in the browser; nothing else opens one.
-            if (vfs is IInteractiveSignIn { NeedsSignIn: true } signIn)
-            {
-                panel.IsSigningIn = true;
-                Mouse.OverrideCursor = null;
-                await signIn.SignInAsync(cts.Token);
-                panel.IsSigningIn = false;
-            }
-
-            if (info.ReadOnly)
-            {
-                vfs = new ReadOnlyFileSystem(vfs);
-            }
-
-            // Fail here rather than leaving a dead panel mounted. One stat round trip is
-            // enough — Mount sets CurrentPath, and that load does the actual listing.
             var root = string.IsNullOrEmpty(startPath ?? info.RemotePath) ? "/" : startPath ?? info.RemotePath;
-            if (await vfs.GetEntryAsync(new VfsPath(root), cts.Token) is null)
-            {
-                throw new DirectoryNotFoundException(
-                    string.Format(LocalizationManager.Get("Conn_DirNotFound"), root));
-            }
+            vfs = await ConnectWait.UntilCancelledAsync(
+                OpenProvenAsync(info, panel, root, cts.Token), cts.Token, opened => opened.Dispose());
 
             // The previous place is left only now that the new one works: a failed connect must not
             // also cost what was open. Another server keeps its tab, the new one gets the next.
@@ -231,16 +213,61 @@ public sealed partial class MountCommands : ObservableObject
     }
 
     /// <summary>
+    /// A fresh file system for a connect, proven by one stat. It owns the file system until it returns
+    /// it, and a failure closes it here, also long after the user cancelled (<see cref="ConnectWait"/>).
+    /// </summary>
+    private static async Task<IVirtualFileSystem> OpenProvenAsync(
+        ConnectionInfo info, PanelViewModel panel, string root, CancellationToken ct)
+    {
+        IVirtualFileSystem? vfs = null;
+        try
+        {
+            // Off the UI thread: an SFTP key file is parsed and decrypted here (INV-06).
+            vfs = await Task.Run(() => NetworkPlugin.CreateFileSystem(info), ct);
+            ct.ThrowIfCancellationRequested();   // nothing waits for this step any more: no browser after a Cancel
+
+            // The first connect of a drive is a sign-in in the browser; nothing else opens one.
+            if (vfs is IInteractiveSignIn { NeedsSignIn: true } signIn)
+            {
+                panel.IsSigningIn = true;
+                Mouse.OverrideCursor = null;
+                await signIn.SignInAsync(ct);
+                panel.IsSigningIn = false;
+            }
+
+            if (info.ReadOnly)
+            {
+                vfs = new ReadOnlyFileSystem(vfs);
+            }
+
+            // Fail here rather than leaving a dead panel mounted. One stat round trip is
+            // enough — Mount sets CurrentPath, and that load does the actual listing.
+            if (await vfs.GetEntryAsync(new VfsPath(root), ct) is null)
+            {
+                throw new DirectoryNotFoundException(
+                    string.Format(LocalizationManager.Get("Conn_DirNotFound"), root));
+            }
+
+            return vfs;
+        }
+        catch
+        {
+            vfs?.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
     /// What has to be settled before connecting: a password that would cross the network readable is
-    /// the user's call (asked knowingly), one this Windows account cannot decrypt is asked for again,
+    /// the user's call (asked knowingly, once per address in a run), one this Windows account cannot decrypt is asked for again,
     /// and a drive needs the client id of an application registered with its provider.
     /// </summary>
     private async Task<bool> ConfirmCredentialsAsync(ConnectionInfo info)
     {
         if (info.SendsCredentialsInClear
-            && !await _dialogs.ConfirmAsync(
+            && !await _clearTextConsents.AskOnceAsync(info, () => _dialogs.ConfirmAsync(
                 LocalizationManager.Get("Conn_ClearTextTitle"),
-                string.Format(LocalizationManager.Get("Conn_ClearTextConfirm"), info.Name)))
+                string.Format(LocalizationManager.Get("Conn_ClearTextConfirm"), info.Name))))
         {
             return false;
         }
@@ -540,6 +567,12 @@ public sealed partial class MountCommands : ObservableObject
     /// <summary>Shares this window opened, by their <c>\\host\share</c> root. Not a mount: the panel reads them as disk paths.</summary>
     private readonly Dictionary<string, ConnectionInfo> _openShares = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The <c>\\host\share</c> root of the connect in progress, if it is a share's.</summary>
+    private string? _shareBeingOpened;
+
+    /// <summary>How long closing a share waits for the panels that left it to let go: a dead share can hold them up.</summary>
+    private static readonly TimeSpan ShareReleaseWait = TimeSpan.FromSeconds(3);
+
     /// <summary>The saved share the panel stands in, or null.</summary>
     public ConnectionInfo? ShareOf(PanelViewModel panel) => ShareAt(panel.CurrentPath);
 
@@ -578,13 +611,26 @@ public sealed partial class MountCommands : ObservableObject
 
         using var cts = new CancellationTokenSource();
         _connecting = cts;
+        _shareBeingOpened = root;
         panel.ConnectingTo = info;
+        var wasOpen = _openShares.ContainsKey(root);
+        var connected = false;
+        var entered = false;
         try
         {
-            // Both block for as long as the server takes to answer (INV-06).
-            await Task.Run(() => FileSystem.Native.Mpr.Connect(root, info.Username, info.Password), cts.Token);
+            // Both block for as long as the server takes to answer (INV-06), and Cancel does not wait for
+            // them. A share the abandoned connect still opens is closed again, unless it is wanted by then.
+            await ConnectWait.UntilCancelledAsync(
+                Task.Run(() =>
+                {
+                    FileSystem.Native.Mpr.Connect(root, info.Username, info.Password);
+                    return root;
+                }, cts.Token),
+                cts.Token,
+                opened => Application.Current?.Dispatcher.InvokeAsync(() => CloseAbandonedShare(opened)));
+            connected = true;
             _openShares[root] = info;
-            if (!await Task.Run(() => Directory.Exists(folder), cts.Token))
+            if (!await ConnectWait.UntilCancelledAsync(Task.Run(() => Directory.Exists(folder), cts.Token), cts.Token))
             {
                 throw new DirectoryNotFoundException(string.Format(LocalizationManager.Get("Conn_DirNotFound"), folder));
             }
@@ -599,6 +645,7 @@ public sealed partial class MountCommands : ObservableObject
             }
 
             panel.CurrentPath = folder;
+            entered = true;
             RememberUse(info);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
@@ -614,13 +661,54 @@ public sealed partial class MountCommands : ObservableObject
         {
             panel.ConnectingTo = null;
             _connecting = null;
+            _shareBeingOpened = null;
+
+            // Opened and then not entered (Cancel, no such folder): no panel stands in it, so nothing
+            // would name it or offer to close it, and it stayed open under the saved account until exit.
+            if (connected && !entered && !wasOpen)
+            {
+                _openShares.Remove(root);
+                CloseAbandonedShare(root);
+            }
+
             panel.RefreshConnectionChip();
         }
     }
 
     /// <summary>
+    /// Whether a share that a connect opened and did not use may be closed. Not when it is wanted by now:
+    /// after a Cancel the user often asks again at once, and the connect given up on, coming back later,
+    /// closed the connection the new one stands on (the panel then lost its account).
+    /// </summary>
+    public static bool MayCloseAbandonedShare(string root, IEnumerable<string> openShares, string? beingOpened) =>
+        !openShares.Contains(root, StringComparer.OrdinalIgnoreCase)
+        && !string.Equals(root, beingOpened, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Closes a share a connect opened and did not use, off the UI thread (INV-06). Called on the UI thread.</summary>
+    private void CloseAbandonedShare(string root)
+    {
+        if (!MayCloseAbandonedShare(root, _openShares.Keys, _shareBeingOpened))
+        {
+            return;
+        }
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                FileSystem.Native.Mpr.Disconnect(root);
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                _logger.LogDebug(ex, "Share {Root} stays connected", root);
+            }
+        });
+    }
+
+    /// <summary>
     /// Releases a share: every panel standing in it goes home first — its folder watcher holds the
-    /// share open, and Windows refuses to close a connection that is in use.
+    /// share open, and Windows refuses to close a connection that is in use. The watcher closes in the
+    /// pool, so the close waits for it, though not for long.
     /// </summary>
     private async Task CloseShareAsync(ConnectionInfo share)
     {
@@ -637,6 +725,10 @@ public sealed partial class MountCommands : ObservableObject
                 panel.CurrentPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             }
         }
+
+        await Task.WhenAny(
+            Task.WhenAll(_shell.LeftPanel.FolderWatcherReleased, _shell.RightPanel.FolderWatcherReleased),
+            Task.Delay(ShareReleaseWait));
 
         try
         {
@@ -657,9 +749,11 @@ public sealed partial class MountCommands : ObservableObject
 
     /// <summary>
     /// Shift+F5 — queue the selection for a resumable background transfer instead of
-    /// copying it inline. One panel must be an open FTP/SFTP/WebDAV connection.
+    /// copying it inline. One panel must be an open FTP/SFTP/WebDAV connection. A folder goes in with
+    /// everything under it (<see cref="TransferPlanner"/>). Concurrent: a second press during a long walk
+    /// finds that walk's window, below.
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task QueueTransfer()
     {
         var selected = GetSelectedOrCurrent();
@@ -695,147 +789,173 @@ public sealed partial class MountCommands : ObservableObject
             return;
         }
 
-        if (selected.Any(e => e.IsDirectory))
+        // A second press while the first still walks its folders finds that walk's window: queued
+        // twice, the second copy of every file would fail on the first one's result.
+        if (_transferPlanning)
         {
-            await _dialogs.ShowErrorAsync(title, LocalizationManager.Get("Transfer_NoFolders"));
+            _transferPlanWindow?.BringBack();
             return;
         }
 
-        var targetDir = OppositePanel.CurrentPath;
-        var remoteVfs = remotePanel.FileList.ActiveVfs;
-        var queued = 0;
-        (ConflictResolution Resolution, bool ApplyToAll)? standing = null;
+        // All of it taken now: the panels are free while the folders are walked (TRAP-92).
+        var targetRoot = OppositePanel.CurrentPath;
+        var targetVfs = OppositePanel.FileList.ActiveVfs;
+        var sourceVfs = ActivePanel.FileList.ActiveVfs;
+        TransferPlan plan;
 
+        _transferPlanning = true;
         try
         {
-            foreach (var entry in selected)
+            using (_shell.LeasePanelFileSystems())
             {
-                var name = entry.Name;
-                var destination = isDownload
-                    ? Path.Combine(targetDir, name)
-                    : new VfsPath(targetDir).Combine(name).Value;
-
-                // Never replace anything without the user saying so: a background transfer that
-                // overwrites silently is data loss nobody sees until later (INV-11).
-                var existing = await FindExistingAsync(isDownload, destination, remoteVfs);
-                var overwrite = false;
-                if (existing is not null)
+                var planned = await PlanTransferAsync(selected, isDownload, sourceVfs, targetVfs, targetRoot);
+                if (planned is null)
                 {
-                    var (resolution, applyToAll) = standing ?? await _dialogs.ShowConflictDialogAsync(entry, existing);
-                    if (applyToAll)
-                    {
-                        standing = (resolution, true);
-                    }
-
-                    if (resolution == ConflictResolution.Cancel)
-                    {
-                        break;
-                    }
-
-                    // "Overwrite if newer" must not turn into a plain overwrite when the target is newer.
-                    if (resolution == ConflictResolution.Skip
-                        || (resolution == ConflictResolution.OverwriteIfNewer
-                            && Sync.DirectoryComparison.TimeDifference(entry.LastModified, existing.LastModified) <= TimeSpan.Zero))
-                    {
-                        continue;
-                    }
-
-                    if (resolution == ConflictResolution.RenameAuto)
-                    {
-                        destination = await UniqueDestinationAsync(isDownload, destination, remoteVfs);
-                    }
-                    else
-                    {
-                        overwrite = true;
-                    }
+                    return;
                 }
 
-                _transferQueue.Enqueue(new TransferItem
-                {
-                    SourcePath = isDownload
-                        ? entry.Path.Value
-                        : FileSystem.WindowsFileSystem.ToWindowsPath(entry.Path),
-                    DestinationPath = destination,
-                    TotalBytes = entry.Size,
-                    Connection = connection,
-                    Direction = isDownload ? TransferDirection.Download : TransferDirection.Upload,
-                    OverwriteExisting = overwrite,
-                });
-                queued++;
+                plan = planned;
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // A server that refuses the existence check (a changed host key, a dropped session): say
-            // so instead of letting the exception escape the command. What was queued stays queued.
-            _logger.LogWarning(ex, "Queueing transfers stopped");
+            // A server that refuses the walk (a changed host key, TRAP-43): say so instead of letting
+            // the exception escape the command.
+            _logger.LogWarning(ex, "Planning transfers stopped");
             await _dialogs.ShowErrorAsync(title, NetworkErrorText.Describe(ex));
+            return;
+        }
+        finally
+        {
+            _transferPlanning = false;
+            _transferPlanWindow = null;
         }
 
-        if (queued == 0)
+        if (plan.Stopped)
         {
             return;
         }
 
-        _logger.LogInformation("Queued {Count} {Direction} transfer(s)", queued,
-            isDownload ? "download" : "upload");
-        OpenTransferQueue();
+        if (plan.Steps.Count > 0)
+        {
+            _transferQueue.EnqueueRange(plan.Steps.Select(step => new TransferItem
+            {
+                SourcePath = step.SourcePath,
+                DestinationPath = step.DestinationPath,
+                TotalBytes = step.IsFolder ? 0 : step.Size,
+                Connection = connection,
+                Direction = isDownload ? TransferDirection.Download : TransferDirection.Upload,
+                OverwriteExisting = step.Overwrite,
+                IsFolder = step.IsFolder,
+                DisplayPath = step.Display,
+            }).ToList());
+
+            _logger.LogInformation("Queued {Count} {Direction} transfer(s)", plan.FileCount,
+                isDownload ? "download" : "upload");
+            OpenTransferQueue();
+        }
+
+        // Whatever did not go in is said, not lost: a folder that looks copied and is not is how files go missing.
+        if (plan.Skips.Count > 0)
+        {
+            await _dialogs.ShowInfoAsync(title, DescribeSkips(plan.Skips));
+        }
     }
 
-    private static async Task<IFileEntry?> FindExistingAsync(bool isDownload, string destination, IVirtualFileSystem remoteVfs)
+    private bool _transferPlanning;
+    private ProgressDialogViewModel? _transferPlanWindow;
+
+    /// <summary>A walk that takes longer than this gets a window: found so far, Cancel, «In background» (ADR-0038).</summary>
+    private static readonly TimeSpan PlanWindowAfter = TimeSpan.FromMilliseconds(400);
+
+    /// <summary>Walks the selection off the UI thread (INV-06, TRAP-66). Null when the user stopped it.</summary>
+    private async Task<TransferPlan?> PlanTransferAsync(
+        IReadOnlyList<IFileEntry> selected, bool isDownload, IVirtualFileSystem sourceVfs,
+        IVirtualFileSystem targetVfs, string targetRoot)
     {
-        if (isDownload)
+        var planner = new TransferPlanner(
+            isDownload, sourceVfs, targetRoot,
+            (folder, ct) => ListTargetFolderAsync(targetVfs, folder, ct),
+            (source, existing) => _dialogs.ShowConflictDialogAsync(source, existing));
+
+        ProgressDialogViewModel? window = null;
+        TransferPlanProgress? last = null;
+        using var stop = new CancellationTokenSource();
+
+        // Made here, on the UI thread: its reports come back to it.
+        var progress = new Progress<TransferPlanProgress>(report =>
         {
-            var info = new FileInfo(destination);
-            return info.Exists
-                ? new FileEntry(new VfsPath(destination), info.Name, false, info.Length, info.LastWriteTime, info.Attributes)
-                : null;
+            last = report;
+            ShowFound(window, report);
+        });
+
+        var walk = Task.Run(() => planner.BuildAsync(selected, progress, stop.Token), stop.Token);
+        if (await Task.WhenAny(walk, Task.Delay(PlanWindowAfter)) != walk)
+        {
+            window = _dialogs.ShowProgressDialog(LocalizationManager.Get("Transfer_Planning"));
+            window.CanPause = false;
+            window.IsIndeterminate = true;
+            window.Cts.Token.Register(stop.Cancel);
+            _transferPlanWindow = window;
+            if (last is not null)
+            {
+                ShowFound(window, last);
+            }
         }
 
         try
         {
-            return await remoteVfs.GetEntryAsync(new VfsPath(destination));
+            var plan = await walk;
+            window?.Complete();
+            return plan;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException && NetworkErrors.Find<HostKeyChangedException>(ex) is null)
+        catch (OperationCanceledException) when (stop.IsCancellationRequested)
         {
-            // Cannot tell (SSH.NET and FluentFTP throw their own types, not IOException): the queue's
-            // own exists-check refuses to overwrite at transfer time. A changed host key is not
-            // "cannot tell" — it stops the command.
+            window?.Dismiss();
             return null;
+        }
+        catch
+        {
+            window?.Dismiss();
+            throw;
         }
     }
 
-    private static async Task<string> UniqueDestinationAsync(bool isDownload, string destination, IVirtualFileSystem remoteVfs)
-    {
-        for (var counter = 1; ; counter++)
-        {
-            var candidate = isDownload
-                ? Path.Combine(Path.GetDirectoryName(destination)!,
-                    $"{Path.GetFileNameWithoutExtension(destination)} ({counter}){Path.GetExtension(destination)}")
-                : $"{destination[..destination.LastIndexOf('/')]}/{Path.GetFileNameWithoutExtension(destination)} ({counter}){Path.GetExtension(destination)}";
+    private static void ShowFound(ProgressDialogViewModel? window, TransferPlanProgress report) =>
+        window?.ReportCount(report.Folder, LocalizationManager.Format("Transfer_PlanningCount", report.Files));
 
-            if (await FindExistingAsync(isDownload, candidate, remoteVfs) is null)
-            {
-                return candidate;
-            }
+    /// <summary>
+    /// What is in a folder of the target, the disk or the server. A failure means "cannot tell" (SSH.NET and
+    /// FluentFTP throw their own types, not IOException): the queue's own exists-check refuses to overwrite
+    /// at transfer time. A changed host key is not "cannot tell": it stops the command.
+    /// </summary>
+    private static async Task<IReadOnlyList<IFileEntry>> ListTargetFolderAsync(
+        IVirtualFileSystem targetVfs, string folder, CancellationToken ct)
+    {
+        try
+        {
+            return await targetVfs.ListAsync(new VfsPath(folder), ct).ConfigureAwait(false);
         }
+        catch (Exception ex) when (ex is not OperationCanceledException && NetworkErrors.Find<HostKeyChangedException>(ex) is null)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>What was left out, and why: the first few by name, the rest counted.</summary>
+    private static string DescribeSkips(IReadOnlyList<TransferSkip> skips)
+    {
+        const int Shown = 8;
+        var lines = skips.Take(Shown).Select(skip =>
+            string.Format(LocalizationManager.Get("Transfer_Skip_" + skip.Reason), skip.Path, skip.Detail));
+        var text = LocalizationManager.Format("Transfer_PlanSkipped", skips.Count)
+                   + Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, lines);
+        return skips.Count > Shown
+            ? text + Environment.NewLine + string.Format(LocalizationManager.Get("Op_MoreWarnings"), skips.Count - Shown)
+            : text;
     }
 
     /// <summary>Shows the transfer queue window (pause / resume / cancel).</summary>
     [RelayCommand]
-    private void OpenTransferQueue()
-    {
-        if (_transferQueueWindow is { IsLoaded: true })
-        {
-            _transferQueueWindow.Activate();
-            return;
-        }
-
-        _transferQueueWindow = new TransferQueueDialog(_transferQueue)
-        {
-            Owner = Application.Current.MainWindow,
-        };
-        _transferQueueWindow.Closed += (_, _) => _transferQueueWindow = null;
-        _transferQueueWindow.Show();   // non-blocking — transfers run in the background
-    }
+    private void OpenTransferQueue() => _dialogs.ShowTransferQueue(_transferQueue);
 }

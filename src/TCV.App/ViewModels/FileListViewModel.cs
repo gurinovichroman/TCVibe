@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -127,14 +126,18 @@ public partial class FileListViewModel : ObservableObject
     // a folder that keeps changing each reload cancelled the one before, and none of them landed.
     private bool _reloadAfterLoad;
 
+    // The user gave up on reading this folder (StopLoading): that is final until something asks for a
+    // load. In a slow folder that keeps changing, the watcher put "Loading..." back at the next change.
+    private bool _loadGivenUp;
+
     /// <summary>
     /// The watcher saw the listed folder change: it is read again, keeping the cursor and the marks. A
-    /// load already on its way is not cancelled for it (TRAP-95), and a name being edited holds it off
-    /// (TRAP-76). On the UI thread.
+    /// load already on its way is not cancelled for it (TRAP-95), a name being edited holds it off
+    /// (TRAP-76), and a folder the user gave up on reading stays given up on (TRAP-96). On the UI thread.
     /// </summary>
     public void ReloadForFolderChange()
     {
-        if (PostponeReloadForNameEdit())
+        if (_loadGivenUp || PostponeReloadForNameEdit())
         {
             return;
         }
@@ -215,7 +218,7 @@ public partial class FileListViewModel : ObservableObject
     /// folder opened from the list is one). Where something is to be <i>put</i> asks this.
     /// </summary>
     public string? DiskFolder =>
-        !IsMounted ? CurrentPath
+        !IsMounted ? _diskPathUnderClosedMounts ?? CurrentPath
         : IsSearchResults && EntriesOnDisk && !FileSystem.SearchResultsFileSystem.IsSyntheticPath(new VfsPath(CurrentPath))
             ? FileSystem.WindowsFileSystem.ToWindowsPath(new VfsPath(CurrentPath))
             : null;
@@ -273,7 +276,15 @@ public partial class FileListViewModel : ObservableObject
     /// since an archive or FTP path is meaningless on the next launch.
     /// </summary>
     public string RootLocalPath =>
-        _navStack.Count > 0 ? _navStack.Last().Path : CurrentPath;
+        _navStack.Count > 0 ? _navStack.Last().Path : _diskPathUnderClosedMounts ?? CurrentPath;
+
+    /// <summary>
+    /// Where on the disk the panel stands from the moment its mounts come off until the caller navigates:
+    /// <see cref="UnmountAll"/> and <see cref="ParkMounts"/> leave <see cref="CurrentPath"/> at the mounted
+    /// path so as not to read a folder nobody is going to look at, and "/pub" is no disk path. Whoever asks
+    /// in between (the tab's location on <see cref="MountChanged"/>, a mount opened next) gets this.
+    /// </summary>
+    private string? _diskPathUnderClosedMounts;
 
     public FileListViewModel(IVirtualFileSystem vfs, ILogger<FileListViewModel> logger)
     {
@@ -331,6 +342,7 @@ public partial class FileListViewModel : ObservableObject
     /// (TRAP-95).
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsLoadingOverlay))]
     private bool _isOpeningFolder;
 
     [ObservableProperty]
@@ -555,6 +567,8 @@ public partial class FileListViewModel : ObservableObject
 
     partial void OnCurrentPathChanged(string value)
     {
+        _diskPathUnderClosedMounts = null;
+
         // A quick-search filter belongs to the folder it was typed in. Left on, it silently hides
         // most of the next folder's listing (type "src", press Enter, and the new folder looks empty).
         // The load that follows applies the cleared filter, so no separate refresh is needed.
@@ -685,6 +699,7 @@ public partial class FileListViewModel : ObservableObject
 
         // This load reads the folder after the change the watcher saw.
         _reloadAfterLoad = false;
+        _loadGivenUp = false;
 
         // Sizes still being measured for another folder or mount are for rows this listing will not show;
         // a refresh of the same folder keeps its rows, and the walk goes on.
@@ -705,13 +720,16 @@ public partial class FileListViewModel : ObservableObject
         {
             var vfsPath = new VfsPath(path);
             // Kept to itself until applied: a load it overlaps reads into the same field, and the rows
-            // must be built from this listing, not from whichever landed last.
-            var listing = await _activeVfs.ListAsync(vfsPath, ct);
+            // must be built from this listing, not from whichever landed last. A file system may not hear
+            // the token: a load given up on ends at once all the same, or whoever awaits it stays waiting
+            // (TRAP-96) — the Refresh command, disabled while it runs, until the server's timeout.
+            var listing = await TCV.Network.ConnectWait.UntilCancelledAsync(_activeVfs.ListAsync(vfsPath, ct), ct);
 
             // The disk lister reports a missing folder as an empty one. Say which it is, or a
             // mistyped path looks like a folder with nothing in it.
             string? notFound = null;
-            if (listing.Count == 0 && !IsMounted && await _activeVfs.GetEntryAsync(vfsPath, ct) is null)
+            if (listing.Count == 0 && !IsMounted
+                && await TCV.Network.ConnectWait.UntilCancelledAsync(_activeVfs.GetEntryAsync(vfsPath, ct), ct) is null)
             {
                 notFound = Localization.LocalizationManager.Get("Files_NotFound");
             }
@@ -856,29 +874,37 @@ public partial class FileListViewModel : ObservableObject
     /// </summary>
     private async Task ShowLoadFailureAsync(Exception ex, int generation)
     {
-        void Apply()
+        var error = string.Format(Localization.LocalizationManager.Get("Files_LoadFailed"), ex.Message);
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
         {
-            // A load started since shows its own outcome; this one must not count it as landed.
-            if (generation != _loadsStarted)
-            {
-                return;
-            }
+            ShowNoListing(error, generation);
+        }
+        else
+        {
+            await dispatcher.InvokeAsync(() => ShowNoListing(error, generation));
+        }
+    }
 
-            _loadsApplied = generation;
-            DropNameEditBeforeRowsChange();
-            _listedVfs = null;
-            _listedPath = null;
-            _allEntries = Array.Empty<IFileEntry>();
-            _vmCache.Clear();
-            LoadError = string.Format(Localization.LocalizationManager.Get("Files_LoadFailed"), ex.Message);
-            PruneSelection(Array.Empty<FileEntryViewModel>());
-            ApplyFilter();
-            DirectoryLoaded?.Invoke(this, EventArgs.Empty);
+    /// <summary>Lands a load that brought no rows: the list is emptied and says why.</summary>
+    private void ShowNoListing(string error, int generation)
+    {
+        // A load started since shows its own outcome; this one must not count it as landed.
+        if (generation != _loadsStarted)
+        {
+            return;
         }
 
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess()) Apply();
-        else await dispatcher.InvokeAsync(Apply);
+        _loadsApplied = generation;
+        DropNameEditBeforeRowsChange();
+        _listedVfs = null;
+        _listedPath = null;
+        _allEntries = Array.Empty<IFileEntry>();
+        _vmCache.Clear();
+        LoadError = error;
+        PruneSelection(Array.Empty<FileEntryViewModel>());
+        ApplyFilter();
+        DirectoryLoaded?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Why the list is empty ("nothing here", "no match", the load error), or empty text when it is not.</summary>
@@ -910,6 +936,13 @@ public partial class FileListViewModel : ObservableObject
             return;
         }
 
+        // The overlay speaks for a folder being opened; an older error and its buttons would lie under it.
+        if (IsOpeningFolder)
+        {
+            EmptyStateText = string.Empty;
+            return;
+        }
+
         if (LoadError is not null)
         {
             EmptyStateText = LoadError;
@@ -918,7 +951,7 @@ public partial class FileListViewModel : ObservableObject
 
         var hasRows = Files.Any(f => !f.IsParentEntry);
         // An empty folder read again stays "empty" meanwhile, rather than blinking with every reload.
-        EmptyStateText = hasRows || IsOpeningFolder
+        EmptyStateText = hasRows
             ? string.Empty
             : Localization.LocalizationManager.Get(
                 string.IsNullOrWhiteSpace(QuickSearchText) ? "Files_Empty" : "Files_NoMatches");
@@ -1631,6 +1664,11 @@ public partial class FileListViewModel : ObservableObject
         // or the selection would keep pointing at a stale snapshot of the file.
         var kept = listing.ToHashSet();
 
+        if (SelectedFiles.Any(f => !kept.Contains(f)))
+        {
+            RememberMarks();
+        }
+
         for (var i = SelectedFiles.Count - 1; i >= 0; i--)
         {
             if (kept.Contains(SelectedFiles[i])) continue;
@@ -1648,12 +1686,14 @@ public partial class FileListViewModel : ObservableObject
 
     public void DeselectAll()
     {
+        RememberMarks();
         foreach (var f in Files) f.IsSelected = false;
         SelectedFiles.Clear();
     }
 
     public void InvertSelection()
     {
+        RememberMarks();
         foreach (var f in Files)
         {
             if (f.IsParentEntry) continue;
@@ -1666,42 +1706,218 @@ public partial class FileListViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Selects (<paramref name="select"/>=true) or unselects the entries whose name matches the
-    /// wildcard <paramref name="mask"/>. Multiple masks may be separated by ';', ',' or spaces,
-    /// TC-style, and an entry matches if it matches any of them. <c>*</c> and <c>?</c> are honoured.
+    /// Selects (<paramref name="select"/>=true) or unselects the entries the mask names, in
+    /// <see cref="Selection.SelectionMask"/> grammar: <c>*.cs;*.md | *.g.cs</c>, <c>bin\</c> for a folder.
+    /// Plain masks name files, and folders too only with <paramref name="includeFolders"/>.
     /// </summary>
-    public void SelectByMask(string mask, bool select)
+    public void SelectByMask(string mask, bool select, bool includeFolders = false)
     {
-        if (string.IsNullOrWhiteSpace(mask)) return;
+        var template = new Selection.SelectionTemplate { Mask = mask, IncludeFolders = includeFolders };
+        ApplySelectionRule(Selection.SelectionRule.From(template, DateTime.UtcNow), select, gitChanged: null);
+    }
 
-        var patterns = mask
-            .Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(WildcardToRegex)
-            .ToList();
-        if (patterns.Count == 0) return;
+    /// <summary>
+    /// Marks (or unmarks) what <paramref name="template"/> names among the shown rows and returns how
+    /// many rows it named. A Git condition costs one status pass in the pool (INV-06); away from the
+    /// disk nothing is changed in Git, so such a template names nothing there.
+    /// </summary>
+    public async Task<int> SelectByTemplateAsync(Selection.SelectionTemplate template, bool select, DateTime? nowUtc = null)
+    {
+        var rule = Selection.SelectionRule.From(template, nowUtc ?? DateTime.UtcNow);
+        if (rule.IsEmpty)
+        {
+            return 0;
+        }
 
+        var gitChanged = rule.NeedsGit ? await GitChangedRowsAsync() : null;
+        return ApplySelectionRule(rule, select, gitChanged);
+    }
+
+    private int ApplySelectionRule(Selection.SelectionRule rule, bool select, IReadOnlySet<FileEntryViewModel>? gitChanged)
+    {
+        if (rule.IsEmpty)
+        {
+            return 0;
+        }
+        if (!select)
+        {
+            RememberMarks();
+        }
+
+        var named = 0;
         foreach (var f in Files)
         {
-            if (f.IsParentEntry) continue;
-            if (!patterns.Any(re => re.IsMatch(f.Name))) continue;
-            if (f.IsSelected == select) continue;
+            if (f.IsParentEntry)
+            {
+                continue;
+            }
+
+            var candidate = new Selection.SelectionCandidate(
+                f.Name, f.IsDirectory, f.LastModified,
+                GitChanged: gitChanged?.Contains(f) ?? f.GitKind != GitCellKind.None,
+                AgentChanged: f.OriginMark == Agents.FileOriginMark.Agent);
+            if (!rule.Matches(candidate))
+            {
+                continue;
+            }
+
+            named++;
+            if (f.IsSelected == select)
+            {
+                continue;
+            }
 
             f.IsSelected = select;
             if (select)
+            {
                 SelectedFiles.Add(f);
+            }
             else
+            {
                 SelectedFiles.Remove(f);
+            }
         }
+
+        return named;
     }
 
-    private static Regex WildcardToRegex(string pattern)
+    /// <summary>
+    /// The rows Git reports changed, asked of the repository whether or not the Git column is on: one
+    /// status pass per folder (search hits lie in many), each in the pool. Empty away from the disk.
+    /// </summary>
+    private async Task<IReadOnlySet<FileEntryViewModel>> GitChangedRowsAsync()
     {
-        // Total Commander/DOS convention: "*.*" matches every file, including extensionless ones
-        // (README, LICENSE). A literal ".*" would demand a dot and skip those.
-        if (pattern == "*.*") pattern = "*";
+        var changed = new HashSet<FileEntryViewModel>();
+        if (!EntriesOnDisk || string.IsNullOrEmpty(CurrentPath))
+        {
+            return changed;
+        }
 
-        return new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
-            RegexOptions.IgnoreCase);
+        var rows = Files.Where(vm => !vm.IsParentEntry).ToList();
+        var folders = IsSearchResults
+            ? rows.GroupBy(vm => vm.Entry.Path.Parent?.Value ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Key.Length > 0)
+                .Select(g => (Folder: FileSystem.WindowsFileSystem.ToWindowsPath(new VfsPath(g.Key)), Rows: g.ToList()))
+                .ToList()
+            : [(Folder: CurrentPath, Rows: rows)];
+
+        foreach (var (folder, folderRows) in folders)
+        {
+            try
+            {
+                var status = await GitStatus.GetDirectoryStatusAsync(folder);
+                foreach (var vm in folderRows)
+                {
+                    if (status.Get(vm.Name).Kind != GitCellKind.None)
+                    {
+                        changed.Add(vm);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Git status for selection failed in {Path}", folder);
+            }
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Alt+Num+ / Alt+Num-: marks (or unmarks) every file with the extension of the one under the
+    /// cursor, an extensionless name meaning the extensionless files. Returns false when the cursor is
+    /// not on a file, so there is no extension to go by.
+    /// </summary>
+    public bool SelectSameExtension(bool select)
+    {
+        if (SelectedItem is not { IsParentEntry: false, IsDirectory: false } cursor)
+        {
+            return false;
+        }
+        if (!select)
+        {
+            RememberMarks();
+        }
+
+        foreach (var f in Files)
+        {
+            if (f.IsParentEntry || f.IsDirectory)
+            {
+                continue;
+            }
+            if (!string.Equals(f.Extension, cursor.Extension, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            if (f.IsSelected == select)
+            {
+                continue;
+            }
+
+            f.IsSelected = select;
+            if (select)
+            {
+                SelectedFiles.Add(f);
+            }
+            else
+            {
+                SelectedFiles.Remove(f);
+            }
+        }
+
+        return true;
+    }
+
+    // ── Restore selection (Num/) ──────────────────────────────────────────────
+    // The names of the last marks something took away in bulk: unselect-all, an unselect by mask, the
+    // listing of another folder, a delete. Num/ marks those names again here — the same folder after an
+    // accidental Ctrl+Num-, or a sibling folder (another worktree) with the same files.
+
+    private IReadOnlyList<string> _lastMarks = [];
+
+    /// <summary>True when there are marks Num/ could bring back.</summary>
+    public bool CanRestoreSelection => _lastMarks.Count > 0;
+
+    private void RememberMarks()
+    {
+        if (SelectedFiles.Count == 0)
+        {
+            return;
+        }
+        _lastMarks = SelectedFiles.Select(f => f.Name).ToList();
+    }
+
+    /// <summary>
+    /// Marks again the names of the last marks taken away in bulk, wherever those names are shown now,
+    /// keeping the marks already set. Returns how many rows it found; the remembered names stay, so the
+    /// same set can be brought back in the next folder too.
+    /// </summary>
+    public int RestoreSelection()
+    {
+        if (_lastMarks.Count == 0)
+        {
+            return 0;
+        }
+
+        var names = _lastMarks.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var found = 0;
+        foreach (var f in Files)
+        {
+            if (f.IsParentEntry || !names.Contains(f.Name))
+            {
+                continue;
+            }
+
+            found++;
+            if (f.IsSelected)
+            {
+                continue;
+            }
+            f.IsSelected = true;
+            SelectedFiles.Add(f);
+        }
+
+        return found;
     }
 
     [RelayCommand]
@@ -1766,12 +1982,23 @@ public partial class FileListViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(vfs);
 
-        _navStack.Push(new MountFrame(_activeVfs, CurrentPath, _mountKind, RemoteConnection));
+        _navStack.Push(new MountFrame(_activeVfs, _diskPathUnderClosedMounts ?? CurrentPath, _mountKind, RemoteConnection));
+        _diskPathUnderClosedMounts = null;
         _activeVfs = vfs;
         _mountKind = kind ?? InferKind(vfs);
         RemoteConnection = connection;
         NotifyMountChanged();
-        CurrentPath = string.IsNullOrEmpty(rootPath) ? "/" : rootPath;
+
+        // A new file system standing on the same path — "/" of an archive inside an archive, a server
+        // mounted over another one's root — is a new place, and only a changed path announces itself:
+        // the panel kept the old listing over the new file system (TRAP-97).
+        var path = string.IsNullOrEmpty(rootPath) ? "/" : rootPath;
+        var samePath = string.Equals(CurrentPath, path, StringComparison.Ordinal);
+        CurrentPath = path;
+        if (samePath)
+        {
+            OnCurrentPathChanged(path);
+        }
     }
 
     /// <summary>
@@ -1823,12 +2050,12 @@ public partial class FileListViewModel : ObservableObject
 
         // Search results shown over an archive or a server stand on the same "/" as the mount under
         // them: the path does not change, so nothing would re-read the listing and ".." kept showing
-        // the hits.
+        // the hits, under a filter typed in the place just left (TRAP-97).
         var samePath = string.Equals(CurrentPath, prev.Path, StringComparison.Ordinal);
         CurrentPath = prev.Path;
         if (samePath)
         {
-            _ = LoadAsync(prev.Path);
+            OnCurrentPathChanged(prev.Path);
         }
     }
 
@@ -1837,11 +2064,13 @@ public partial class FileListViewModel : ObservableObject
     /// <see cref="CurrentPath"/> untouched. Callers that navigate elsewhere right after avoid the
     /// throwaway directory reload each intermediate <see cref="Unmount"/> would otherwise fire —
     /// e.g. popping an archive-within-archive would reload twice before reaching the destination.
+    /// Until they do, <see cref="RootLocalPath"/> and <see cref="DiskFolder"/> say the disk folder.
     /// </summary>
     public void UnmountAll()
     {
         if (!IsMounted) return;
 
+        _diskPathUnderClosedMounts = RootLocalPath;
         while (_activeVfs != _vfs && _navStack.TryPop(out var prev))
         {
             DisposeActiveVfs();
@@ -1954,6 +2183,7 @@ public partial class FileListViewModel : ObservableObject
         var frames = _navStack.Reverse().ToArray();
         var parked = new ParkedMounts(frames, _activeVfs, _mountKind, RemoteConnection, ActiveConnection, CurrentPath);
 
+        _diskPathUnderClosedMounts = RootLocalPath;
         _navStack.Clear();
         _activeVfs = frames[0].Vfs;
         _mountKind = frames[0].Kind;
@@ -1970,6 +2200,7 @@ public partial class FileListViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(parked);
         UnmountAll();
+        _diskPathUnderClosedMounts = null;
 
         foreach (var frame in parked.Frames)
         {

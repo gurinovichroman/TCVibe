@@ -28,6 +28,7 @@
                 <RowDefinition Height="Auto" />  <!-- Tabs -->
                 <RowDefinition Height="Auto" />  <!-- Path -->
                 <RowDefinition Height="Auto" />  <!-- Filter -->
+                <RowDefinition Height="Auto" />  <!-- A connection on its way -->
                 <RowDefinition Height="*"    />  <!-- FileList -->
                 <RowDefinition Height="Auto" />  <!-- StatusBar -->
             </Grid.RowDefinitions>
@@ -328,14 +329,50 @@
                 </Grid>
             </Border>
 
+            <!-- A connection on its way. The rows stay usable meanwhile (the place is left only once the new one
+                 works), so the way to stop it lies above them, not over them. It keeps the keyboard in the list,
+                 and comes only after a moment: a connect that is quick does not make the list jump. -->
+            <Border Grid.Row="4" Padding="11,4,9,4"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsConnecting}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard x:Name="ShowConnecting">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.7">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="ShowConnecting" />
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{DynamicResource Cancel}" Focusable="False"
+                            Margin="8,0,0,0" Click="OnCancelConnectClick" />
+                    <Ellipse Width="6" Height="6" Margin="0,0,7,0" VerticalAlignment="Center"
+                             Fill="{DynamicResource WarningBrush}" />
+                    <TextBlock Text="{Binding ConnectingText}" FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource ForegroundDimBrush}" TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+            </Border>
+
             <!-- File list -->
-            <ctrl:FileListControl x:Name="FileListView" Grid.Row="4"
+            <ctrl:FileListControl x:Name="FileListView" Grid.Row="5"
                                   DataContext="{Binding FileList}"
                                   MouseDoubleClick="OnFileListDoubleClick"
                                   QuickFilterTyped="OnQuickFilterTyped" />
 
             <!-- Status line: which panel has the keyboard, what is listed, how it is listed. -->
-            <Border Grid.Row="5" Height="29" Padding="11,0"
+            <Border Grid.Row="6" Height="29" Padding="11,0"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                     Visibility="{DynamicResource ChromeStatusBarVisibility}">
                 <Grid>

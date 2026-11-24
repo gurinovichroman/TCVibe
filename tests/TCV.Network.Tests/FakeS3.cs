@@ -10,9 +10,10 @@ namespace TCV.Network.Tests;
 /// <summary>
 /// An S3 endpoint in memory, as an <see cref="HttpMessageHandler"/>: enough of the API —
 /// ListBuckets, ListObjectsV2 with paging, objects with ranges and conditions, CopyObject,
-/// DeleteObjects, multipart — to run <see cref="S3FileSystem"/> end to end. It checks what a real
-/// store checks and a client gets wrong: the body hash against <c>x-amz-content-sha256</c>, the
-/// <c>Content-MD5</c> of DeleteObjects, the ETags of the parts.
+/// DeleteObjects, multipart, UploadPartCopy — to run <see cref="S3FileSystem"/> end to end. It checks
+/// what a real store checks and a client gets wrong: the body hash against
+/// <c>x-amz-content-sha256</c>, the <c>Content-MD5</c> of DeleteObjects, the ETags of the parts and
+/// their order, the range of a copied part. Written from the AWS documentation, not from a live store.
 /// </summary>
 internal sealed class FakeS3 : HttpMessageHandler
 {
@@ -43,6 +44,15 @@ internal sealed class FakeS3 : HttpMessageHandler
 
     /// <summary>True: an <c>If-None-Match: *</c> write is refused with 501.</summary>
     public bool RejectsIfNoneMatch { get; set; }
+
+    /// <summary>False: UploadPartCopy answers 501, as a store without it does.</summary>
+    public bool PartCopySupported { get; set; } = true;
+
+    /// <summary>True: UploadPartCopy copies the whole source into every part, whatever range it was asked for.</summary>
+    public bool IgnoresCopyRange { get; set; }
+
+    /// <summary>Other endpoints this store answers at, as a regional one beside the global one.</summary>
+    public HashSet<string> OtherEndpoints { get; } = new(StringComparer.Ordinal);
 
     /// <summary>Answers a request before the store does; null lets the store answer.</summary>
     public Func<Seen, CancellationToken, Task<HttpResponseMessage?>>? Intercept { get; set; }
@@ -163,9 +173,12 @@ internal sealed class FakeS3 : HttpMessageHandler
     private (string? Bucket, string Key) Route(Uri uri)
     {
         var path = uri.AbsolutePath;
-        if (uri.Host.EndsWith("." + Endpoint, StringComparison.Ordinal))
+        foreach (var endpoint in OtherEndpoints.Prepend(Endpoint))
         {
-            return (uri.Host[..^(Endpoint.Length + 1)], Uri.UnescapeDataString(path.Length > 0 ? path[1..] : path));
+            if (uri.Host.EndsWith("." + endpoint, StringComparison.Ordinal))
+            {
+                return (uri.Host[..^(endpoint.Length + 1)], Uri.UnescapeDataString(path.Length > 0 ? path[1..] : path));
+            }
         }
 
         var rest = path.TrimStart('/');
@@ -247,7 +260,8 @@ internal sealed class FakeS3 : HttpMessageHandler
         {
             if (r.Param("partNumber") is { } number)
             {
-                return UploadPart(r, int.Parse(number, CultureInfo.InvariantCulture));
+                var part = int.Parse(number, CultureInfo.InvariantCulture);
+                return r.Header("x-amz-copy-source") is { } partSource ? UploadPartCopy(r, part, partSource) : UploadPart(r, part);
             }
 
             return r.Header("x-amz-copy-source") is { } source ? CopyObject(objects, r, source) : PutObject(objects, r);
@@ -436,6 +450,53 @@ internal sealed class FakeS3 : HttpMessageHandler
         return response;
     }
 
+    /// <summary>
+    /// What S3 documents: the range counts both its ends and must lie inside the source, and the ETag of
+    /// the new part comes in the body, with no <c>ETag</c> header.
+    /// </summary>
+    private HttpResponseMessage UploadPartCopy(Seen r, int number, string source)
+    {
+        if (!PartCopySupported)
+        {
+            return Error(HttpStatusCode.NotImplemented, "NotImplemented", "A header you provided implies functionality that is not implemented");
+        }
+
+        if (r.Param("uploadId") is not { } id || !_uploads.TryGetValue(id, out var parts))
+        {
+            return Error(HttpStatusCode.NotFound, "NoSuchUpload", "The specified upload does not exist.");
+        }
+
+        var decoded = Uri.UnescapeDataString(source).TrimStart('/');
+        var slash = decoded.IndexOf('/');
+        if (slash < 0 || !Buckets.TryGetValue(decoded[..slash], out var sourceObjects)
+                      || !sourceObjects.TryGetValue(decoded[(slash + 1)..], out var data))
+        {
+            return Error(HttpStatusCode.NotFound, "NoSuchKey", "The specified key does not exist.");
+        }
+
+        if (r.Header("x-amz-copy-source-if-match") is { } match && match != ETagOf(data))
+        {
+            return Error(HttpStatusCode.PreconditionFailed, "PreconditionFailed", "At least one of the pre-conditions you specified did not hold");
+        }
+
+        var (first, last) = (0L, data.Length - 1L);
+        if (!IgnoresCopyRange && r.Header("x-amz-copy-source-range") is { } range)
+        {
+            var ends = range["bytes=".Length..].Split('-');
+            (first, last) = (long.Parse(ends[0], CultureInfo.InvariantCulture), long.Parse(ends[1], CultureInfo.InvariantCulture));
+            if (first > last || last >= data.Length)
+            {
+                return Error(HttpStatusCode.BadRequest, "InvalidArgument", $"Range specified is not valid for source object of size: {data.Length}");
+            }
+        }
+
+        var copied = data[(int)first..(int)(last + 1)];
+        parts[number] = copied;
+        return Xml(HttpStatusCode.OK, new XElement(Ns + "CopyPartResult",
+            new XElement(Ns + "LastModified", Modified.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)),
+            new XElement(Ns + "ETag", ETagOf(copied))));
+    }
+
     private HttpResponseMessage Complete(SortedDictionary<string, byte[]> objects, Seen r, string uploadId)
     {
         if (!_uploads.TryGetValue(uploadId, out var parts))
@@ -457,6 +518,11 @@ internal sealed class FakeS3 : HttpMessageHandler
         if (listed.Count != parts.Count || listed.Any(p => !parts.TryGetValue(p.Number, out var data) || ETagOf(data) != p.ETag))
         {
             return Error(HttpStatusCode.BadRequest, "InvalidPart", "One or more of the specified parts could not be found.");
+        }
+
+        if (!listed.Select(p => p.Number).SequenceEqual(listed.Select(p => p.Number).Order()))
+        {
+            return Error(HttpStatusCode.BadRequest, "InvalidPartOrder", "The list of parts was not in ascending order.");
         }
 
         objects[r.Key] = listed.SelectMany(p => parts[p.Number]).ToArray();

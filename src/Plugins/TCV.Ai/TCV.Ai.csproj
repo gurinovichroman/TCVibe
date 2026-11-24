@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- McpServer's port candidates are a seam: a taken port cannot be arranged from outside (TRAP-112) -->
+    <InternalsVisibleTo Include="TCV.Ai.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\TCV.Core\TCV.Core.csproj" />
   </ItemGroup>
 

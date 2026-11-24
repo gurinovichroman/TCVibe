@@ -53,6 +53,8 @@
                             <TextBlock Text="{Binding Notes}" FontSize="11" TextWrapping="Wrap"
                                        Foreground="{DynamicResource ForegroundDimBrush}"
                                        Visibility="{Binding Notes, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
+                            <TextBlock Text="{Binding TunnelWarning}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}"
+                                       Visibility="{Binding TunnelWarning, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
                             <TextBlock Text="{Binding DuplicateText}" FontSize="11" Foreground="{DynamicResource WarningBrush}"
                                        Visibility="{Binding IsDuplicate, Converter={x:Static conv:BoolToVisibilityConverter.Instance}}" />
                         </StackPanel>

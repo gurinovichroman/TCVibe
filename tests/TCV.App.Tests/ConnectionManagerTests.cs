@@ -241,6 +241,61 @@ public sealed class ConnectionManagerTests : IDisposable
         book.Connections.Single().RemotePath.Should().Be("/");
     }
 
+    // ── Testing a connection ─────────────────────────────────────────────────
+
+    /// <summary>A server that takes the connection and never says a word: SSH.NET's connect sits there for its whole timeout.</summary>
+    private static (System.Net.Sockets.TcpListener Listener, ConnectionEditorViewModel Editor) SilentServerEditor()
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        return (listener, new ConnectionEditorViewModel(new ConnectionInfo
+        {
+            Name = "silent",
+            Protocol = NetworkProtocol.Sftp,
+            Host = "127.0.0.1",
+            Port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port,
+            Username = "u",
+            Password = "p",
+        }));
+    }
+
+    [Fact]
+    public async Task TestConnection_CancelWhileAConnectDoesNotHearIt_EndsAtOnce()
+    {
+        var (listener, editor) = SilentServerEditor();
+        using (listener)
+        {
+            var test = editor.TestConnectionCommand.ExecuteAsync(null);
+            await Task.Delay(200);
+            editor.IsConnecting.Should().BeTrue();
+            editor.TestConnectionCancelCommand.CanExecute(null).Should().BeTrue();
+
+            editor.TestConnectionCancelCommand.Execute(null);
+            await test.WaitAsync(TimeSpan.FromSeconds(5));
+
+            editor.IsConnecting.Should().BeFalse();
+            editor.ConnectionStatusIsError.Should().BeTrue();
+            editor.ConnectionStatus.Should().Be(TCV.App.Localization.LocalizationManager.Get("Conn_TestCancelled"));
+            editor.TestConnectionCommand.CanExecute(null).Should().BeTrue("a new test can start right away");
+        }
+    }
+
+    [Fact]
+    public async Task TestConnection_EditorReplaced_StopsItsTest()
+    {
+        var (listener, editor) = SilentServerEditor();
+        using (listener)
+        {
+            var test = editor.TestConnectionCommand.ExecuteAsync(null);
+            await Task.Delay(200);
+
+            editor.CancelTest();
+
+            await test.WaitAsync(TimeSpan.FromSeconds(5));
+            editor.IsConnecting.Should().BeFalse();
+        }
+    }
+
     // ── Editor ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -505,6 +560,16 @@ public sealed class ConnectionManagerTests : IDisposable
     {
         MountCommands.SharePaths(new ConnectionInfo { Protocol = NetworkProtocol.Smb, Host = "nas", RemotePath = "/" }, null)
             .Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(new string[0], null, true)]                       // given up on, and nobody asked again
+    [InlineData(new[] { @"\\nas\other" }, @"\\nas\other", true)]  // another share is none of its business
+    [InlineData(new[] { @"\\NAS\Projects" }, null, false)]        // asked again meanwhile, and the panel stands in it
+    [InlineData(new string[0], @"\\NAS\Projects", false)]         // asked again, and still connecting
+    public void MayCloseAbandonedShare_OnlyWhenNobodyWantsItByNow(string[] open, string? beingOpened, bool mayClose)
+    {
+        MountCommands.MayCloseAbandonedShare(@"\\nas\projects", open, beingOpened).Should().Be(mayClose);
     }
 
     // ── The chip on the drive strip ──────────────────────────────────────────

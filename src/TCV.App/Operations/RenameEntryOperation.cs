@@ -25,7 +25,7 @@ public sealed class RenameEntryOperation : FileOperationBase
     }
 
     public override OperationLogDescriptor LogDescriptor =>
-        new(OperationKind.Rename, _entry.Path.Value, _newName, 1);
+        new(OperationKind.Rename, _entry.Path.Value, _newName, 1) { ChangedArchive = ArchiveEditing.ArchiveBehind(_fs) };
 
     public override async Task ExecuteAsync(CancellationToken ct)
     {

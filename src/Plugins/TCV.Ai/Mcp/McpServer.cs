@@ -72,24 +72,46 @@ public sealed class McpServer : IAsyncDisposable
     /// portable copy of this app.
     /// </summary>
     /// <returns>The published endpoint, or null when the port could not be bound.</returns>
-    public McpEndpointInfo? Start(int preferredPort = 0, string? endpointFilePath = null)
+    public McpEndpointInfo? Start(int preferredPort = 0, string? endpointFilePath = null) =>
+        Start(preferredPort, endpointFilePath, FindFreePort);
+
+    /// <summary>Ports a server looking for a free one tries before it gives up.</summary>
+    private const int FreePortAttempts = 16;
+
+    /// <param name="nextFreePort">Gives the next candidate; a test seam for ports known to be taken.</param>
+    internal McpEndpointInfo? Start(int preferredPort, string? endpointFilePath, Func<int> nextFreePort)
     {
         if (IsRunning) return Endpoint;
 
-        var port = preferredPort > 0 ? preferredPort : FindFreePort();
-        var prefix = $"http://127.0.0.1:{port}/mcp/";
-
-        try
+        // A number from a probe is only a likely candidate: until HttpListener.Start, which takes tens of
+        // milliseconds, the next probe anywhere on the machine can be handed the same one. Only Start claims
+        // the port, so a failed start is how a taken one is found out (TRAP-112). A port asked for by
+        // number is that port or nothing.
+        var attempts = preferredPort > 0 ? 1 : FreePortAttempts;
+        var port = 0;
+        for (var attempt = 1; ; attempt++)
         {
+            port = preferredPort > 0 ? preferredPort : nextFreePort();
+            var prefix = $"http://127.0.0.1:{port}/mcp/";
             var listener = new HttpListener();
-            listener.Prefixes.Add(prefix);
-            listener.Start();
-            _listener = listener;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogWarning(ex, "Could not start the MCP server on {Prefix}", prefix);
-            return null;
+            try
+            {
+                listener.Prefixes.Add(prefix);
+                listener.Start();
+                _listener = listener;
+                break;
+            }
+            catch (Exception ex)
+            {
+                listener.Close();
+                if (attempt >= attempts)
+                {
+                    _logger?.LogWarning(ex, "Could not start the MCP server on {Prefix}", prefix);
+                    return null;
+                }
+
+                _logger?.LogDebug(ex, "Port {Port} was taken, trying another", port);
+            }
         }
 
         // A fresh token per run: the endpoint file is readable by anything running as this user, so a
@@ -456,10 +478,9 @@ public sealed class McpServer : IAsyncDisposable
     }
 
     /// <summary>
-    /// Asks the OS for a free loopback port by binding one and letting go. There is a race between
-    /// releasing it and <see cref="HttpListener"/> claiming it, but the window is microseconds on a
-    /// machine that is not exhausting ports, and the alternative — a hard-coded port — fails far more
-    /// often and less visibly.
+    /// Asks the OS for a likely free loopback port by binding one and letting go. Nothing holds it
+    /// until <see cref="HttpListener"/> starts, which is why <see cref="Start(int, string?, Func{int})"/>
+    /// tries again; the alternative, a hard-coded port, fails far more often and less visibly.
     /// </summary>
     private static int FindFreePort()
     {

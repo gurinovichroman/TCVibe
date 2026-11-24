@@ -4,11 +4,24 @@ namespace TCV.Network;
 
 /// <summary>
 /// A transfer stream that tells its owner, once, when it is closed and whether the transfer ran to its
-/// end: a download read to the last byte, an upload neither aborted nor failed, and the server's reply
-/// read on close. A connection of its own is then kept for the next transfer
-/// (<see cref="TransferConnectionPool{T}"/>); one shared with the panel hands its gate back either way.
+/// end, so that nothing of it is left on the connection: a download read to the last byte, an upload
+/// neither aborted nor failed, and answered by the server after its data connection closed. A connection
+/// of its own is then kept for the next transfer (<see cref="TransferConnectionPool{T}"/>); one shared with
+/// the panel hands its gate back either way.
 /// </summary>
-internal sealed class TransferStream(Stream inner, bool download, Action<bool> closed) : Stream, IAbortableWriteStream
+/// <param name="inner">The data connection.</param>
+/// <param name="download">Read, as opposed to written.</param>
+/// <param name="closed">Told, after everything, whether the connection is left clean.</param>
+/// <param name="confirmUpload">
+/// Waits for the server's word on the upload that has just closed, and throws when it is not a yes
+/// (<see cref="FtpFinalReply"/>). The owner of the connection is told only after it, so nothing else
+/// uses the connection in between. A plain no (<see cref="FtpTransferRefusedException"/>) fails the upload
+/// but leaves the connection clean. Only an asynchronous close can wait: a synchronous one reports
+/// the transfer as unfinished, since the reply is still to come (TRAP-100).
+/// </param>
+internal sealed class TransferStream(
+    Stream inner, bool download, Action<bool> closed, Func<Task>? confirmUpload = null, Func<CancellationToken, Task>? confirmDownload = null)
+    : Stream, IAbortableWriteStream
 {
     private int _closed;
     private bool _reachedEnd;
@@ -30,20 +43,37 @@ internal sealed class TransferStream(Stream inner, bool download, Action<bool> c
     public override void Flush() => Guard(inner.Flush);
     public override Task FlushAsync(CancellationToken ct) => GuardAsync(() => inner.FlushAsync(ct));
 
-    public override int Read(byte[] buffer, int offset, int count) =>
-        Counted(Guard(() => inner.Read(buffer, offset, count)), count);
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var read = Guard(() => inner.Read(buffer, offset, count));
+        if (ReachesEnd(read, count) && confirmDownload is not null)
+        {
+            // Off this thread: whoever reads synchronously may own a context the wait would need to come back to.
+            Task.Run(() => ConfirmDownloadAsync(CancellationToken.None)).GetAwaiter().GetResult();
+        }
+
+        return read;
+    }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
     {
+        int read;
         try
         {
-            return Counted(await inner.ReadAsync(buffer, ct), buffer.Length);
+            read = await inner.ReadAsync(buffer, ct);
         }
         catch
         {
             _faulted = true;
             throw;
         }
+
+        if (ReachesEnd(read, buffer.Length) && confirmDownload is not null)
+        {
+            await ConfirmDownloadAsync(ct);
+        }
+
+        return read;
     }
 
     public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
@@ -63,15 +93,37 @@ internal sealed class TransferStream(Stream inner, bool download, Action<bool> c
         }
     }
 
-    /// <summary>A read that asked for something and got nothing is the end of the file.</summary>
-    private int Counted(int read, int asked)
+    /// <summary>
+    /// True for the first read that asked for something and got nothing: the data has run out. That is
+    /// where a download learns whether it is the end of the file or a server giving up, and it says so as
+    /// a failed read: by the time the stream is closed, the caller has taken the short copy for the whole.
+    /// </summary>
+    private bool ReachesEnd(int read, int asked)
     {
-        if (read == 0 && asked > 0)
+        if (read != 0 || asked == 0 || _reachedEnd)
         {
-            _reachedEnd = true;
+            return false;
         }
 
-        return read;
+        _reachedEnd = true;
+        return true;
+    }
+
+    private async Task ConfirmDownloadAsync(CancellationToken ct)
+    {
+        try
+        {
+            await confirmDownload!(ct);
+        }
+        catch (FtpTransferRefusedException)
+        {
+            throw;   // the server has answered: the download failed, the connection is as good as before
+        }
+        catch
+        {
+            _faulted = true;
+            throw;
+        }
     }
 
     private T Guard<T>(Func<T> work)
@@ -116,7 +168,8 @@ internal sealed class TransferStream(Stream inner, bool download, Action<bool> c
     {
         if (disposing)
         {
-            var finished = Finished;
+            // An upload closed this way leaves its reply unread. A download has read its own at the end of the data.
+            var finished = Finished && (download || confirmUpload is null);
             try
             {
                 inner.Dispose();
@@ -137,10 +190,23 @@ internal sealed class TransferStream(Stream inner, bool download, Action<bool> c
 
     public override async ValueTask DisposeAsync()
     {
+        if (Volatile.Read(ref _closed) != 0)
+        {
+            return;   // closed already: the one reply there was has been read
+        }
+
         var finished = Finished;
         try
         {
             await inner.DisposeAsync();
+            if (finished && confirmUpload is not null)
+            {
+                await confirmUpload();
+            }
+        }
+        catch (FtpTransferRefusedException)
+        {
+            throw;   // the server has answered: the upload failed, the connection is as good as before
         }
         catch
         {

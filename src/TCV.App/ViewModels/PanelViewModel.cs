@@ -325,11 +325,14 @@ public partial class PanelViewModel : ObservableObject
             tab.Path = value;
     }
 
+    /// <summary>Completes when this panel's folder watcher holds no handle on a folder the panel has left (TRAP-96).</summary>
+    public Task FolderWatcherReleased => _fileWatcher.Released;
+
     /// <summary>
     /// The path a tab should remember: a mount is gone by the next launch, so tabs keep the
     /// disk directory underneath it rather than "/pub" or an archive-internal path.
     /// </summary>
-    private string TabPath => FileList.IsMounted ? FileList.RootLocalPath : CurrentPath;
+    private string TabPath => FileList.RootLocalPath;
 
     /// <summary>Set while tabs are being switched: the location is refreshed once, at the end.</summary>
     private bool _switchingTabs;
@@ -519,6 +522,13 @@ public partial class PanelViewModel : ObservableObject
 
     public bool IsConnecting => ConnectingTo is not null;
 
+    /// <summary>What the strip over the list says while a connection opens; null when none does.</summary>
+    public string? ConnectingText => ConnectingTo is not { } connection
+        ? null
+        : IsSigningIn
+            ? Localization.LocalizationManager.Get("Chip_SigningIn")
+            : Localization.LocalizationManager.Format("Conn_ConnectingTo", ConnectionTitle(connection));
+
     /// <summary>The tab's connection dropped and comes back by itself: the chip offers to stop it.</summary>
     public bool IsReconnecting => ConnectingTo is null && FileList.IsReconnecting;
 
@@ -584,6 +594,7 @@ public partial class PanelViewModel : ObservableObject
         OnPropertyChanged(nameof(ChipState));
         OnPropertyChanged(nameof(HasConnection));
         OnPropertyChanged(nameof(IsConnecting));
+        OnPropertyChanged(nameof(ConnectingText));
         OnPropertyChanged(nameof(IsReconnecting));
         OnPropertyChanged(nameof(ChipTitle));
         OnPropertyChanged(nameof(ChipKind));

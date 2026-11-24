@@ -42,7 +42,18 @@ public sealed class TransferQueue : IDisposable
     /// <summary>Completes when the run the worker took last has ended and been reported; under <see cref="_sync"/>.</summary>
     private Task? _runEnded;
 
+    /// <summary>
+    /// Every item before this one has ended, so the worker's search for the next starts here: from the
+    /// top each time, a folder of 100 000 files costs 5 000 000 000 looks under the lock (TRAP-107). A retry,
+    /// the one way back from an end, and a clearing start it over. Under <see cref="_sync"/>.
+    /// </summary>
+    private int _scanFrom;
+
     private readonly Func<Exception, string>? _describeError;
+
+    /// <summary>What FTP and SFTP items of one server share, so a folder of small files logs in once.</summary>
+    private readonly KeptConnection<AsyncFtpClient> _ftpConnection;
+    private readonly KeptConnection<SftpClient> _sftpConnection;
 
     /// <param name="uiContext">Context that owns <see cref="Items"/> (the UI thread's); null runs synchronously.</param>
     /// <param name="trust">Trust policy for SFTP host keys and FTPS certificates; defaults to <see cref="NetworkSecurity.Default"/>.</param>
@@ -54,10 +65,14 @@ public sealed class TransferQueue : IDisposable
         _ui = uiContext;
         _trust = trust;
         _describeError = describeError;
+        _ftpConnection = new KeptConnection<AsyncFtpClient>(OpenFtpAsync, c => c.IsConnected, CloseQuietlyAsync);
+        _sftpConnection = new KeptConnection<SftpClient>(OpenSftpAsync, c => c.IsConnected, CloseQuietlyAsync);
     }
 
+    private readonly TransferItemList _items = [];
+
     /// <summary>What the transfer window shows. Bind to it; do not mutate it from outside the queue.</summary>
-    public ObservableCollection<TransferItem> Items { get; } = [];
+    public ObservableCollection<TransferItem> Items => _items;
 
     /// <summary>
     /// Raised once per run when a transfer stops for good: completed, failed or cancelled. A pause is
@@ -70,14 +85,25 @@ public sealed class TransferQueue : IDisposable
     // ── Public API ────────────────────────────────────────────────────────────
 
     /// <summary>Adds an item and starts processing if the queue is idle.</summary>
-    public void Enqueue(TransferItem item)
+    public void Enqueue(TransferItem item) => EnqueueRange([item]);
+
+    /// <summary>
+    /// Adds many items in one step, as a folder of 100 000 files does: one lock, one wake-up of the worker,
+    /// and the window hears of them once instead of 100 000 times (TRAP-107).
+    /// </summary>
+    public void EnqueueRange(IReadOnlyList<TransferItem> items)
     {
-        lock (_sync)
+        if (items.Count == 0)
         {
-            _all.Add(item);
+            return;
         }
 
-        OnUi(() => Items.Add(item));
+        lock (_sync)
+        {
+            _all.AddRange(items);
+        }
+
+        OnUi(() => _items.AddMany(items.Where(i => !i.Removed).ToList()));
         Kick();
     }
 
@@ -270,6 +296,7 @@ public sealed class TransferQueue : IDisposable
             item.BeginNewAttempt();
             item.ErrorMessage = null;
             item.Status = TransferStatus.Pending;
+            _scanFrom = 0;
         }
 
         Kick();
@@ -278,23 +305,20 @@ public sealed class TransferQueue : IDisposable
     /// <summary>Removes finished (completed, failed, cancelled) items from the list.</summary>
     public void ClearFinished()
     {
-        List<TransferItem> finished;
+        HashSet<TransferItem> finished;
         lock (_sync)
         {
-            finished = _all.Where(i => i.IsFinished && i.Cts is null && !_cleanups.ContainsKey(i.Id)).ToList();
+            // In one pass: removing them one by one is quadratic, and the worker waits on this lock.
+            finished = _all.Where(i => i.IsFinished && i.Cts is null && !_cleanups.ContainsKey(i.Id)).ToHashSet();
+            _all.RemoveAll(finished.Contains);
+            _scanFrom = 0;
             foreach (var item in finished)
             {
-                _all.Remove(item);
+                item.Removed = true;
             }
         }
 
-        OnUi(() =>
-        {
-            foreach (var item in finished)
-            {
-                Items.Remove(item);
-            }
-        });
+        OnUi(() => _items.RemoveMany(finished));
     }
 
     /// <summary>
@@ -334,6 +358,9 @@ public sealed class TransferQueue : IDisposable
         }
         finally
         {
+            // Nothing to carry: a silent connection only costs the server a slot until it hangs up.
+            _ftpConnection.Close();
+            _sftpConnection.Close();
             Interlocked.Exchange(ref _pumping, 0);
             if (!_disposeCts.IsCancellationRequested && HasPending())
             {
@@ -359,7 +386,7 @@ public sealed class TransferQueue : IDisposable
                 return null;
             }
 
-            var item = _all.FirstOrDefault(IsReadyLocked);
+            var item = NextReadyLocked();
             if (item is null)
             {
                 return null;
@@ -381,8 +408,26 @@ public sealed class TransferQueue : IDisposable
     {
         lock (_sync)
         {
-            return _all.Any(IsReadyLocked);
+            return NextReadyLocked() is not null;
         }
+    }
+
+    private TransferItem? NextReadyLocked()
+    {
+        while (_scanFrom < _all.Count && _all[_scanFrom].IsFinished)
+        {
+            _scanFrom++;
+        }
+
+        for (var i = _scanFrom; i < _all.Count; i++)
+        {
+            if (IsReadyLocked(_all[i]))
+            {
+                return _all[i];
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Waiting, and neither a worker nor a cleanup still holds it.</summary>
@@ -407,18 +452,25 @@ public sealed class TransferQueue : IDisposable
                     throw new ReadOnlyConnectionException();
                 }
 
-                switch (item.Connection.Protocol)
+                if (item.IsFolder)
                 {
-                    case NetworkProtocol.Sftp:
-                        await ExecuteSftpTransferAsync(item, ct);
-                        break;
-                    case NetworkProtocol.Ftp or NetworkProtocol.Ftps or NetworkProtocol.FtpsImplicit:
-                        await ExecuteFtpTransferAsync(item, ct);
-                        break;
-                    default:
-                        // WebDAV, object storage, the drives: HTTP underneath, the file system does the protocol.
-                        await ExecuteHttpTransferAsync(item, ct);
-                        break;
+                    await CreateFolderAsync(item, ct);
+                }
+                else
+                {
+                    switch (item.Connection.Protocol)
+                    {
+                        case NetworkProtocol.Sftp:
+                            await ExecuteSftpTransferAsync(item, ct);
+                            break;
+                        case NetworkProtocol.Ftp or NetworkProtocol.Ftps or NetworkProtocol.FtpsImplicit:
+                            await ExecuteFtpTransferAsync(item, ct);
+                            break;
+                        default:
+                            // WebDAV, object storage, the drives: HTTP underneath, the file system does the protocol.
+                            await ExecuteHttpTransferAsync(item, ct);
+                            break;
+                    }
                 }
 
                 completed = true;
@@ -507,6 +559,51 @@ public sealed class TransferQueue : IDisposable
         }
     }
 
+    // ── A folder of a transfer ────────────────────────────────────────────────
+
+    /// <summary>Makes the destination of a folder item. One that is there already is fine: a folder merges.</summary>
+    private async Task CreateFolderAsync(TransferItem item, CancellationToken ct)
+    {
+        if (item.Direction == TransferDirection.Download)
+        {
+            Directory.CreateDirectory(item.DestinationPath);
+            return;
+        }
+
+        switch (item.Connection.Protocol)
+        {
+            case NetworkProtocol.Sftp:
+                await _sftpConnection.RunAsync(item.Connection, client =>
+                {
+                    if (!client.Exists(item.DestinationPath))
+                    {
+                        client.CreateDirectory(item.DestinationPath);
+                    }
+
+                    return Task.CompletedTask;
+                }, MayBeTheKeptConnection, ct);
+                break;
+            case NetworkProtocol.Ftp or NetworkProtocol.Ftps or NetworkProtocol.FtpsImplicit:
+                // A name FluentFTP would send as another one is refused here too (TRAP-94).
+                FtpFileSystem.ToSendablePath(item.DestinationPath);
+                await _ftpConnection.RunAsync(
+                    item.Connection, client => client.CreateDirectory(item.DestinationPath, ct), MayBeTheKeptConnection, ct);
+                break;
+            default:
+                using (var fs = NetworkPlugin.CreateFileSystem(item.Connection))
+                {
+                    // Asked first: not every store takes it calmly (MKCOL on WebDAV answers 405).
+                    var path = new VfsPath(item.DestinationPath);
+                    if (await fs.GetEntryAsync(path, ct) is not { IsDirectory: true })
+                    {
+                        await fs.CreateDirectoryAsync(path, ct);
+                    }
+                }
+
+                break;
+        }
+    }
+
     // ── FTP transfer (FluentFTP, supports REST-based resume) ──────────────────
 
     private async Task ExecuteFtpTransferAsync(TransferItem item, CancellationToken ct)
@@ -514,16 +611,71 @@ public sealed class TransferQueue : IDisposable
         // A name FluentFTP would send as another one is refused before anything is opened (TRAP-94).
         FtpFileSystem.ToSendablePath(item.Direction == TransferDirection.Download ? item.SourcePath : item.DestinationPath);
 
-        using var client = FtpFileSystem.CreateClient(item.Connection, _trust);
+        await _ftpConnection.RunAsync(item.Connection, client => TransferOverFtpAsync(client, item, ct), MayBeTheKeptConnection, ct);
+    }
+
+    private async Task<AsyncFtpClient> OpenFtpAsync(ConnectionInfo connection, CancellationToken ct)
+    {
+        var client = FtpFileSystem.CreateClient(connection, _trust);
         try
         {
             await client.Connect(ct);
+            return client;
         }
-        catch (Exception ex) when (NetworkErrors.Find<HostKeyChangedException>(ex) is { } changed)
+        catch (Exception ex)
         {
-            throw changed;
-        }
+            _ = CloseQuietlyAsync(client);
+            if (NetworkErrors.Find<HostKeyChangedException>(ex) is { } changed)
+            {
+                throw changed;
+            }
 
+            throw;
+        }
+    }
+
+    private async Task<SftpClient> OpenSftpAsync(ConnectionInfo connection, CancellationToken ct)
+    {
+        var client = SftpFileSystem.CreateClientInternal(connection, _trust);
+        try
+        {
+            await Task.Run(() => SftpFileSystem.ConnectClient(client), ct);
+            return client;
+        }
+        catch
+        {
+            _ = CloseQuietlyAsync(client);
+            throw;
+        }
+    }
+
+    /// <summary>On the pool: closing waits for the far side (QUIT, SSH's disconnect), and whoever does not need to wait goes on.</summary>
+    private static Task CloseQuietlyAsync(IDisposable client) =>
+        Task.Run(() =>
+        {
+            try
+            {
+                client.Dispose();
+            }
+            catch (Exception)
+            {
+                // A connection that will not close cleanly is closed anyway.
+            }
+        });
+
+    /// <summary>
+    /// A kept connection may have died between two items, whatever the failure looks like (a 421, a closed
+    /// socket). What is the file's own answer is the same on any connection, and a changed host key is not
+    /// worth a second look (TRAP-43).
+    /// </summary>
+    private static bool MayBeTheKeptConnection(Exception ex) =>
+        ex is not TransferTargetExistsException && NetworkErrors.Find<HostKeyChangedException>(ex) is null;
+
+    /// <summary>How long the library's own transfer waits for the final reply (<see cref="FtpFinalReply.WithPatienceAsync"/>); tests shorten it.</summary>
+    internal TimeSpan FtpReplyWait { get; init; } = FtpFinalReply.DefaultWait;
+
+    private async Task TransferOverFtpAsync(AsyncFtpClient client, TransferItem item, CancellationToken ct)
+    {
         var progress = new FtpProgressWrapper(item);
 
         if (item.Direction == TransferDirection.Download)
@@ -542,12 +694,12 @@ public sealed class TransferQueue : IDisposable
             }
 
             item.OwnsLocalFile = true;
-            var status = await client.DownloadFile(
+            var status = await FtpFinalReply.WithPatienceAsync(client, FtpReplyWait, () => client.DownloadFile(
                 item.DestinationPath,
                 item.SourcePath,
                 resuming ? FtpLocalExists.Resume : FtpLocalExists.Overwrite,
                 token: ct,
-                progress: progress);
+                progress: progress));
             EnsureFtpSucceeded(status, item.SourcePath);
         }
         else
@@ -565,12 +717,12 @@ public sealed class TransferQueue : IDisposable
             }
 
             item.OwnsRemoteFile = true;
-            var status = await client.UploadFile(
+            var status = await FtpFinalReply.WithPatienceAsync(client, FtpReplyWait, () => client.UploadFile(
                 item.SourcePath,
                 item.DestinationPath,
                 resuming ? FtpRemoteExists.Resume : FtpRemoteExists.Overwrite,
                 token: ct,
-                progress: progress);
+                progress: progress));
 
             EnsureFtpSucceeded(status, item.SourcePath);
         }
@@ -586,11 +738,11 @@ public sealed class TransferQueue : IDisposable
 
     // ── SFTP transfer (SSH.NET, manual seek for resume) ───────────────────────
 
-    private async Task ExecuteSftpTransferAsync(TransferItem item, CancellationToken ct)
-    {
-        using var client = SftpFileSystem.CreateClientInternal(item.Connection, _trust);
-        await Task.Run(() => SftpFileSystem.ConnectClient(client), ct);
+    private Task ExecuteSftpTransferAsync(TransferItem item, CancellationToken ct) =>
+        _sftpConnection.RunAsync(item.Connection, client => TransferOverSftpAsync(client, item, ct), MayBeTheKeptConnection, ct);
 
+    private async Task TransferOverSftpAsync(SftpClient client, TransferItem item, CancellationToken ct)
+    {
         if (item.Direction == TransferDirection.Download)
         {
             var attributes = client.GetAttributes(item.SourcePath);
@@ -934,6 +1086,8 @@ public sealed class TransferQueue : IDisposable
     public void Dispose()
     {
         _disposeCts.Cancel();
+        _ftpConnection.Close();
+        _sftpConnection.Close();
 
         // Under the lock: TakeNext links to the token only after seeing it not cancelled, under the same lock.
         lock (_sync)
@@ -958,6 +1112,77 @@ public sealed class TransferQueue : IDisposable
                 _item.LearnTotal((long)(value.TransferredBytes / (value.Progress / 100.0)));
             }
         }
+    }
+}
+
+/// <summary>
+/// The list the queue window binds to, which takes many items in one change. A folder of 100 000 files
+/// added one by one is 100 000 notifications to the grid; WPF's list views refuse a notification carrying
+/// several items, so a big change is told as a reset, and a virtualising grid rebuilds only what shows.
+/// Small changes stay ordinary ones: the selection and the scroll position do not notice them.
+/// </summary>
+internal sealed class TransferItemList : ObservableCollection<TransferItem>
+{
+    private const int Small = 32;
+
+    public void AddMany(IReadOnlyList<TransferItem> items)
+    {
+        if (items.Count <= Small)
+        {
+            foreach (var item in items)
+            {
+                Add(item);
+            }
+
+            return;
+        }
+
+        CheckReentrancy();
+        foreach (var item in items)
+        {
+            Items.Add(item);
+        }
+
+        Changed();
+    }
+
+    public void RemoveMany(HashSet<TransferItem> items)
+    {
+        if (items.Count <= Small)
+        {
+            foreach (var item in items)
+            {
+                Remove(item);
+            }
+
+            return;
+        }
+
+        CheckReentrancy();
+        if (Items is List<TransferItem> list)
+        {
+            list.RemoveAll(items.Contains);
+        }
+        else
+        {
+            for (var i = Items.Count - 1; i >= 0; i--)
+            {
+                if (items.Contains(Items[i]))
+                {
+                    Items.RemoveAt(i);
+                }
+            }
+        }
+
+        Changed();
+    }
+
+    private void Changed()
+    {
+        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Count)));
+        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Item[]"));
+        OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(
+            System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
     }
 }
 

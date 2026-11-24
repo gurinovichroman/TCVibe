@@ -128,8 +128,28 @@
                         <MenuItem Header="{DynamicResource Menu_Delete}"        Command="{Binding Files.DeleteCommand}"         ctrl:MenuGestures.CommandId="Delete" />
                         <MenuItem Header="{DynamicResource Menu_DeletePermanent}" Command="{Binding Files.DeletePermanentCommand}" ctrl:MenuGestures.CommandId="DeletePermanent" />
                         <Separator />
-                        <MenuItem Header="{DynamicResource Menu_SelectByMask}"  Command="{Binding Files.SelectByMaskCommand}"   ctrl:MenuGestures.CommandId="SelectByMask" />
-                        <MenuItem Header="{DynamicResource Menu_UnselectByMask}" Command="{Binding Files.UnselectByMaskCommand}" ctrl:MenuGestures.CommandId="UnselectByMask" />
+                        <MenuItem Header="{DynamicResource Menu_SelectionSub}">
+                            <MenuItem Header="{DynamicResource Menu_SelectByMask}"  Command="{Binding Files.SelectByMaskCommand}"   ctrl:MenuGestures.CommandId="SelectByMask" />
+                            <MenuItem Header="{DynamicResource Menu_UnselectByMask}" Command="{Binding Files.UnselectByMaskCommand}" ctrl:MenuGestures.CommandId="UnselectByMask" />
+                            <MenuItem Header="{DynamicResource Menu_SelectSameExtension}"   Command="{Binding Files.SelectSameExtensionCommand}"   ctrl:MenuGestures.CommandId="SelectSameExtension" />
+                            <MenuItem Header="{DynamicResource Menu_UnselectSameExtension}" Command="{Binding Files.UnselectSameExtensionCommand}" ctrl:MenuGestures.CommandId="UnselectSameExtension" />
+                            <MenuItem Header="{DynamicResource Menu_RestoreSelection}"      Command="{Binding Files.RestoreSelectionCommand}"      ctrl:MenuGestures.CommandId="RestoreSelection" />
+                            <Separator />
+                            <!-- The templates of Num+ (settings.json); each also runs from the palette -->
+                            <MenuItem Header="{DynamicResource Menu_SelectionTemplates}"
+                                      ItemsSource="{Binding Files.SelectionTemplateMenuEntries}">
+                                <MenuItem.ItemContainerStyle>
+                                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                        <Setter Property="Header" Value="{Binding Header}" />
+                                        <Setter Property="InputGestureText" Value="{Binding Gesture}" />
+                                        <Setter Property="Command"
+                                                Value="{Binding DataContext.Files.ApplySelectionTemplateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=Window}}" />
+                                        <Setter Property="CommandParameter" Value="{Binding Template}" />
+                                    </Style>
+                                </MenuItem.ItemContainerStyle>
+                            </MenuItem>
+                        </MenuItem>
                         <Separator />
                         <MenuItem Header="{DynamicResource Menu_CopyFullPath}"  Command="{Binding Files.CopyFullPathToClipboardCommand}" ctrl:MenuGestures.CommandId="CopyFullPath" />
                         <MenuItem Header="{DynamicResource Menu_CopyNames}"     Command="{Binding Files.CopyNamesToClipboardCommand}"    ctrl:MenuGestures.CommandId="CopyNames" />
@@ -379,8 +399,10 @@
                                 ToolTip="{loc:Live Shell_WorkspaceBoxTip}" AutomationProperties.Name="{DynamicResource Shell_WorkspaceBox}"
                                 Visibility="{Binding TransientNotice, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}">
                             <Grid>
-                                <TextBlock Text="{Binding WorkspaceTitle}" FontSize="12" FontWeight="Medium"
-                                           TextTrimming="CharacterEllipsis" />
+                                <ctrl:WorkspaceLabel Picture="{Binding WorkspaceTitlePicture}"
+                                                     Text="{Binding WorkspaceTitle}"
+                                                     TextBesidePicture="{Binding Workspaces.ActiveWorkspaceName}"
+                                                     TextElement.FontSize="12" TextElement.FontWeight="Medium" />
                                 <TextBlock Text="{DynamicResource Shell_NoWorkspace}" FontSize="12"
                                            Foreground="{DynamicResource ForegroundDimBrush}" TextTrimming="CharacterEllipsis"
                                            Visibility="{Binding WorkspaceTitle, Converter={x:Static conv:BoolToVisibilityConverter.Instance}, ConverterParameter=inverse}" />

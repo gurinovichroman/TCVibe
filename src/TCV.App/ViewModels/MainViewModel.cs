@@ -16,7 +16,6 @@ using TCV.App.Services;
 using TCV.App.Settings;
 using System.Collections.ObjectModel;
 using TCV.App.ViewModels.Dialogs;
-using TCV.App.Views.Dialogs;
 using TCV.Core.PluginSdk;
 using TCV.Core.Domain;
 using TCV.Network;
@@ -191,6 +190,7 @@ public partial class MainViewModel : ObservableObject
             this, _settings, _dialogs, _fs, _operationQueue, services.Clipboard, _archivePlugin,
             _agents, _logger, services.CopyLogger, services.MoveLogger, services.DeleteLogger,
             services.MkdirLogger, services.FileEditor);
+        Files.AttachSelectionTemplates(_hotkeyManager, () => _serializer.Save(_settings));
 
         // The agent layer's singletons need the live panels, and this window is transient — so the
         // window registers itself rather than being injected into them.
@@ -395,7 +395,7 @@ public partial class MainViewModel : ObservableObject
     internal OperationErrorHandler BuildErrorHandler() => (error, _) =>
         _dialogs.ShowOperationErrorAsync(error);
 
-    internal static string GetFileErrorMessage(Exception ex) => ex switch
+    public static string GetFileErrorMessage(Exception ex) => ex switch
     {
         DestinationInsideSourceException inside
             => string.Format(LocalizationManager.Get("Op_IntoItself"), inside.ItemName),
@@ -407,6 +407,8 @@ public partial class MainViewModel : ObservableObject
             => LocalizationManager.Get("Fc_ArchivePasswordNeeded"),
         TCV.Archives.ArchiveEntryEncryptedException
             => LocalizationManager.Get("Fc_ArchiveEntryEncrypted"),
+        TCV.Archives.ArchiveNameTakenException taken
+            => string.Format(LocalizationManager.Get("Op_NameTaken"), taken.Name),
         _ => ex.Message
     };
 
@@ -425,6 +427,9 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     public void SaveState()
     {
+        // A copy on its way has no use after this: the partial file goes with it.
+        RemoteFetches.CancelAll();
+
         // A leftover watcher would keep uploading into a connection this window is about to close.
         CloseRemoteEditSessions();
 

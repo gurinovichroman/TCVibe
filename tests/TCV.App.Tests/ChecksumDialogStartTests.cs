@@ -2,6 +2,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using FluentAssertions;
+using Moq;
+using TCV.App.Services;
 using TCV.App.ViewModels.Dialogs;
 using TCV.Core.Domain;
 using TCV.Core.Interfaces;
@@ -54,7 +56,7 @@ public sealed class ChecksumDialogStartTests : IDisposable
     [Fact]
     public void Constructor_OnAChecksumFile_OpensOnTheVerifyTabAndKeepsTheFileHashable()
     {
-        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.sha256")], @"D:\iso", new ChecksumEngine());
+        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.sha256")], @"D:\iso", new ChecksumEngine(), Mock.Of<IDialogService>());
 
         vm.VerifyMode.Should().BeTrue();
         vm.ChecksumFileToVerify.Should().Be(@"D:\iso\ubuntu.sha256");
@@ -65,7 +67,7 @@ public sealed class ChecksumDialogStartTests : IDisposable
     [Fact]
     public void Constructor_OnAnOrdinaryFile_StaysOnTheCalculateTab()
     {
-        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.iso")], @"D:\iso", new ChecksumEngine());
+        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.iso")], @"D:\iso", new ChecksumEngine(), Mock.Of<IDialogService>());
 
         vm.VerifyMode.Should().BeFalse();
         vm.ChecksumFileToVerify.Should().BeNull();
@@ -80,7 +82,7 @@ public sealed class ChecksumDialogStartTests : IDisposable
         var sums = Path.Combine(_dir, "data.sha256");
         await File.WriteAllTextAsync(sums, $"{digest}  data.bin\nffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff  gone.bin\n");
 
-        var vm = new ChecksumDialogViewModel([Entry(sums)], _dir, new ChecksumEngine());
+        var vm = new ChecksumDialogViewModel([Entry(sums)], _dir, new ChecksumEngine(), Mock.Of<IDialogService>());
         await vm.StartAsync();
 
         vm.VerifyFilePath.Should().Be(sums);
@@ -93,7 +95,7 @@ public sealed class ChecksumDialogStartTests : IDisposable
     [Fact]
     public async Task StartAsync_OnAnOrdinaryFile_DoesNothing()
     {
-        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.iso")], @"D:\iso", new ChecksumEngine());
+        var vm = new ChecksumDialogViewModel([Entry(@"D:\iso\ubuntu.iso")], @"D:\iso", new ChecksumEngine(), Mock.Of<IDialogService>());
 
         await vm.StartAsync();
 

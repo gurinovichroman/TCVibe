@@ -23,10 +23,10 @@
                  AutomationProperties.Name="{Binding Prompt}" />
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="{DynamicResource OK}" Width="80" Margin="0,0,8,0"
+            <Button Content="{DynamicResource OK}" MinWidth="80" Margin="0,0,8,0"
                     Command="{Binding ConfirmCommand}"
                     IsDefault="True" />
-            <Button Content="{DynamicResource Cancel}" Width="80"
+            <Button Content="{DynamicResource Cancel}" MinWidth="80"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
         </StackPanel>

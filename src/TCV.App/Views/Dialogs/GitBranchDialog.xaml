@@ -93,7 +93,7 @@
                         Command="{Binding SwitchCommand}"
                         IsEnabled="{Binding CanSwitch}"
                         IsDefault="True" />
-                <Button Content="{DynamicResource Close}" Width="90"
+                <Button Content="{DynamicResource Close}" MinWidth="90"
                         Command="{Binding CancelCommand}"
                         IsCancel="True" />
             </StackPanel>

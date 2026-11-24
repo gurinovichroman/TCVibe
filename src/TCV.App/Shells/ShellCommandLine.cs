@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using TCV.Core.Domain;
 
 namespace TCV.App.Shells;
@@ -22,7 +23,7 @@ namespace TCV.App.Shells;
 /// typed.</item>
 /// </list>
 /// </remarks>
-public static class ShellCommandLine
+public static partial class ShellCommandLine
 {
     /// <summary><c>%C</c>: the typed command, as one argument.</summary>
     public const char CommandMacro = 'C';
@@ -35,17 +36,33 @@ public static class ShellCommandLine
     /// <c>%C</c> gets the command as its last argument, so a shell that only needs a flag in front of
     /// the command (<c>nu -e</c>) works as written.
     /// </summary>
+    /// <remarks>
+    /// TRAP-110. A <c>;</c> right after <c>%C</c> in a template goes out as a line break. The typed command
+    /// may end in a comment (<c># why</c>), which would swallow <c>; exec bash</c> and close the window, or
+    /// in <c>&amp;</c>, and <c>&amp;;</c> is a syntax error. A line break ends both and still means «then»
+    /// in every shell that reads argv. Written at this point, not in the template, so that a template stays
+    /// one line in the settings grid and rows saved before this keep working. cmd is left alone: its line
+    /// ends at a line break, and its templates hold no <c>;</c> of this kind.
+    /// <para>
+    /// TRAP-113. Before <c>exec</c> of a POSIX shell the command goes in as the string of an <c>eval</c>. A
+    /// shell parses all of <c>-c</c> before it runs any of it: an unclosed quote, a <c>\</c> at the end, an
+    /// open <c>&lt;&lt;EOF</c> or <c>if</c> swallowed the <c>exec</c> as well, so the window closed before the
+    /// error could be read. As a string it is one word to the outer parse, and <c>eval</c> reports its
+    /// syntax error and goes on. Other templates keep the line break: PowerShell has no <c>eval</c>.
+    /// </para>
+    /// </remarks>
     /// <param name="program">The shell's program, environment variables already expanded.</param>
     public static ShellLaunch Build(string program, string template, string command, string folder)
     {
+        var readsRawLine = IsCmd(program);
         var usedCommand = false;
-        IReadOnlyList<string>? Resolve(char macro)
+        IReadOnlyList<string>? Resolve(char macro, string typed)
         {
             switch (macro)
             {
                 case CommandMacro:
                     usedCommand = true;
-                    return [command];
+                    return [typed];
                 case FolderMacro:
                     return [folder];
                 default:
@@ -54,15 +71,34 @@ public static class ShellCommandLine
         }
 
         var arguments = SplitArguments(template ?? string.Empty)
-            .Select(argument => MacroTemplate.Expand(argument, Resolve, raw: true))
+            .Select(argument =>
+            {
+                if (readsRawLine)
+                {
+                    return MacroTemplate.Expand(argument, m => Resolve(m, command), raw: true);
+                }
+
+                var typed = CommandThenShell().IsMatch(argument) ? PosixEval(command) : command;
+                return MacroTemplate.Expand(CommandThenTail().Replace(argument, "%C\n"), m => Resolve(m, typed), raw: true);
+            })
             .ToList();
         if (!usedCommand)
         {
             arguments.Add(command);
         }
 
-        return new ShellLaunch(program, arguments, IsCmd(program));
+        return new ShellLaunch(program, arguments, readsRawLine);
     }
+
+    [GeneratedRegex(@"%C[ \t]*;[ \t]*")]
+    private static partial Regex CommandThenTail();
+
+    /// <summary>The command, then the shell that keeps the window open: <c>bash</c>, <c>zsh</c>, <c>sh</c>, by name or path.</summary>
+    [GeneratedRegex(@"%C[ \t]*;[ \t]*exec[ \t]+\S*sh\b")]
+    private static partial Regex CommandThenShell();
+
+    /// <summary>A single-quoted POSIX word holds anything: only <c>'</c> itself has to step out and back in.</summary>
+    private static string PosixEval(string command) => "eval '" + command.Replace("'", @"'\''", StringComparison.Ordinal) + "'";
 
     /// <summary>
     /// The process that opens the shell itself in <paramref name="folder"/>, with no command: Enter on an

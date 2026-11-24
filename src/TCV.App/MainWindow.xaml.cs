@@ -32,6 +32,7 @@ public partial class MainWindow : Window
         _settings = settings;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.ExitRequested += (_, _) => Close();
+        System.Windows.Application.Current.SessionEnding += (_, _) => _sessionEnding = true;
         SourceInitialized += (_, _) => WatchDrives();
         InitializePlacement();
         InitializeChrome();
@@ -218,20 +219,48 @@ public partial class MainWindow : Window
         return item;
     }
 
+    /// <summary>F4 edits are on their way to the server and this close waits for them (TRAP-105).</summary>
+    private bool _flushingForExit;
+
+    /// <summary>The waiting is over and this close goes through: asked and flushed already.</summary>
+    private bool _flushedForExit;
+
+    /// <summary>Windows is shutting down: a cancelled close would be ignored, so nothing may be put off.</summary>
+    private bool _sessionEnding;
+
     private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        // A running copy or transfer is cut off by closing: say so, and let the user stay.
-        if (_viewModel.HasRunningWork
-            && !ConfirmDialog.Ask(
-                LocalizationManager.Get("Close_BusyTitle"),
-                LocalizationManager.Get("Close_BusyMessage"),
-                LocalizationManager.Get("Close_BusyExit"),
-                LocalizationManager.Get("Close_BusyStay"),
-                isWarning: true,
-                owner: this))
+        // A second close while the first waits for the uploads changes nothing.
+        if (_flushingForExit && !_sessionEnding)
         {
             e.Cancel = true;
             return;
+        }
+
+        if (!_flushedForExit)
+        {
+            // A running copy or transfer is cut off by closing: say so, and let the user stay.
+            if (_viewModel.HasRunningWork
+                && !ConfirmDialog.Ask(
+                    LocalizationManager.Get("Close_BusyTitle"),
+                    LocalizationManager.Get("Close_BusyMessage"),
+                    LocalizationManager.Get("Close_BusyExit"),
+                    LocalizationManager.Get("Close_BusyStay"),
+                    isWarning: true,
+                    owner: this))
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            // Uploads can take minutes on a slow line: not on this thread (TRAP-105). The close is put
+            // off, the window stays alive and comes back here when they have ended or were stopped.
+            if (!_sessionEnding && _viewModel.HasRemoteEditsToFlush)
+            {
+                e.Cancel = true;
+                _ = FlushEditsThenCloseAsync();
+                return;
+            }
         }
 
         _viewModel.SaveState();
@@ -239,6 +268,37 @@ public partial class MainWindow : Window
         // Connections parked in background tabs are closed politely, and shares this window opened
         // are released — after the state is saved, which keeps the disk folders under them.
         _viewModel.Mounts.CloseAll();
+    }
+
+    /// <summary>
+    /// The first half of a close that has edits to upload. The session is written before anything waits:
+    /// should the process be ended meanwhile, the layout is on disk and the copies hold the edits
+    /// (TRAP-72). An update has left the window by the time this runs only if an editor saved in the last
+    /// moment, so a handed-over close stops by itself before the updater's patience runs out.
+    /// </summary>
+    private async Task FlushEditsThenCloseAsync()
+    {
+        _flushingForExit = true;
+        try
+        {
+            // Off the Closing event first: an edit already gone up by now ends the wait without one real
+            // await, and Close() inside Closing throws, which left the first press of the cross doing nothing.
+            await Task.Yield();
+            _viewModel.SaveSession();
+            await _viewModel.FlushRemoteEditsAsync(_viewModel.Services.UpdateHandedOver ? TimeSpan.FromSeconds(15) : null);
+        }
+        catch (Exception ex)
+        {
+            // The edits are safe in their copies: a failure here must not leave the window unclosable.
+            Serilog.Log.Warning(ex, "Waiting for remote edits on exit failed");
+        }
+        finally
+        {
+            _flushingForExit = false;
+            _flushedForExit = true;
+        }
+
+        Close();
     }
 
     private void OnMenuQuit(object sender, System.Windows.RoutedEventArgs e) => Close();
@@ -363,7 +423,8 @@ public partial class MainWindow : Window
         "OpenFile", "View", "Edit", "Properties",
         "ClipboardCopy", "ClipboardCut", "ClipboardPaste", "CopyFullPath", "CopyNames", "CopyReadLink",
         "SelectToggle", "SelectToggleSize", "SelectAll", "DeselectAll", "InvertSelection", "CalculateFolderSizes",
-        "SelectByMask", "UnselectByMask", "NavigateUp", "GoToRoot", "GoHome",
+        "SelectByMask", "UnselectByMask", "SelectSameExtension", "UnselectSameExtension", "RestoreSelection",
+        "NavigateUp", "GoToRoot", "GoHome",
         // These read the panel's selection or path too, and their gestures (Ctrl+P, Ctrl+E) are
         // ordinary editing keys inside a rename or breadcrumb box.
         "FindFiles", "OpenInEditor", "OpenInEditorPicker",
@@ -468,6 +529,9 @@ public partial class MainWindow : Window
             case "InvertSelection":  fileList.InvertSelection(); return true;
             case "SelectByMask":     _viewModel.Files.SelectByMaskCommand.Execute(null); return true;
             case "UnselectByMask":   _viewModel.Files.UnselectByMaskCommand.Execute(null); return true;
+            case "SelectSameExtension":   _viewModel.Files.SelectSameExtensionCommand.Execute(null); return true;
+            case "UnselectSameExtension": _viewModel.Files.UnselectSameExtensionCommand.Execute(null); return true;
+            case "RestoreSelection": _viewModel.Files.RestoreSelectionCommand.Execute(null); return true;
 
             // ── Tabs ──────────────────────────────────────────────────────────
             case "NewTab":           _viewModel.ActivePanel.NewTabCommand.Execute(null); return true;
@@ -625,8 +689,10 @@ public partial class MainWindow : Window
             default:
                 // The user's own tools are not in the static registry — their ids are built from
                 // the tool names (6.29), so they are resolved here rather than as a case above. So are
-                // the palette's recent connections (Connection:<id>, 6.82).
+                // the palette's recent connections (Connection:<id>, 6.82), and the selection
+                // templates (SelectTemplate:<key>).
                 return _viewModel.Services.TryRunUserTool(commandId)
+                    || _viewModel.Files.TryRunSelectionTemplate(commandId)
                     || _viewModel.Mounts.TryOpenRecentConnection(commandId);
         }
     }
@@ -655,6 +721,7 @@ public partial class MainWindow : Window
         var items = CommandCatalog
             .BuildItems(_hotkeys, lang)
             .Concat(_viewModel.Services.UserToolPaletteItems(lang))
+            .Concat(_viewModel.Files.SelectionTemplatePaletteItems())
             .Concat(_viewModel.Mounts.RecentConnectionPaletteItems())
             .ToList();
         var vm = new CommandPaletteViewModel(items, lang);
@@ -757,7 +824,8 @@ public partial class MainWindow : Window
             w.Name,
             w.DisplayName,
             WorkspaceSwitcherLabel(w),
-            WorkspaceGesture(i))).ToList();
+            WorkspaceGesture(i),
+            Picture: w.IconImage)).ToList();
 
         var title = LocalizationManager.Get("Ws_SwitcherTitle");
         var placeholder = LocalizationManager.Get("Ws_SwitcherPlaceholder");
@@ -815,15 +883,27 @@ public partial class MainWindow : Window
         for (int i = 0; i < list.Count; i++)
         {
             var ws = list[i];
-            var parent = new MenuItem
-            {
-                Header           = MenuHeaderText.Literal(ws.DisplayName),
-                InputGestureText = WorkspaceGesture(i),
-            };
-
+            var parent = WorkspaceMenuItem(ws, i);
             AddWorkspaceActions(parent.Items, ws);
             WorkspacesMenu.Items.Add(parent);
         }
+    }
+
+    /// <summary>
+    /// A workspace in a menu: its picture and name (<see cref="WorkspaceLabel"/>), by a template rather than
+    /// an element in the header, since the item's template has a presenter of the header for each role and
+    /// an element can stand in only one. A header that is not text gives a screen reader no name of itself.
+    /// </summary>
+    private MenuItem WorkspaceMenuItem(Workspaces.Workspace ws, int index)
+    {
+        var item = new MenuItem
+        {
+            Header           = ws,
+            HeaderTemplate   = (DataTemplate)FindResource("WorkspaceMenuHeader"),
+            InputGestureText = WorkspaceGesture(index),
+        };
+        System.Windows.Automation.AutomationProperties.SetName(item, ws.Name);
+        return item;
     }
 
     // The terminal item names the active workspace's command only while the menu is open. Closed, it

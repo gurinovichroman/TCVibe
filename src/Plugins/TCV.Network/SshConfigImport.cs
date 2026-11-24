@@ -15,7 +15,10 @@ public enum SshImportNote
     /// <summary>No key at all: the connection asks for a password.</summary>
     NoKey,
 
-    /// <summary>A <c>ProxyJump</c> or <c>ProxyCommand</c> applies, which is not supported: the connection goes direct.</summary>
+    /// <summary>
+    /// A <c>ProxyJump</c> or <c>ProxyCommand</c> applies, and there is no tunnel here: the connection would go
+    /// direct, past the jump host. Such a host is not imported unless the user ticks it knowing that.
+    /// </summary>
     ProxyIgnored,
 }
 
@@ -31,6 +34,9 @@ public sealed record SshImportCandidate(
     IReadOnlyList<SshImportNote> Notes)
 {
     public bool IsDuplicate => DuplicateOf is not null;
+
+    /// <summary>What ssh goes through to reach this host: the jump host, or <c>ProxyCommand</c>. Null when it connects directly.</summary>
+    public string? ReachedThrough => Host.ProxyJump ?? (Host.HasProxyCommand ? "ProxyCommand" : null);
 }
 
 /// <summary>

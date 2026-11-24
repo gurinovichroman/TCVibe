@@ -2,8 +2,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using TCV.App.Localization;
+using TCV.App.Services;
 using TCV.Core.Interfaces;
 using TCV.Tools;
 
@@ -13,15 +13,18 @@ public partial class ChecksumDialogViewModel : ObservableObject, IDisposable
 {
     private readonly ChecksumEngine _engine;
     private readonly string _activeDirectory;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     public ChecksumDialogViewModel(
         IReadOnlyList<IFileEntry> files,
         string activeDirectory,
-        ChecksumEngine engine)
+        ChecksumEngine engine,
+        IDialogService dialogs)
     {
         _engine = engine;
         _activeDirectory = activeDirectory;
+        _dialogs = dialogs;
 
         foreach (var f in files.Where(f => !f.IsDirectory))
         {
@@ -215,15 +218,13 @@ public partial class ChecksumDialogViewModel : ObservableObject, IDisposable
         }
 
         var ext = ChecksumEngine.Extension(SelectedAlgorithm);   // md5 / sha1 / sha256 / sha512 / sfv
-        var dlg = new SaveFileDialog
-        {
-            Title = LocalizationManager.Get("CS_SaveTitle"),
-            Filter = $"{SelectedAlgorithm} (*.{ext})|*.{ext}|{LocalizationManager.Get("CS_AllFiles")} (*.*)|*.*",
-            FileName = $"checksums.{ext}",
-            InitialDirectory = _activeDirectory,
-        };
+        var path = _dialogs.PickSaveFile(
+            LocalizationManager.Get("CS_SaveTitle"),
+            $"{SelectedAlgorithm} (*.{ext})|*.{ext}|{LocalizationManager.Get("CS_AllFiles")} (*.*)|*.*",
+            $"checksums.{ext}",
+            _activeDirectory);
 
-        if (dlg.ShowDialog() != true)
+        if (path is null)
         {
             return;
         }
@@ -233,14 +234,14 @@ public partial class ChecksumDialogViewModel : ObservableObject, IDisposable
             // CRC32 is the SFV format ("name hash"); the rest use BSD-labelled lines.
             if (SelectedAlgorithm == ChecksumAlgorithm.CRC32)
             {
-                await _engine.WriteSfvFileAsync(dlg.FileName, results);
+                await _engine.WriteSfvFileAsync(path, results);
             }
             else
             {
-                await _engine.WriteChecksumFileAsync(dlg.FileName, results);
+                await _engine.WriteChecksumFileAsync(path, results);
             }
 
-            StatusText = string.Format(LocalizationManager.Get("CS_Saved"), dlg.FileName);
+            StatusText = string.Format(LocalizationManager.Get("CS_Saved"), path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -253,19 +254,17 @@ public partial class ChecksumDialogViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task LoadChecksumForVerify()
     {
-        var dlg = new OpenFileDialog
-        {
-            Title = LocalizationManager.Get("CS_OpenTitle"),
-            Filter = LocalizationManager.Get("CS_OpenFilter"),
-            InitialDirectory = _activeDirectory,
-        };
+        var path = _dialogs.PickOpenFile(
+            LocalizationManager.Get("CS_OpenTitle"),
+            LocalizationManager.Get("CS_OpenFilter"),
+            _activeDirectory);
 
-        if (dlg.ShowDialog() != true)
+        if (path is null)
         {
             return;
         }
 
-        await VerifyFileAsync(dlg.FileName);
+        await VerifyFileAsync(path);
     }
 
     /// <summary>Verifies the files named in a checksum file; the results land in <see cref="VerifyResults"/>.</summary>

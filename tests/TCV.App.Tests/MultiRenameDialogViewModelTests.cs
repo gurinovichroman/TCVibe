@@ -77,6 +77,8 @@ public sealed class MultiRenameDialogViewModelTests
         var previewed = vm.PreviewItems.Single().NewName;
 
         await vm.ConfirmCommand.ExecuteAsync(null);
+        var batch = vm.Accepted!;
+        await new TCV.MultiRename.RenameEngine(fs).ExecuteBatchAsync(batch.Files, batch.Previews);
 
         previewed.Should().Be("shot_03-04-05.png");
         fs.HasFile("/d/" + previewed).Should().BeTrue();

@@ -24,9 +24,11 @@ public interface IViewerSource : IDisposable
 
 /// <summary>
 /// A <see cref="IViewerSource"/> over any <see cref="IVirtualFileSystem"/> (INV-02): the disk, an
-/// archive entry, a server. Each read opens the file afresh, seeks when the stream can and skips when it
-/// cannot (FTP), so nothing is kept open between windows. An archive entry, which would be unpacked
-/// again on every open, is read through <see cref="ExtractedViewerSource"/> instead.
+/// archive entry, a server. Each read opens the file afresh and gets to the offset the cheapest way there
+/// is: the server starts there (<see cref="TCV.Network.IRangeReader"/>: FTP's REST, HTTP's Range), or the
+/// stream seeks, or, when neither can, it skips (TRAP-106). So nothing is kept open between windows. An
+/// archive entry, which would be unpacked again on every open, is read through
+/// <see cref="ExtractedViewerSource"/> instead.
 /// </summary>
 /// <remarks>
 /// It can own a <em>lease</em> on a mounted file system (TRAP-05): the viewer window outlives the command
@@ -54,9 +56,10 @@ public sealed class VfsViewerSource : IViewerSource
 
     public async Task<byte[]> ReadAsync(long offset, int count, IProgress<long>? progress, CancellationToken ct)
     {
-        await using var stream = await _vfs.OpenReadAsync(_path, ct).ConfigureAwait(false);
+        var (stream, start) = await OpenAtAsync(offset, ct).ConfigureAwait(false);
+        await using var opened = stream;
 
-        if (offset > 0)
+        if (start < offset)
         {
             if (stream.CanSeek)
             {
@@ -64,7 +67,7 @@ public sealed class VfsViewerSource : IViewerSource
             }
             else
             {
-                var skipped = 0L;
+                var skipped = start;
                 var trash = new byte[SkipBuffer];
                 while (skipped < offset)
                 {
@@ -96,6 +99,22 @@ public sealed class VfsViewerSource : IViewerSource
         }
 
         return total == count ? buffer : buffer[..total];
+    }
+
+    /// <summary>
+    /// The file open as near <paramref name="offset"/> as the server will go, and where it really starts.
+    /// A range past the known end is not asked for (servers answer that with an error), nor one of a size
+    /// the listing does not know: the old way finds the end by reading to it.
+    /// </summary>
+    private async Task<(Stream Stream, long Start)> OpenAtAsync(long offset, CancellationToken ct)
+    {
+        if (offset > 0 && offset < Length && _vfs is TCV.Network.IRangeReader ranged)
+        {
+            var (stream, start, _, _) = await ranged.OpenReadFromAsync(_path, offset, null, ct).ConfigureAwait(false);
+            return (stream, start);
+        }
+
+        return (await _vfs.OpenReadAsync(_path, ct).ConfigureAwait(false), 0);
     }
 
     public void Dispose() => _lease?.Dispose();

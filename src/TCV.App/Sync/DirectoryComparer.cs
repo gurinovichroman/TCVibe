@@ -59,6 +59,9 @@ public sealed class DirectoryComparer
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private TimeSpan _lastReport;
 
+    // Folders already listed to announce what will be read, not to be asked of a server a second time.
+    private readonly Dictionary<(string Side, string Path), IReadOnlyList<IFileEntry>> _listed = [];
+
     public DirectoryComparer(
         IVirtualFileSystem leftFs, IVirtualFileSystem rightFs, ComparisonOptions? options = null)
     {
@@ -92,6 +95,7 @@ public sealed class DirectoryComparer
             {
                 await EnsureRootAsync(_leftFs, leftRoot, "left", linked.Token).ConfigureAwait(false);
                 await EnsureRootAsync(_rightFs, rightRoot, "right", linked.Token).ConfigureAwait(false);
+                using var readAhead = await AnnounceContentReadsAsync(leftRoot, rightRoot, linked.Token).ConfigureAwait(false);
                 await CompareDirectoryAsync(leftRoot, rightRoot, string.Empty, 0, null, channel.Writer, linked.Token)
                     .ConfigureAwait(false);
                 channel.Writer.TryComplete();
@@ -117,6 +121,82 @@ public sealed class DirectoryComparer
         {
             linked.Cancel();
             await producer.ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// With <see cref="ComparisonOptions.CompareContent"/>, tells an archive which files will be read, so
+    /// they all come from one pass over it (6.42): only the pairs of equal size, which takes knowing the
+    /// other side first. A folder that cannot be listed is the walk's to report.
+    /// </summary>
+    private async Task<IDisposable?> AnnounceContentReadsAsync(VfsPath left, VfsPath right, CancellationToken ct)
+    {
+        var leftReadAhead = FileSystem.FileSystemIdentity.ReadAheadOf(_leftFs);
+        var rightReadAhead = FileSystem.FileSystemIdentity.ReadAheadOf(_rightFs);
+        if (!_options.CompareContent || (leftReadAhead is null && rightReadAhead is null))
+        {
+            return null;
+        }
+
+        var leftFiles = new List<VfsPath>();
+        var rightFiles = new List<VfsPath>();
+        await CollectContentPairsAsync(left, right, string.Empty, 0, leftFiles, rightFiles, ct).ConfigureAwait(false);
+
+        var fromLeft = leftReadAhead?.ReadAhead(leftFiles);
+        var fromRight = rightReadAhead?.ReadAhead(rightFiles);
+        return new BothReadAheads(fromLeft, fromRight);
+    }
+
+    private async Task CollectContentPairsAsync(
+        VfsPath left, VfsPath right, string prefix, int depth, List<VfsPath> leftFiles, List<VfsPath> rightFiles, CancellationToken ct)
+    {
+        if (depth > _options.MaxDepth)
+        {
+            return;
+        }
+
+        IReadOnlyList<IFileEntry> leftEntries;
+        IReadOnlyList<IFileEntry> rightEntries;
+        try
+        {
+            leftEntries = await ListAsync(_leftFs, left, "left", ct).ConfigureAwait(false);
+            rightEntries = await ListAsync(_rightFs, right, "right", ct).ConfigureAwait(false);
+        }
+        catch (ComparisonFailedException)
+        {
+            return;
+        }
+
+        _listed[("left", left.Value)] = leftEntries;
+        _listed[("right", right.Value)] = rightEntries;
+
+        foreach (var row in DirectoryComparison.CompareLevel(leftEntries, rightEntries, _options with { IncludeSame = true }, prefix))
+        {
+            ct.ThrowIfCancellationRequested();
+            if (row.Left is not { } l || row.Right is not { } r)
+            {
+                continue;
+            }
+
+            if (!l.IsDirectory && !r.IsDirectory && l.Size == r.Size)
+            {
+                leftFiles.Add(l.Path);
+                rightFiles.Add(r.Path);
+            }
+            else if (l.IsDirectory && r.IsDirectory && _options.Recursive
+                     && !_options.SkipDirectories.Contains(row.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                await CollectContentPairsAsync(l.Path, r.Path, row.RelativePath, depth + 1, leftFiles, rightFiles, ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private sealed class BothReadAheads(IDisposable? left, IDisposable? right) : IDisposable
+    {
+        public void Dispose()
+        {
+            left?.Dispose();
+            right?.Dispose();
         }
     }
 
@@ -326,9 +406,14 @@ public sealed class DirectoryComparer
         }
     }
 
-    private static async Task<IReadOnlyList<IFileEntry>> ListAsync(
+    private async Task<IReadOnlyList<IFileEntry>> ListAsync(
         IVirtualFileSystem fs, VfsPath path, string side, CancellationToken ct)
     {
+        if (_listed.Remove((side, path.Value), out var known))
+        {
+            return known;
+        }
+
         try
         {
             return await fs.ListAsync(path, ct).ConfigureAwait(false);

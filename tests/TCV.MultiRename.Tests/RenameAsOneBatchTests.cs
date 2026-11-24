@@ -54,6 +54,28 @@ public class RenameAsOneBatchTests
     }
 
     [Fact]
+    public async Task ExecuteBatch_BatchRefused_TheReasonIsInTheCallersWords()
+    {
+        var fs = new BatchFs("/d/a.txt") { Refusal = "name taken" };
+
+        var result = await new RenameEngine(fs, ex => "translated: " + ex.Message).ExecuteBatchAsync(
+            [Entry("/d/a.txt")], [Plan("a.txt", "x.txt")]);
+
+        result.Failures.Single().Error.Should().Be("translated: name taken");
+    }
+
+    [Fact]
+    public async Task ExecuteBatch_OneByOneRefused_TheReasonIsInTheCallersWords()
+    {
+        var fs = new BatchFs("/d/a.txt") { CanRenameAsBatch = false, Refusal = "name taken" };
+
+        var result = await new RenameEngine(fs, ex => "translated: " + ex.Message).ExecuteBatchAsync(
+            [Entry("/d/a.txt")], [Plan("a.txt", "x.txt")]);
+
+        result.Failures.Single().Error.Should().Be("translated: name taken");
+    }
+
+    [Fact]
     public async Task ExecuteBatch_Cancelled_ReportsCancelledWithNothingDone()
     {
         var fs = new BatchFs("/d/a.txt");
@@ -152,6 +174,11 @@ public class RenameAsOneBatchTests
 
         public Task RenameAsync(VfsPath path, string newName, CancellationToken ct = default)
         {
+            if (Refusal is not null)
+            {
+                throw new IOException(Refusal);
+            }
+
             SingleRenames.Add((path.Value, newName));
             var content = _files[path.Value];
             _files.Remove(path.Value);

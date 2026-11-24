@@ -16,6 +16,12 @@ public static class FileSystemIdentity
     public static IVirtualFileSystem Underlying(IVirtualFileSystem fs) =>
         fs is SearchResultsFileSystem results ? Underlying(results.Inner) : fs;
 
+    /// <summary>
+    /// The file system to announce reads to, if it takes announcements: the view forwards every read to
+    /// the one underneath, so the hits of a search inside a solid archive come from one pass over it too.
+    /// </summary>
+    public static IReadAheadFileSystem? ReadAheadOf(IVirtualFileSystem fs) => Underlying(fs) as IReadAheadFileSystem;
+
     /// <summary>True when both show the files of one file system, so a rename or a system copy can join them.</summary>
     public static bool Same(IVirtualFileSystem a, IVirtualFileSystem b) =>
         ReferenceEquals(Underlying(a), Underlying(b));
