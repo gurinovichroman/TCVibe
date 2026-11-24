@@ -47,6 +47,38 @@ public class ListFocusTests
         ListFocus.MayTakeKeys(KeyHolder.OwnFilter, claim, panelIsActive: true).Should().Be(expected);
     }
 
+    [Fact]
+    public void MayTakeKeys_RefreshWhileTypingElsewhere_LeavesTheKeysThere()
+    {
+        // The watcher reloaded %TEMP% every few seconds and the command line lost its keys each time.
+        ListFocus.MayTakeKeys(KeyHolder.Other, FocusClaim.Refresh, panelIsActive: true).Should().BeFalse();
+    }
+
+    [Fact]
+    public void MayTakeKeys_RefreshOfTheListWithTheKeys_PutsThemOnTheNewRow()
+    {
+        // F8 took away the row that had the keys: they are "nowhere", and belong back on the list.
+        ListFocus.MayTakeKeys(KeyHolder.List, FocusClaim.Refresh, panelIsActive: true).Should().BeTrue();
+    }
+
+    [Fact]
+    public void MayTakeKeys_RefreshOfTheInactivePanel_LeavesTheKeysWhereTheyAre()
+    {
+        ListFocus.MayTakeKeys(KeyHolder.List, FocusClaim.Refresh, panelIsActive: false).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(FocusClaim.Hand, true)]
+    [InlineData(FocusClaim.Panel, false)]
+    [InlineData(FocusClaim.Follow, false)]
+    [InlineData(FocusClaim.Refresh, false)]
+    public void MayTakeKeys_MenuOpen_KeepsItOpenUnlessHanded(FocusClaim claim, bool expected)
+    {
+        // The watcher reloaded %TEMP% every few seconds, the cursor cell took the focus, and the File
+        // menu closed as soon as it opened.
+        ListFocus.MayTakeKeys(KeyHolder.Menu, claim, panelIsActive: true).Should().Be(expected);
+    }
+
     [Theory]
     [InlineData(FocusClaim.Hand, true)]
     [InlineData(FocusClaim.Panel, true)]

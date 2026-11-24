@@ -161,6 +161,13 @@ public partial class FileListViewModel : ObservableObject
     }
 
     /// <summary>
+    /// The rows are being read again in the same place (the watcher, the end of an operation) and the
+    /// cursor will be put back on them, not on a name being navigated to. The view then leaves the keys
+    /// where the user has them (<see cref="Controls.FocusClaim.Refresh"/>).
+    /// </summary>
+    public bool IsRefreshPending => _pendingViewState is not null && _pendingSelectName is null;
+
+    /// <summary>
     /// Where the cursor belongs once a refresh (<see cref="PrepareForRefresh"/>) has refilled the list. A
     /// cursor whose row is still listed stays, also when a key moved it while the folder was read. One
     /// whose row went takes the row with the saved name (a changed file is listed anew), else the row now

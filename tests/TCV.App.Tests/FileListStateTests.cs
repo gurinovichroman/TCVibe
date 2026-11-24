@@ -500,6 +500,32 @@ public class FileListStateTests
         list.ConsumePendingViewState()!.FocusedItemName.Should().Be("b.txt");
     }
 
+    [Fact]
+    public async Task IsRefreshPending_AfterPrepareForRefresh_IsTrueUntilTheStateIsConsumed()
+    {
+        var (list, rows) = await CreateWithFiles("a.txt", "b.txt");
+        list.IsRefreshPending.Should().BeFalse();
+
+        list.SelectedItem = rows[1];
+        list.PrepareForRefresh();
+        list.IsRefreshPending.Should().BeTrue();
+
+        _ = list.ConsumePendingViewState();
+        list.IsRefreshPending.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsRefreshPending_WithANameToLandOn_IsFalse()
+    {
+        // Navigating to a name (a folder left, F6 renaming in place) is not a refresh of the same rows.
+        var (list, rows) = await CreateWithFiles("a.txt", "b.txt");
+        list.SelectedItem = rows[1];
+        list.PrepareForRefresh();
+        list.SetPendingSelectName("a.txt");
+
+        list.IsRefreshPending.Should().BeFalse();
+    }
+
     /// <summary>Lists through the inner file system, but holds a listing back until the test lets it go.</summary>
     private sealed class HeldListingFileSystem(InMemoryFileSystem inner) : IVirtualFileSystem
     {

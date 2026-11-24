@@ -193,17 +193,47 @@ public partial class FileListControl : UserControl
         }
     }
 
-    private static bool MayTakeKeys(FileListViewModel vm, FocusClaim claim)
+    private bool MayTakeKeys(FileListViewModel vm, FocusClaim claim)
     {
-        var holder = Keyboard.FocusedElement switch
+        var focused = KeysOwner();
+        var holder = focused switch
         {
             NameEditBox => KeyHolder.NameEdit,
             QuickFilterBox box => ReferenceEquals(box.DataContext, vm) ? KeyHolder.OwnFilter : KeyHolder.OtherFilter,
+            _ when IsMenuOpen(focused) => KeyHolder.Menu,
+            System.Windows.Media.Visual visual when IsAncestorOf(visual) => KeyHolder.List,
+            _ when IsFocusLost(focused) => KeyHolder.List,
             _ => KeyHolder.Other,
         };
 
         return ListFocus.MayTakeKeys(holder, claim, vm.IsActive);
     }
+
+    /// <summary>
+    /// The element that has the keys, or gets them back when the user returns to this window: a window
+    /// left for another program has no keyboard focus, and the command line being typed into before that
+    /// would read as "nowhere" and lose them to a refresh. While the window is inactive the keyboard
+    /// focus may sit in another window of the program (a modal dialog): the keys of this one are those
+    /// it gets back, not the dialog's box.
+    /// </summary>
+    private IInputElement? KeysOwner() =>
+        Window.GetWindow(this) is { IsActive: false } window
+            ? FocusManager.GetFocusedElement(window)
+            : Keyboard.FocusedElement;
+
+    /// <summary>
+    /// A menu or drop-down is open. The watcher's reload of a folder that keeps changing (%TEMP%) put the
+    /// focus back on the cursor every few seconds and closed the File menu as soon as it opened. A menu
+    /// opened by the mouse holds the capture and may leave the keys nowhere, so both are asked.
+    /// </summary>
+    private bool IsMenuOpen(IInputElement? focused) =>
+        focused is MenuItem or MenuBase
+        || Mouse.Captured switch
+        {
+            null => false,
+            System.Windows.Media.Visual visual => !IsAncestorOf(visual),
+            _ => true,
+        };
 
     /// <summary>
     /// Gives keyboard focus to the cursor of the view that is shown: the grid's current cell, the
@@ -316,6 +346,10 @@ public partial class FileListControl : UserControl
             return;
         }
 
+        // A refresh putting the cursor back on its new rows leaves the keys where they are (asked now:
+        // the restore after the layout runs before these callbacks and spends the refresh).
+        var claim = vm.IsRefreshPending ? FocusClaim.Refresh : FocusClaim.Follow;
+
         if (vm.ViewMode == ViewMode.Details)
         {
             if (!vm.IsActive || ReferenceEquals(Grid.CurrentItem, item))
@@ -327,7 +361,7 @@ public partial class FileListControl : UserControl
             {
                 if (ReferenceEquals(vm.SelectedItem, item) && !ReferenceEquals(Grid.CurrentItem, item))
                 {
-                    ApplyGridFocus(vm, item, scrollIntoView: true, FocusClaim.Follow);
+                    ApplyGridFocus(vm, item, scrollIntoView: true, claim);
                 }
             }, System.Windows.Threading.DispatcherPriority.Input);
             return;
@@ -354,7 +388,7 @@ public partial class FileListControl : UserControl
             }
 
             list.ScrollIntoView(item);
-            if (MayTakeKeys(vm, FocusClaim.Follow))
+            if (MayTakeKeys(vm, claim))
             {
                 FocusListCursor(list, vm, scrollIntoView: false);
             }
@@ -414,7 +448,7 @@ public partial class FileListControl : UserControl
                 && (IsKeyboardFocusWithin || IsFocusLost(focused))
                 && (vm.SelectedItem is null || vm.Files.Contains(vm.SelectedItem)))
             {
-                FocusCursor(scrollIntoView: false, FocusClaim.Follow);
+                FocusCursor(scrollIntoView: false, FocusClaim.Refresh);
             }
         }, System.Windows.Threading.DispatcherPriority.Input);
     }
@@ -585,7 +619,7 @@ public partial class FileListControl : UserControl
             vm.SetMarks(vm.Files.Where(f => !f.IsParentEntry && byName.Contains(f.Name)));
         }
 
-        ApplyGridFocus(vm, focused, scrollIntoView: false, FocusClaim.Follow);
+        ApplyGridFocus(vm, focused, scrollIntoView: false, FocusClaim.Refresh);
     }
 
     private void ApplyGridFocus(FileListViewModel vm, FileEntryViewModel target, bool scrollIntoView, FocusClaim claim)

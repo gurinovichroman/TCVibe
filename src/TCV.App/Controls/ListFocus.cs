@@ -15,13 +15,21 @@ public enum FocusClaim
     /// And only in the active panel: the other panel reloaded by its watcher took the keys, and the next
     /// Shift+↓ marked a file over there.</summary>
     Follow,
+
+    /// <summary>The same folder was read again (the watcher, the end of an operation) and the cursor put back
+    /// on its rows: only keys the list held or that went nowhere. In a folder that keeps changing (%TEMP%)
+    /// the command line lost its keys every few seconds.</summary>
+    Refresh,
 }
 
 /// <summary>What holds the keyboard when the list wants it.</summary>
 public enum KeyHolder
 {
-    /// <summary>Anything else, nothing at all included.</summary>
+    /// <summary>Anything else outside the list: the command line, the path being typed, the folder tree.</summary>
     Other,
+
+    /// <summary>The list itself, or nothing at all: a row the refill took away, the bare window.</summary>
+    List,
 
     /// <summary>The box of a name being renamed in place (TRAP-76).</summary>
     NameEdit,
@@ -31,6 +39,10 @@ public enum KeyHolder
 
     /// <summary>The quick filter box of the other panel.</summary>
     OtherFilter,
+
+    /// <summary>An open menu or drop-down: a menu item has the keys, or something outside the list holds
+    /// the mouse (menu mode, a context menu, a combo box list). Focus taken from it closes it.</summary>
+    Menu,
 }
 
 /// <summary>
@@ -41,17 +53,18 @@ public static class ListFocus
 {
     public static bool MayTakeKeys(KeyHolder holder, FocusClaim claim, bool panelIsActive)
     {
-        if (claim == FocusClaim.Follow && !panelIsActive)
+        if (claim is FocusClaim.Follow or FocusClaim.Refresh && !panelIsActive)
         {
             return false;
         }
 
         return holder switch
         {
+            KeyHolder.List => true,
             KeyHolder.NameEdit => false,
-            KeyHolder.OwnFilter => claim == FocusClaim.Hand,
+            KeyHolder.OwnFilter or KeyHolder.Menu => claim == FocusClaim.Hand,
             KeyHolder.OtherFilter => claim is FocusClaim.Hand or FocusClaim.Panel,
-            _ => true,
+            _ => claim != FocusClaim.Refresh,
         };
     }
 }
